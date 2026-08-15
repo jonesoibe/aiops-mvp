@@ -1,0 +1,7 @@
+Metric,Unit,AIOps MVP,Baseline
+Precision,,0.0000,0.0000
+Recall,,0.0000,0.0000
+F1-Score,,0.0000,0.0000
+ROC-AUC,,0.0000,0.0000
+Latency,ms,0.50,0.10
+False Positive Rate,,0.9296,0.4507

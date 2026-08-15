@@ -1,0 +1,11 @@
+incident_id,timestamp,machine,issue_type,severity,confidence,message
+INC-20260813201251-001,2026-08-13 20:12:51.466458,machine-1-1,unknown,low,0.37,unknown detected on machine-1-1 (confidence: 37.0%)
+INC-20260813201251-002,2026-08-13 20:12:51.466458,machine-1-1,unknown,low,0.37,unknown detected on machine-1-1 (confidence: 37.0%)
+INC-20260813201251-003,2026-08-13 20:12:51.466458,machine-1-1,performance_degradation,low,0.37666666666666665,performance_degradation detected on machine-1-1 (confidence: 37.7%)
+INC-20260813201251-004,2026-08-13 20:12:51.466458,machine-1-1,performance_degradation,medium,0.5533333333333333,performance_degradation detected on machine-1-1 (confidence: 55.3%)
+INC-20260813201251-005,2026-08-13 20:12:51.468490,machine-1-1,performance_degradation,low,0.4066666666666667,performance_degradation detected on machine-1-1 (confidence: 40.7%)
+INC-20260813201251-006,2026-08-13 20:12:51.468490,machine-1-1,unknown,low,0.34414634146341466,unknown detected on machine-1-1 (confidence: 34.4%)
+INC-20260813201251-007,2026-08-13 20:12:51.468490,machine-1-1,resource_exhaustion,low,0.36019548221275866,resource_exhaustion detected on machine-1-1 (confidence: 36.0%)
+INC-20260813201251-008,2026-08-13 20:12:51.468490,machine-1-1,unknown,low,0.30202010948914343,unknown detected on machine-1-1 (confidence: 30.2%)
+INC-20260813201251-009,2026-08-13 20:12:51.468490,machine-1-1,resource_exhaustion,low,0.3497433190085151,resource_exhaustion detected on machine-1-1 (confidence: 35.0%)
+INC-20260813201251-010,2026-08-13 20:12:51.468490,machine-1-1,service_outage,low,0.27525229801644896,service_outage detected on machine-1-1 (confidence: 27.5%)

@@ -1,0 +1,11 @@
+incident_id,timestamp,action,target,status,message,simulated
+INC-20260813201251-001,2026-08-13 20:12:51.466458,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3700, severity: low)",False
+INC-20260813201251-002,2026-08-13 20:12:51.466458,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3700, severity: low)",False
+INC-20260813201251-003,2026-08-13 20:12:51.466458,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3767, severity: low)",False
+INC-20260813201251-004,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.5533, severity: medium)",False
+INC-20260813201251-005,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.4067, severity: low)",False
+INC-20260813201251-006,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3441, severity: low)",False
+INC-20260813201251-007,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3602, severity: low)",False
+INC-20260813201251-008,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3020, severity: low)",False
+INC-20260813201251-009,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.3497, severity: low)",False
+INC-20260813201251-010,2026-08-13 20:12:51.468490,manual_investigation,machine-1-1,pending_review,"Routed to human review (confidence: 0.2753, severity: low)",False

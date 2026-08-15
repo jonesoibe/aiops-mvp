@@ -1,0 +1,30 @@
+# AIOps MVP Configuration
+data:
+  aiops_path: data/raw/aiops/
+  smd_path: data/raw/smd/
+  processed_path: data/processed/
+  test_split: 0.15
+  val_split: 0.15
+
+anomaly_detection:
+  n_estimators: 200
+  contamination: 0.05
+  detection_threshold: 0.55
+  window_seconds: 60
+
+classification:
+  n_estimators: 300
+  max_depth: 15
+  automation_threshold: 0.85
+  random_state: 42
+
+correlation:
+  window_seconds: 120
+
+response:
+  recovery_window_seconds: 60
+  simulate_only: true   # Set false only for live K8s deployment
+
+mlflow:
+  experiment_name: aiops-mvp
+  tracking_uri: mlruns/

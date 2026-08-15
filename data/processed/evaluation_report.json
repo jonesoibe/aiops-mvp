@@ -1,0 +1,37 @@
+{
+  "title": "AIOps MVP - Performance Evaluation Report",
+  "date": "2026-08-13T20:55:15.669339",
+  "chapter": "Chapter Five: Performance Evaluation",
+  "summary": {
+    "total_test_samples": 71,
+    "true_anomalies": 0,
+    "mvp_detected": 66,
+    "baseline_detected": 32
+  },
+  "metrics": {
+    "precision": {
+      "mvp": 0.0,
+      "baseline": 0.0
+    },
+    "recall": {
+      "mvp": 0.0,
+      "baseline": 0.0
+    },
+    "f1_score": {
+      "mvp": 0.0,
+      "baseline": 0.0
+    },
+    "roc_auc": {
+      "mvp": 0.0,
+      "baseline": 0.0
+    },
+    "latency_ms": {
+      "mvp": 0.5,
+      "baseline": 0.1
+    },
+    "false_positive_rate": {
+      "mvp": 0.9295774647874231,
+      "baseline": 0.45070422535147786
+    }
+  }
+}

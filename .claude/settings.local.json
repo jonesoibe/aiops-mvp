@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:PATH -split ';' | Where-Object { $_ -match 'Python' })",
+      "PowerShell(winget install Python.Python.3.11 --accept-package-agreements --accept-source-agreements --force)",
+      "PowerShell(& \"C:\\\\Users\\\\FAVOUR\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe\" --version)",
+      "PowerShell($PROFILE | Select-Object @{Name=\"Profile Path\";Expression={$_}})",
+      "PowerShell(if \\(-not \\(Test-Path $PROFILE\\)\\) { New-Item -ItemType File -Path $PROFILE -Force } else { \"Profile already exists\" })",
+      "PowerShell(. $PROFILE; python311 --version)",
+      "PowerShell(python311 -m pip list)",
+      "PowerShell(& \"C:\\\\Users\\\\FAVOUR\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe\" -m pip list)"
+    ]
+  }
+}
