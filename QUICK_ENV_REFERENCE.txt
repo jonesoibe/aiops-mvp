@@ -1,0 +1,149 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    ENVIRONMENT VARIABLES QUICK REFERENCE                   ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 JWT_SECRET_KEY (Most Important!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Cryptographic key for signing JWT authentication tokens
+
+📋 LOCAL DEVELOPMENT (NOT SECURE - DEV ONLY!)
+   JWT_SECRET_KEY=dev-secret-key-change-this-in-production
+
+🔒 PRODUCTION (SECURE - USE THIS!)
+   JWT_SECRET_KEY=vF9kL2mP7qR4sT6uV8wX1yZ3aBcD5eF6gH9iJ0kL2mN4oP6qR8sT0uV2wX4yZ
+
+⚙️  HOW TO GENERATE SECURE KEY:
+   python -c "import secrets; print(secrets.token_urlsafe(32))"
+   openssl rand -hex 32
+
+✅ REQUIREMENTS:
+   ✓ At least 32 characters
+   ✓ Random & unique
+   ✓ Different per environment
+   ✓ NEVER commit to GitHub
+   ✓ NEVER share with anyone
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌍 FLASK_ENV (Application Mode)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Controls Flask behavior (debug mode, error handling, etc.)
+
+LOCAL DEVELOPMENT:
+   FLASK_ENV=development
+   Effects: Debug ON, Auto-reload ON, Detailed errors
+
+PRODUCTION:
+   FLASK_ENV=production
+   Effects: Debug OFF, Optimized, Minimal error details
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🖨️  PYTHONUNBUFFERED (Output Logging)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Ensures log messages appear immediately (important for Docker)
+
+ALWAYS USE:
+   PYTHONUNBUFFERED=1
+   Effects: Real-time log output, no buffering
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 COMPLETE .env FILE EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LOCAL DEVELOPMENT (.env)
+───────────────────────────────────────────────────────────────────────────────
+FLASK_ENV=development
+JWT_SECRET_KEY=dev-secret-key-change-this
+PYTHONUNBUFFERED=1
+MONGODB_URI=mongodb://localhost:27017/aiops_mvp
+
+
+PRODUCTION (Railway/Render/AWS)
+───────────────────────────────────────────────────────────────────────────────
+FLASK_ENV=production
+JWT_SECRET_KEY=vF9kL2mP7qR4sT6uV8wX1yZ3aBcD5eF6gH9iJ0kL2mN4oP6qR8sT0uV2wX4yZ
+PYTHONUNBUFFERED=1
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/aiops_mvp
+
+
+DOCKER DEPLOYMENT
+───────────────────────────────────────────────────────────────────────────────
+version: '3.8'
+services:
+  app:
+    environment:
+      FLASK_ENV: production
+      JWT_SECRET_KEY: vF9kL2mP7qR4sT6uV8wX1yZ3aBcD5eF6gH9iJ0kL2mN4oP6qR8sT0uV2wX4yZ
+      PYTHONUNBUFFERED: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 HOW TO SET IN DEPLOYMENT PLATFORMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RAILWAY.APP
+───────────
+1. Go to your project dashboard
+2. Click "Variables" tab
+3. Add each variable:
+   Name: FLASK_ENV
+   Value: production
+4. Click "Save"
+
+RENDER.COM
+──────────
+1. Go to your service
+2. Click "Environment"
+3. Add variables:
+   Key: FLASK_ENV
+   Value: production
+4. Click "Save"
+
+DOCKER
+──────
+docker run -e FLASK_ENV=production \
+           -e JWT_SECRET_KEY=your-key-here \
+           -e PYTHONUNBUFFERED=1 \
+           -p 5000:5000 aiops-mvp
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  SECURITY REMINDERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ DON'T:
+   • Commit .env to GitHub
+   • Use weak secrets (too short, dictionary words)
+   • Share secrets in chat/email
+   • Use same secret for dev and production
+   • Hardcode secrets in Python files
+
+✅ DO:
+   • Generate 32+ character random strings
+   • Keep .env in .gitignore
+   • Store secrets in password manager
+   • Use different secrets per environment
+   • Rotate secrets every 6 months
+   • Set variables in deployment platform
+   • Use environment variables in code
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔑 EXAMPLE SECURE VALUES (Don't use these - generate your own!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 1:
+JWT_SECRET_KEY=aK9$mL@vP2&xQ8!zR4%sT6^uV0*wX3(yZ1-BaC5=De7~Fg9|Hi0+Jk2
+
+Example 2:
+JWT_SECRET_KEY=7x#3Q$jP&2vK1*mL@9sT%6uV^8wX0(yZ)aB-cD+eF=gH~iJ|kL?mN
+
+Example 3:
+JWT_SECRET_KEY=p5@cD2#kL8$vM1%nQ9^sT&uV*wX(yZ)aB-cD+eF=gH~iJ|kL?mN
+
+Generate your own!
+$ python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   READY TO DEPLOY SECURELY! 🚀                            ║
+╚════════════════════════════════════════════════════════════════════════════╝

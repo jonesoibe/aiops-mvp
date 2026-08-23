@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Trail - AIOps MVP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e27;
+            color: #e2e8f0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 10px 15px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .table-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #334155;
+            padding: 15px 20px;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #334155;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #cbd5e1;
+            border-bottom: 2px solid #475569;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #334155;
+            color: #e2e8f0;
+        }
+
+        tr:hover {
+            background: #0f172a;
+        }
+
+        .timestamp {
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #94a3b8;
+        }
+
+        .user-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .action-login {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .action-create {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .action-update {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .action-delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .action-access {
+            background: rgba(168, 85, 247, 0.2);
+            color: #d8b4fe;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid #334155;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .pagination button.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Audit Trail</h1>
+        <a href="/" class="back-btn">← Back to Home</a>
+    </div>
+
+    <div class="container">
+        <!-- Quick Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalEvents">247</div>
+                <div class="stat-label">Total Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="todayEvents">18</div>
+                <div class="stat-label">Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeUsers">5</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="criticalEvents">3</div>
+                <div class="stat-label">Critical</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <input type="text" class="filter-input" id="userFilter" placeholder="Filter by user...">
+            <input type="text" class="filter-input" id="actionFilter" placeholder="Filter by action...">
+            <input type="date" class="filter-input" id="dateFilter">
+        </div>
+
+        <!-- Audit Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">📊 Recent Activity</div>
+                <div style="font-size: 0.85em; color: #94a3b8;">Last 100 events</div>
+            </div>
+            <div class="table-container">
+                <table id="auditTable">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Resource</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sample audit trail data
+        const auditData = [
+            { timestamp: '2026-08-23 15:57:42', user: 'admin', action: 'login_success', resource: 'Authentication', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 15:56:18', user: 'operator', action: 'chaos_simulation_started', resource: 'Demo Simulator', ip: '203.0.113.46', status: '✓' },
+            { timestamp: '2026-08-23 15:55:09', user: 'viewer', action: 'access_denied', resource: 'User Management', ip: '203.0.113.47', status: '✗' },
+            { timestamp: '2026-08-23 15:54:21', user: 'admin', action: 'user_created', resource: 'John Doe', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 15:52:03', user: 'operator', action: 'incident_acknowledged', resource: 'INC-0042-SERVICE_A', ip: '203.0.113.46', status: '✓' },
+            { timestamp: '2026-08-23 15:50:15', user: 'admin', action: 'api_call', resource: '/api/incidents', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 15:48:42', user: 'viewer', action: 'login_success', resource: 'Authentication', ip: '203.0.113.48', status: '✓' },
+            { timestamp: '2026-08-23 15:47:21', user: 'operator', action: 'incident_resolved', resource: 'INC-0041-SERVICE_B', ip: '203.0.113.46', status: '✓' },
+            { timestamp: '2026-08-23 15:45:33', user: 'admin', action: 'user_deleted', resource: 'Old User', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 15:43:12', user: 'operator', action: 'api_call', resource: '/api/problems', ip: '203.0.113.46', status: '✓' },
+        ];
+
+        // Load audit trail
+        function loadAuditTrail() {
+            const tbody = document.getElementById('auditBody');
+            tbody.innerHTML = '';
+
+            auditData.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="timestamp">${entry.timestamp}</span></td>
+                    <td><span class="user-badge">${entry.user}</span></td>
+                    <td><span class="action-badge action-${entry.action.split('_')[0]}">${entry.action.replace(/_/g, ' ').toUpperCase()}</span></td>
+                    <td>${entry.resource}</td>
+                    <td><span class="timestamp">${entry.ip}</span></td>
+                    <td>${entry.status}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAuditTrail();
+        });
+
+        // Filter functionality
+        document.getElementById('userFilter').addEventListener('input', () => {
+            console.log('Filter by user coming soon');
+        });
+
+        document.getElementById('actionFilter').addEventListener('input', () => {
+            console.log('Filter by action coming soon');
+        });
+    </script>
+</body>
+</html>

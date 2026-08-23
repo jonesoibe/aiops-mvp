@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - AIOps MVP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: #0a0e27;
+            color: #e2e8f0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .intro-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .intro-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+        }
+
+        .intro-text {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .base-url {
+            background: #0f172a;
+            padding: 15px;
+            border-left: 3px solid #3b82f6;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .endpoint-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            background: #334155;
+            padding: 15px 20px;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .endpoint-header:hover {
+            background: #475569;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .method-get {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .method-post {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .method-put {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .method-delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .endpoint-path {
+            font-family: monospace;
+            font-size: 0.95em;
+            flex: 1;
+        }
+
+        .endpoint-expand {
+            color: #94a3b8;
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+
+        .endpoint-header.expanded .endpoint-expand {
+            transform: rotate(180deg);
+        }
+
+        .endpoint-body {
+            display: none;
+            padding: 20px;
+        }
+
+        .endpoint-body.expanded {
+            display: block;
+        }
+
+        .endpoint-description {
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .params-table th {
+            background: #334155;
+            padding: 10px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #cbd5e1;
+            border-bottom: 1px solid #475569;
+        }
+
+        .params-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .param-name {
+            font-family: monospace;
+            color: #93c5fd;
+            font-weight: 500;
+        }
+
+        .param-type {
+            background: rgba(139, 92, 246, 0.2);
+            color: #d8b4fe;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .param-required {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .response-example {
+            margin-top: 15px;
+        }
+
+        .status-code {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-200 {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-201 {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-400 {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .status-401 {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .status-403 {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .status-500 {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .auth-section {
+            background: #1e293b;
+            border-left: 3px solid #8b5cf6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .auth-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #e2e8f0;
+        }
+
+        .auth-text {
+            color: #cbd5e1;
+            font-size: 0.9em;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 API Documentation</h1>
+        <a href="/" class="back-btn">← Back to Home</a>
+    </div>
+
+    <div class="container">
+        <!-- Introduction -->
+        <div class="intro-section">
+            <div class="intro-title">🌐 AIOps MVP API</div>
+            <div class="intro-text">
+                Welcome to the AIOps MVP REST API documentation. This API provides endpoints for authentication,
+                incident management, anomaly detection, chaos simulation, and system metrics.
+            </div>
+            <div class="base-url">Base URL: https://your-deployment.onrender.com/api</div>
+
+            <div class="auth-section">
+                <div class="auth-title">🔐 Authentication</div>
+                <div class="auth-text">
+                    All API requests (except /login and /signup) require a valid JWT token in the Authorization header:
+                    <div class="code-block" style="margin-top: 10px;">Authorization: Bearer &lt;your_jwt_token&gt;</div>
+                    Tokens expire after 7 days. Use the /auth/refresh endpoint to get a new token.
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="filter-section">
+            <button class="filter-btn active" onclick="filterEndpoints('all')">All</button>
+            <button class="filter-btn" onclick="filterEndpoints('auth')">Authentication</button>
+            <button class="filter-btn" onclick="filterEndpoints('incidents')">Incidents</button>
+            <button class="filter-btn" onclick="filterEndpoints('metrics')">Metrics</button>
+            <button class="filter-btn" onclick="filterEndpoints('simulator')">Simulator</button>
+        </div>
+
+        <!-- Authentication Endpoints -->
+        <div class="endpoint-section" data-category="auth">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-post">POST</span>
+                <span class="endpoint-path">/auth/login</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Authenticate user and receive JWT token.</div>
+
+                <div class="section-title">Request Body</div>
+                <div class="code-block">{
+  "username": "admin",
+  "password": "your_password"
+}</div>
+
+                <div class="section-title">Response (200 OK)</div>
+                <span class="status-code status-200">200 OK</span>
+                <div class="code-block">{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "user_001",
+    "username": "admin",
+    "role": "admin"
+  },
+  "expires_in": 604800
+}</div>
+            </div>
+        </div>
+
+        <div class="endpoint-section" data-category="auth">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-post">POST</span>
+                <span class="endpoint-path">/auth/signup</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Create a new user account (Admin only).</div>
+
+                <div class="section-title">Request Body</div>
+                <div class="code-block">{
+  "username": "newuser",
+  "password": "secure_password",
+  "role": "operator"
+}</div>
+
+                <div class="section-title">Response (201 Created)</div>
+                <span class="status-code status-201">201 Created</span>
+                <div class="code-block">{
+  "id": "user_002",
+  "username": "newuser",
+  "role": "operator",
+  "created_at": "2026-08-23T15:57:42Z"
+}</div>
+            </div>
+        </div>
+
+        <!-- Incident Endpoints -->
+        <div class="endpoint-section" data-category="incidents">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/incidents</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Retrieve list of incidents with optional filtering.</div>
+
+                <div class="section-title">Query Parameters</div>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="param-name">status</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>No</td>
+                            <td>Filter by status: active, resolved, acknowledged</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">severity</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>No</td>
+                            <td>Filter by severity: critical, high, medium, low</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">limit</span></td>
+                            <td><span class="param-type">integer</span></td>
+                            <td>No</td>
+                            <td>Max results to return (default: 50)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="section-title">Response (200 OK)</div>
+                <span class="status-code status-200">200 OK</span>
+                <div class="code-block">{
+  "incidents": [
+    {
+      "id": "INC-0042-SERVICE_A",
+      "title": "High CPU Usage on Service A",
+      "severity": "high",
+      "status": "active",
+      "created_at": "2026-08-23T14:30:00Z",
+      "classification": "Performance Degradation"
+    }
+  ],
+  "total": 42
+}</div>
+            </div>
+        </div>
+
+        <div class="endpoint-section" data-category="incidents">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-post">POST</span>
+                <span class="endpoint-path">/incidents/{id}/acknowledge</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Acknowledge an incident and assign to user.</div>
+
+                <div class="section-title">Request Body</div>
+                <div class="code-block">{
+  "user_id": "user_001",
+  "notes": "Investigating the issue now"
+}</div>
+
+                <div class="section-title">Response (200 OK)</div>
+                <span class="status-code status-200">200 OK</span>
+                <div class="code-block">{
+  "id": "INC-0042-SERVICE_A",
+  "status": "acknowledged",
+  "acknowledged_by": "user_001",
+  "acknowledged_at": "2026-08-23T15:57:42Z"
+}</div>
+            </div>
+        </div>
+
+        <!-- Metrics Endpoints -->
+        <div class="endpoint-section" data-category="metrics">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/metrics/anomalies</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Get anomaly detection metrics and statistics.</div>
+
+                <div class="section-title">Query Parameters</div>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="param-name">time_range</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>No</td>
+                            <td>Time range: 1h, 24h, 7d, 30d (default: 24h)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="section-title">Response (200 OK)</div>
+                <span class="status-code status-200">200 OK</span>
+                <div class="code-block">{
+  "total_anomalies": 127,
+  "critical": 8,
+  "high": 23,
+  "medium": 42,
+  "low": 54,
+  "detection_rate": 0.92,
+  "false_positive_rate": 0.08,
+  "avg_detection_time": 120
+}</div>
+            </div>
+        </div>
+
+        <div class="endpoint-section" data-category="metrics">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/metrics/system</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Get system health and performance metrics.</div>
+
+                <div class="section-title">Response (200 OK)</div>
+                <span class="status-code status-200">200 OK</span>
+                <div class="code-block">{
+  "uptime": 98.7,
+  "cpu_usage": 42.3,
+  "memory_usage": 67.8,
+  "disk_usage": 45.2,
+  "api_latency_ms": 125,
+  "requests_per_second": 342,
+  "error_rate": 0.02
+}</div>
+            </div>
+        </div>
+
+        <!-- Simulator Endpoints -->
+        <div class="endpoint-section" data-category="simulator">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-post">POST</span>
+                <span class="endpoint-path">/simulator/start</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Start chaos engineering simulation with injected faults.</div>
+
+                <div class="section-title">Request Body</div>
+                <div class="code-block">{
+  "duration_seconds": 300,
+  "services": ["SERVICE_A", "SERVICE_B", "SERVICE_C"],
+  "fault_types": ["cpu_spike", "memory_leak", "network_latency"],
+  "correlation": true
+}</div>
+
+                <div class="section-title">Response (201 Created)</div>
+                <span class="status-code status-201">201 Created</span>
+                <div class="code-block">{
+  "simulation_id": "SIM-001",
+  "status": "running",
+  "start_time": "2026-08-23T15:57:42Z",
+  "estimated_end_time": "2026-08-23T16:02:42Z"
+}</div>
+            </div>
+        </div>
+
+        <div class="endpoint-section" data-category="simulator">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/simulator/{id}/results</span>
+                <span class="endpoint-expand">▼</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="endpoint-description">Get results from a completed simulation.</div>
+
+                <div class="section-title">Response (200 OK)</div>
+                <span class="status-code status-200">200 OK</span>
+                <div class="code-block">{
+  "simulation_id": "SIM-001",
+  "status": "completed",
+  "faults_injected": 53,
+  "anomalies_detected": 47,
+  "incidents_generated": 8,
+  "false_positives": 2,
+  "detection_accuracy": 0.94,
+  "avg_detection_time_ms": 1250
+}</div>
+            </div>
+        </div>
+
+        <!-- Error Handling -->
+        <div class="endpoint-section">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)" style="cursor: default; background: #334155;">
+                <span class="endpoint-expand">▼</span>
+                <span style="flex: 1; font-weight: 600;">Common Error Responses</span>
+            </div>
+            <div class="endpoint-body">
+                <div class="section-title">400 Bad Request</div>
+                <span class="status-code status-400">400 Bad Request</span>
+                <div class="code-block">{
+  "error": "Invalid request parameters",
+  "details": "The 'severity' parameter must be one of: critical, high, medium, low"
+}</div>
+
+                <div class="section-title">401 Unauthorized</div>
+                <span class="status-code status-401">401 Unauthorized</span>
+                <div class="code-block">{
+  "error": "Unauthorized",
+  "message": "Invalid or expired JWT token"
+}</div>
+
+                <div class="section-title">403 Forbidden</div>
+                <span class="status-code status-403">403 Forbidden</span>
+                <div class="code-block">{
+  "error": "Forbidden",
+  "message": "User role 'viewer' does not have permission to create incidents"
+}</div>
+
+                <div class="section-title">500 Internal Server Error</div>
+                <span class="status-code status-500">500 Internal Server Error</span>
+                <div class="code-block">{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred while processing your request"
+}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleEndpoint(header) {
+            header.classList.toggle('expanded');
+            header.nextElementSibling.classList.toggle('expanded');
+        }
+
+        function filterEndpoints(category) {
+            // Update button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter endpoints
+            const endpoints = document.querySelectorAll('.endpoint-section');
+            endpoints.forEach(endpoint => {
+                if (category === 'all' || endpoint.dataset.category === category) {
+                    endpoint.style.display = 'block';
+                } else {
+                    endpoint.style.display = 'none';
+                }
+            });
+        }
+
+        // Auto-expand error responses on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorSection = document.querySelector('[style*="background: #334155"]')?.parentElement;
+            if (errorSection) {
+                errorSection.querySelector('.endpoint-header').classList.add('expanded');
+                errorSection.querySelector('.endpoint-body').classList.add('expanded');
+            }
+        });
+    </script>
+</body>
+</html>

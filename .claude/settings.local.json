@@ -15,7 +15,14 @@
       "Bash(timeout 10 python run_dashboard.py)",
       "Bash(python)",
       "Bash(python -c ' *)",
-      "Bash(grep -v \"^\\\\-\\\\|^$\")"
+      "Bash(grep -v \"^\\\\-\\\\|^$\")",
+      "Bash(python dashboard_lite.py)",
+      "Bash(timeout 5 python dashboard_lite.py)",
+      "Bash(pkill -f \"python dashboard_lite.py\")",
+      "Bash(python dashboard_lite.py > /tmp/flask.log 2>&1 & *)",
+      "Bash(python -c \"from dashboard_lite import app; print\\('Flask app imported successfully'\\); print\\('Routes:', [rule.rule for rule in app.url_map.iter_rules\\(\\)]\\)\")",
+      "Bash(curl -s http://localhost:5000/settings)",
+      "Bash(git add *)"
     ]
   }
 }

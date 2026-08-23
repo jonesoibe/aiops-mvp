@@ -141,6 +141,31 @@ def demo():
     """Render demo page."""
     return render_template('demo_dashboard.html')
 
+@app.route('/settings')
+def settings():
+    """Render system settings page."""
+    return render_template('settings.html')
+
+@app.route('/audit-trail')
+def audit_trail():
+    """Render audit trail page."""
+    return render_template('audit_trail.html')
+
+@app.route('/api-docs')
+def api_docs():
+    """Render API documentation page."""
+    return render_template('api_docs.html')
+
+@app.route('/outputs')
+def outputs():
+    """Render outputs and results page."""
+    return render_template('outputs.html')
+
+@app.route('/users')
+def users():
+    """Render user management page."""
+    return render_template('users_page.html')
+
 # ==================== API ENDPOINTS ====================
 
 @app.route('/api/chaos-simulation/run', methods=['POST'])
