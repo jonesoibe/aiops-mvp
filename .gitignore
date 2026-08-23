@@ -1,9 +1,3 @@
-# Virtual Environment
-.venv/
-venv/
-ENV/
-env/
-
 # Python
 __pycache__/
 *.py[cod]
@@ -26,40 +20,47 @@ wheels/
 .installed.cfg
 *.egg
 
+# Virtual Environment
+venv/
+.venv
+env/
+ENV/
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Data (keep directory structure)
-data/raw/aiops/*.csv
-data/raw/aiops/*.zip
-
-# Models (but track .joblib in docs)
-models/isolation_forest.joblib
-models/scaler.joblib
-
-# Logs
-*.log
-logs/
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
 
 # Environment
 .env
 .env.local
+.env.*.local
 
-# MLflow
+# Data
+data/raw/*
+data/processed/*.png
 mlruns/
+logs/
+*.db
+*.sqlite
 
-# Test coverage
+# Flask
+instance/
+.webassets-cache
+.pytest_cache/
 .coverage
-htmlcov/
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# OS
+Thumbs.db
+
+# Project specific
+*.pid
+nohup.out

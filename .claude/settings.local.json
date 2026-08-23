@@ -8,7 +8,14 @@
       "PowerShell(if \\(-not \\(Test-Path $PROFILE\\)\\) { New-Item -ItemType File -Path $PROFILE -Force } else { \"Profile already exists\" })",
       "PowerShell(. $PROFILE; python311 --version)",
       "PowerShell(python311 -m pip list)",
-      "PowerShell(& \"C:\\\\Users\\\\FAVOUR\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe\" -m pip list)"
+      "PowerShell(& \"C:\\\\Users\\\\FAVOUR\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe\" -m pip list)",
+      "Bash(pkill -f \"python run_dashboard.py\")",
+      "PowerShell(Get-Process python -ErrorAction SilentlyContinue)",
+      "Bash(pip install *)",
+      "Bash(timeout 10 python run_dashboard.py)",
+      "Bash(python)",
+      "Bash(python -c ' *)",
+      "Bash(grep -v \"^\\\\-\\\\|^$\")"
     ]
   }
 }

@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: AIOps Dashboard API
+  description: Autonomous AIOps Platform with real-time incident detection and management
+  version: 1.0.0
+  contact:
+    name: AIOps Team
+    email: support@aiops.local
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: https://aiops.example.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/login:
+    post:
+      summary: User login
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: admin123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+
+  /api/incidents:
+    get:
+      summary: Get all incidents
+      tags:
+        - Incidents
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, acknowledged, resolved, failed]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, high, medium, low]
+      responses:
+        '200':
+          description: List of incidents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incidents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Incident'
+                  total:
+                    type: integer
+
+  /api/incidents/{incident_id}/status:
+    put:
+      summary: Update incident status
+      tags:
+        - Incidents
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [new, acknowledged, resolved, failed]
+      responses:
+        '200':
+          description: Status updated
+
+  /api/chaos-simulation/run:
+    post:
+      summary: Run chaos simulation
+      tags:
+        - Simulation
+      responses:
+        '200':
+          description: Simulation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  summary:
+                    type: object
+
+  /api/simulation/status:
+    get:
+      summary: Get simulation status
+      tags:
+        - Simulation
+      responses:
+        '200':
+          description: Simulation status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_running:
+                    type: boolean
+                  incidents_count:
+                    type: integer
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, operator, viewer]
+
+    Incident:
+      type: object
+      properties:
+        id:
+          type: string
+        time:
+          type: integer
+        service:
+          type: string
+        incident_type:
+          type: string
+        confidence:
+          type: number
+        status:
+          type: string
+        severity:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+tags:
+  - name: Authentication
+    description: User authentication
+  - name: Incidents
+    description: Incident management
+  - name: Simulation
+    description: Chaos simulation
