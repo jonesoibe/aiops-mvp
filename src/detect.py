@@ -1,7 +1,7 @@
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import precision_recall_curve
 import pandas as pd, numpy as np
-import joblib, yaml, mlflow
+import joblib, yaml
 import matplotlib.pyplot as plt
 
 def load_config():
@@ -12,23 +12,22 @@ def train_isolation_forest(X_train):
     cfg = load_config()
     params = cfg['anomaly_detection']
 
-    # End any active runs first
-    mlflow.end_run()
+    # MLflow tracking disabled for Render deployment
+    # mlflow.end_run()
+    # mlflow.set_experiment(cfg['mlflow']['experiment_name'])
+    # with mlflow.start_run(run_name='IsolationForest_training'):
+    #     mlflow.log_params(params)
 
-    mlflow.set_experiment(cfg['mlflow']['experiment_name'])
-    with mlflow.start_run(run_name='IsolationForest_training'):
-        mlflow.log_params(params)
-
-        model = IsolationForest(
-            n_estimators   = params['n_estimators'],
-            contamination  = params['contamination'],
-            random_state   = 42,
-            n_jobs         = -1   # Use all CPU cores
-        )
-        model.fit(X_train)
-        joblib.dump(model, 'models/isolation_forest.joblib')
-        mlflow.sklearn.log_model(model, 'isolation_forest')
-        print('Isolation Forest trained and saved.')
+    model = IsolationForest(
+        n_estimators   = params['n_estimators'],
+        contamination  = params['contamination'],
+        random_state   = 42,
+        n_jobs         = -1   # Use all CPU cores
+    )
+    model.fit(X_train)
+    joblib.dump(model, 'models/isolation_forest.joblib')
+    # mlflow.sklearn.log_model(model, 'isolation_forest')
+    print('Isolation Forest trained and saved.')
     return model
 
 def score_observations(model, X, threshold=0.55):
@@ -86,8 +85,8 @@ def calibrate_threshold(model, X_val, y_val_true):
     print(f'Best threshold on validation set: {best_thresh:.4f}')
     print(f'Best F1 on validation set: {f1_scores[best_idx]:.4f}')
 
-    # Log to MLflow
-    mlflow.log_metric('best_threshold', best_thresh)
-    mlflow.log_metric('best_f1', f1_scores[best_idx])
+    # Log to MLflow (disabled for Render deployment)
+    # mlflow.log_metric('best_threshold', best_thresh)
+    # mlflow.log_metric('best_f1', f1_scores[best_idx])
 
     return float(best_thresh)
