@@ -308,18 +308,24 @@
     </div>
 
     <script>
-        // Sample audit trail data
+        // Sample audit trail data (including IAM events)
         const auditData = [
+            { timestamp: '2026-08-23 16:02:15', user: 'admin', action: 'login_success', resource: 'Authentication', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 16:01:42', user: 'operator', action: 'password_changed', resource: 'IAM', ip: '203.0.113.46', status: '✓' },
+            { timestamp: '2026-08-23 16:00:09', user: 'viewer', action: 'login_failed', resource: 'Authentication', ip: '203.0.113.50', status: '✗' },
+            { timestamp: '2026-08-23 15:59:21', user: 'admin', action: 'role_updated', resource: 'operator (viewer→operator)', ip: '203.0.113.45', status: '✓' },
             { timestamp: '2026-08-23 15:57:42', user: 'admin', action: 'login_success', resource: 'Authentication', ip: '203.0.113.45', status: '✓' },
             { timestamp: '2026-08-23 15:56:18', user: 'operator', action: 'chaos_simulation_started', resource: 'Demo Simulator', ip: '203.0.113.46', status: '✓' },
             { timestamp: '2026-08-23 15:55:09', user: 'viewer', action: 'access_denied', resource: 'User Management', ip: '203.0.113.47', status: '✗' },
-            { timestamp: '2026-08-23 15:54:21', user: 'admin', action: 'user_created', resource: 'John Doe', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 15:54:21', user: 'admin', action: 'user_created', resource: 'John Doe (role: operator)', ip: '203.0.113.45', status: '✓' },
             { timestamp: '2026-08-23 15:52:03', user: 'operator', action: 'incident_acknowledged', resource: 'INC-0042-SERVICE_A', ip: '203.0.113.46', status: '✓' },
             { timestamp: '2026-08-23 15:50:15', user: 'admin', action: 'api_call', resource: '/api/incidents', ip: '203.0.113.45', status: '✓' },
             { timestamp: '2026-08-23 15:48:42', user: 'viewer', action: 'login_success', resource: 'Authentication', ip: '203.0.113.48', status: '✓' },
             { timestamp: '2026-08-23 15:47:21', user: 'operator', action: 'incident_resolved', resource: 'INC-0041-SERVICE_B', ip: '203.0.113.46', status: '✓' },
             { timestamp: '2026-08-23 15:45:33', user: 'admin', action: 'user_deleted', resource: 'Old User', ip: '203.0.113.45', status: '✓' },
             { timestamp: '2026-08-23 15:43:12', user: 'operator', action: 'api_call', resource: '/api/problems', ip: '203.0.113.46', status: '✓' },
+            { timestamp: '2026-08-23 15:41:05', user: 'admin', action: 'login_success', resource: 'Authentication', ip: '203.0.113.45', status: '✓' },
+            { timestamp: '2026-08-23 15:39:33', user: 'viewer', action: 'logout', resource: 'Authentication', ip: '203.0.113.48', status: '✓' },
         ];
 
         // Load audit trail

@@ -681,7 +681,10 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!user.token) {
+            const token = localStorage.getItem('token');
+
+            // Check for both user and token
+            if (!user || !user.username || !token) {
                 window.location.href = '/login';
                 return;
             }

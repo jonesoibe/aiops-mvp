@@ -22,7 +22,13 @@
       "Bash(python dashboard_lite.py > /tmp/flask.log 2>&1 & *)",
       "Bash(python -c \"from dashboard_lite import app; print\\('Flask app imported successfully'\\); print\\('Routes:', [rule.rule for rule in app.url_map.iter_rules\\(\\)]\\)\")",
       "Bash(curl -s http://localhost:5000/settings)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m 'Add four admin dashboard pages and output regeneration scripts *)",
+      "Bash(git pull *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'Fix: Bind Flask app to 0.0.0.0 for cloud deployment *)",
+      "Bash(git commit -m 'Add deployment guide for Render *)",
+      "Bash(git commit -m 'Add methodology page, improve security, fix auth issues *)"
     ]
   }
 }

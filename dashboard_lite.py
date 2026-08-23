@@ -166,6 +166,11 @@ def users():
     """Render user management page."""
     return render_template('users_page.html')
 
+@app.route('/methodology')
+def methodology():
+    """Render methodology and results page."""
+    return render_template('methodology.html')
+
 # ==================== API ENDPOINTS ====================
 
 @app.route('/api/chaos-simulation/run', methods=['POST'])
