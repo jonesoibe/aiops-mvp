@@ -308,11 +308,16 @@ def server_error(error):
 # ==================== RUN ====================
 
 if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5000))
+    debug_mode = os.getenv('FLASK_ENV', 'production') != 'production'
+
     print("\n" + "="*70)
     print("  🚀 AIOps Dashboard Lite")
-    print("  Starting on http://localhost:5000")
+    print(f"  Starting on http://0.0.0.0:{port}")
     print("="*70)
-    print("\n📍 Login at: http://localhost:5000/login")
-    print("   Demo: admin / admin123\n")
+    print(f"\n📍 Login at: http://localhost:{port}/login")
+    print("   Demo credentials: admin / admin123")
+    print(f"   Environment: {'Development' if debug_mode else 'Production'}\n")
 
-    app.run(debug=True, port=5000, use_reloader=False)
+    # Bind to 0.0.0.0 for cloud deployment (Render, Heroku, etc.)
+    app.run(host='0.0.0.0', port=port, debug=debug_mode, use_reloader=False)
