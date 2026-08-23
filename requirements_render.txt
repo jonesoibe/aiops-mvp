@@ -1,0 +1,34 @@
+# AIOps MVP - Render.com Deployment Requirements
+# Optimized to avoid compilation issues
+
+# Core Web Framework
+flask==3.0.0
+flask-cors==4.0.0
+python-dotenv==1.0.0
+werkzeug==3.0.0
+
+# Data Processing (pre-built wheels only)
+pandas==2.1.4
+numpy==1.26.2
+
+# ML Libraries (pre-built wheels)
+scikit-learn==1.3.2 --only-binary :all:
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Configuration & Utilities
+pyyaml==6.0.1
+joblib==1.3.2
+requests==2.31.0
+
+# Authentication & Security
+bcrypt==4.1.1
+PyJWT==2.13.0
+
+# Database (optional)
+pymongo==4.6.0
+
+# Monitoring
+gunicorn==21.2.0
