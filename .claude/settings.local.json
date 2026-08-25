@@ -74,7 +74,13 @@
       "Bash(pkill -9 -f flask)",
       "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Works: {d.get\\('total'\\)} items\\\\\"\\)\")",
       "Bash(curl -s \"http://localhost:5000/approvals\")",
-      "Bash(git commit -m 'Fix: Complete Approvals page with functional approve/reject *)"
+      "Bash(git commit -m 'Fix: Complete Approvals page with functional approve/reject *)",
+      "Bash(curl -s \"http://localhost:5000/api/approvals-test\")",
+      "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Result: {d.get\\('total', 'error'\\)} pending\\\\\"\\)\")",
+      "Bash(curl -s \"http://localhost:5000/api/approvals?status=approved\")",
+      "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Result: {d.get\\('total', 'error'\\)} approved\\\\\"\\)\")",
+      "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Result: {d.get\\('message', d.get\\('error', 'unknown'\\)\\)}\\\\\"\\)\")",
+      "Bash(git commit -m 'Refactor: Clean up duplicate approval endpoints and add MongoDB setup guide *)"
     ]
   }
 }

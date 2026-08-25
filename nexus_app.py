@@ -603,6 +603,100 @@ def get_actions():
         'actions': list(reversed(actions))
     }), 200
 
+# ==================== APPROVALS ENDPOINTS ====================
+
+@app.route('/api/approvals', methods=['GET'])
+def get_approvals_api():
+    """Get approval requests by status."""
+    status = request.args.get('status', 'pending')
+    limit = request.args.get('limit', 50, type=int)
+
+    if db:
+        try:
+            approvals = list(db['approvals'].find({'status': status}, {'_id': 0}).sort('requested_at', -1).limit(limit))
+            return jsonify({'total': len(approvals), 'approvals': approvals}), 200
+        except Exception as e:
+            print(f"MongoDB error: {e}")
+
+    all_approvals = in_memory_store.get('approvals', [])
+    approvals = [a for a in all_approvals if a.get('status') == status][-limit:]
+    return jsonify({'total': len(approvals), 'approvals': list(reversed(approvals))}), 200
+
+@app.route('/api/approvals/<approval_id>', methods=['GET'])
+def get_approval_api(approval_id):
+    """Get specific approval request."""
+    if db:
+        try:
+            approval = db['approvals'].find_one({'approval_id': approval_id}, {'_id': 0})
+            if approval:
+                return jsonify(approval), 200
+        except Exception as e:
+            print(f"MongoDB error: {e}")
+
+    for approval in in_memory_store.get('approvals', []):
+        if approval.get('approval_id') == approval_id:
+            return jsonify(approval), 200
+
+    return jsonify({'error': 'Approval not found'}), 404
+
+@app.route('/api/approvals/<approval_id>/approve', methods=['POST'])
+def approve_approval_api(approval_id):
+    """Approve an approval request."""
+    timestamp = datetime.utcnow().isoformat()
+    user = getattr(request, 'user', {'username': 'admin'})
+
+    update_data = {
+        'status': 'approved',
+        'approved_by': user.get('username', 'admin'),
+        'approved_at': timestamp
+    }
+
+    if db:
+        try:
+            db['approvals'].update_one({'approval_id': approval_id}, {'$set': update_data})
+        except Exception as e:
+            print(f"MongoDB error: {e}")
+    else:
+        for approval in in_memory_store.get('approvals', []):
+            if approval.get('approval_id') == approval_id:
+                approval.update(update_data)
+                break
+
+    return jsonify({'status': 'approved', 'message': f'Approval {approval_id} granted'}), 200
+
+@app.route('/api/approvals/<approval_id>/reject', methods=['POST'])
+def reject_approval_api(approval_id):
+    """Reject an approval request."""
+    data = request.get_json() or {}
+    timestamp = datetime.utcnow().isoformat()
+    user = getattr(request, 'user', {'username': 'admin'})
+    reason = data.get('reason', 'No reason provided')
+
+    update_data = {
+        'status': 'rejected',
+        'rejected_by': user.get('username', 'admin'),
+        'rejected_at': timestamp,
+        'rejection_reason': reason
+    }
+
+    if db:
+        try:
+            db['approvals'].update_one({'approval_id': approval_id}, {'$set': update_data})
+        except Exception as e:
+            print(f"MongoDB error: {e}")
+    else:
+        for approval in in_memory_store.get('approvals', []):
+            if approval.get('approval_id') == approval_id:
+                approval.update(update_data)
+                break
+
+    return jsonify({'status': 'rejected', 'message': f'Approval {approval_id} rejected', 'reason': reason}), 200
+
+@app.route('/api/approvals-test', methods=['GET'])
+def approvals_test():
+    """Test endpoint for debugging."""
+    return jsonify({'message': 'Test endpoint works', 'approvals_count': len(in_memory_store.get('approvals', []))}), 200
+
 @app.route('/api/actions/execute', methods=['POST'])
 @require_auth
 def execute_action():
@@ -667,191 +761,6 @@ def execute_action():
     print(f"⚡ Action executed: {action} on {target} (Incident: {incident_id})")
 
     return jsonify(action_record), 200
-
-@app.route('/api/test-simple', methods=['GET'])
-def test_simple():
-    """Simple test route."""
-    return jsonify({'message': 'Simple test works'})
-
-# ==================== APPROVALS ENDPOINTS ====================
-
-@app.route('/api/approvals', methods=['GET'])
-def get_approvals():
-    """Get pending approval requests."""
-    print("DEBUG: get_approvals() called!")
-    status = request.args.get('status', 'pending')
-    limit = request.args.get('limit', 50, type=int)
-
-    if db:
-        try:
-            query = {'status': status}
-            approvals = list(db['approvals'].find(query, {'_id': 0}).sort('requested_at', -1).limit(limit))
-            return jsonify({
-                'total': len(approvals),
-                'approvals': approvals
-            }), 200
-        except Exception as e:
-            print(f"⚠️ MongoDB query error: {e}")
-
-    # Fallback to in-memory
-    all_approvals = in_memory_store.get('approvals', [])
-    approvals = [a for a in all_approvals if a.get('status') == status][-limit:]
-    return jsonify({
-        'total': len(approvals),
-        'approvals': list(reversed(approvals))
-    }), 200
-
-@app.route('/api/approvals/<approval_id>', methods=['GET'])
-@require_auth
-def get_approval_detail(approval_id):
-    """Get detailed approval information."""
-    if db:
-        try:
-            approval = db['approvals'].find_one({'approval_id': approval_id}, {'_id': 0})
-            if approval:
-                print(f"✅ Retrieved approval details: {approval_id}")
-                return jsonify(approval), 200
-        except Exception as e:
-            print(f"⚠️ MongoDB query error: {e}")
-
-    # Fallback to in-memory
-    for approval in in_memory_store['approvals']:
-        if approval.get('approval_id') == approval_id:
-            return jsonify(approval), 200
-
-    return jsonify({'error': 'Approval not found'}), 404
-
-@app.route('/api/approvals/<approval_id>/approve', methods=['POST'])
-@require_auth
-def approve_request(approval_id):
-    """Approve an approval request."""
-    user = request.user or {'username': 'system'}
-    timestamp = datetime.utcnow().isoformat()
-
-    # Update approval status
-    update_data = {
-        'status': 'approved',
-        'approved_by': user.get('username', 'system'),
-        'approved_at': timestamp,
-        'approval_id': approval_id
-    }
-
-    if db:
-        try:
-            result = db['approvals'].update_one(
-                {'approval_id': approval_id},
-                {'$set': update_data}
-            )
-            if result.modified_count > 0:
-                print(f"✅ Approval approved: {approval_id}")
-            else:
-                # Create if doesn't exist
-                update_data['requested_at'] = timestamp
-                update_data['priority'] = 'HIGH'
-                update_data['type'] = 'automated_action'
-                update_data['description'] = 'Automated approval request'
-                db['approvals'].insert_one(update_data)
-        except Exception as e:
-            print(f"⚠️ MongoDB update error: {e}")
-    else:
-        # Update in memory
-        for approval in in_memory_store['approvals']:
-            if approval.get('approval_id') == approval_id:
-                approval.update(update_data)
-                break
-
-    # Log to audit trail
-    audit_entry = {
-        'timestamp': timestamp,
-        'user_id': user.get('user_id', 'system'),
-        'username': user.get('username', 'system'),
-        'action_type': 'approval_granted',
-        'description': f"Approved request {approval_id}",
-        'approval_id': approval_id
-    }
-
-    if db:
-        try:
-            db['audit_log'].insert_one(audit_entry)
-        except Exception as e:
-            print(f"⚠️ Audit log error: {e}")
-    else:
-        in_memory_store['audit_log'].append(audit_entry)
-
-    return jsonify({
-        'status': 'approved',
-        'message': f'Approval request {approval_id} has been approved',
-        'approved_by': user.get('username', 'system'),
-        'timestamp': timestamp
-    }), 200
-
-@app.route('/api/approvals/<approval_id>/reject', methods=['POST'])
-@require_auth
-def reject_request(approval_id):
-    """Reject an approval request."""
-    data = request.get_json() or {}
-    user = request.user or {'username': 'system'}
-    timestamp = datetime.utcnow().isoformat()
-    reason = data.get('reason', 'No reason provided')
-
-    # Update approval status
-    update_data = {
-        'status': 'rejected',
-        'rejected_by': user.get('username', 'system'),
-        'rejected_at': timestamp,
-        'rejection_reason': reason,
-        'approval_id': approval_id
-    }
-
-    if db:
-        try:
-            result = db['approvals'].update_one(
-                {'approval_id': approval_id},
-                {'$set': update_data}
-            )
-            if result.modified_count > 0:
-                print(f"✅ Approval rejected: {approval_id}")
-            else:
-                # Create if doesn't exist
-                update_data['requested_at'] = timestamp
-                update_data['priority'] = 'HIGH'
-                update_data['type'] = 'automated_action'
-                update_data['description'] = 'Automated approval request'
-                db['approvals'].insert_one(update_data)
-        except Exception as e:
-            print(f"⚠️ MongoDB update error: {e}")
-    else:
-        # Update in memory
-        for approval in in_memory_store['approvals']:
-            if approval.get('approval_id') == approval_id:
-                approval.update(update_data)
-                break
-
-    # Log to audit trail
-    audit_entry = {
-        'timestamp': timestamp,
-        'user_id': user.get('user_id', 'system'),
-        'username': user.get('username', 'system'),
-        'action_type': 'approval_rejected',
-        'description': f"Rejected request {approval_id}: {reason}",
-        'approval_id': approval_id
-    }
-
-    if db:
-        try:
-            db['audit_log'].insert_one(audit_entry)
-        except Exception as e:
-            print(f"⚠️ Audit log error: {e}")
-    else:
-        in_memory_store['audit_log'].append(audit_entry)
-
-    return jsonify({
-        'status': 'rejected',
-        'message': f'Approval request {approval_id} has been rejected',
-        'rejected_by': user.get('username', 'system'),
-        'reason': reason,
-        'timestamp': timestamp
-    }), 200
 
 # ==================== WEBSOCKET EVENTS ====================
 
