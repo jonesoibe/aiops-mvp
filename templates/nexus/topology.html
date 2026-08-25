@@ -1,0 +1,562 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Smart Topology - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🔗 Smart Service Topology - Real-Time Dependency Graph{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .topology-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .topology-canvas {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .canvas-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+        color: var(--text-secondary);
+    }
+
+    .canvas-icon {
+        font-size: 4em;
+        margin-bottom: var(--space-4);
+        opacity: 0.5;
+    }
+
+    .canvas-text {
+        font-size: var(--fs-lg);
+        margin-bottom: var(--space-2);
+    }
+
+    .canvas-subtext {
+        font-size: var(--fs-sm);
+        color: var(--text-tertiary);
+    }
+
+    .topology-sidebar {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+        margin-bottom: var(--space-4);
+    }
+
+    .sidebar-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .topology-controls {
+        display: flex;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+    }
+
+    .control-btn {
+        flex: 1;
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-secondary);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: var(--fs-xs);
+        transition: all var(--transition-base);
+    }
+
+    .control-btn:hover {
+        border-color: var(--color-success);
+        color: var(--color-success);
+        background: var(--bg-hover);
+    }
+
+    .control-btn.active {
+        background: var(--color-success);
+        color: var(--text-inverse);
+        border-color: var(--color-success);
+    }
+
+    .node-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .node-item {
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .node-item:hover {
+        border-color: var(--color-success);
+        background: var(--bg-hover);
+        transform: translateX(4px);
+    }
+
+    .node-item.selected {
+        border-color: var(--color-info);
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+    }
+
+    .node-icon {
+        font-size: 1.5em;
+        margin-bottom: var(--space-2);
+    }
+
+    .node-name {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .node-status {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: var(--radius-full);
+        background: var(--color-success);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.warning {
+        background: var(--color-warning);
+    }
+
+    .status-dot.critical {
+        background: var(--color-critical);
+    }
+
+    .node-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+    }
+
+    .metric-small {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .metric-value {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+    }
+
+    .metric-value.warning {
+        color: var(--color-warning);
+    }
+
+    .metric-value.critical {
+        color: var(--color-critical);
+    }
+
+    .detail-panel {
+        margin-top: var(--space-6);
+        padding-top: var(--space-6);
+        border-top: 1px solid var(--border-primary);
+    }
+
+    .detail-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-3);
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .detail-value {
+        font-size: var(--fs-xs);
+        color: var(--text-primary);
+        font-weight: var(--fw-medium);
+    }
+
+    .connection-list {
+        margin-top: var(--space-4);
+    }
+
+    .connection-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        margin-bottom: var(--space-2);
+    }
+
+    .connection-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .connection-arrow {
+        color: var(--text-tertiary);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-2);
+        margin-top: var(--space-4);
+    }
+
+    .btn-small {
+        flex: 1;
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-secondary);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-medium);
+        transition: all var(--transition-base);
+    }
+
+    .btn-small:hover {
+        border-color: var(--color-success);
+        color: var(--color-success);
+    }
+
+    @media (max-width: 1024px) {
+        .topology-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .topology-sidebar {
+            order: -1;
+            max-height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="topology-container">
+    <!-- MAIN CANVAS -->
+    <div class="topology-canvas">
+        <div class="canvas-placeholder">
+            <div class="canvas-icon">🌐</div>
+            <div class="canvas-text">Service Topology Graph</div>
+            <div class="canvas-subtext">Interactive service dependency visualization</div>
+            <div style="margin-top: var(--space-6); font-size: var(--fs-sm); color: var(--text-tertiary);">
+                Click a service on the right to view details and interactions
+            </div>
+        </div>
+    </div>
+
+    <!-- TOPOLOGY SIDEBAR -->
+    <div class="topology-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">Services & Dependencies</div>
+        </div>
+
+        <div class="topology-controls">
+            <button class="control-btn active">Graph</button>
+            <button class="control-btn">List</button>
+            <button class="control-btn">Map</button>
+        </div>
+
+        <!-- SERVICES LIST -->
+        <div class="node-list">
+            <!-- SERVICE A -->
+            <div class="node-item selected" onclick="selectService(this, 'SERVICE_A')">
+                <div class="node-icon">🖥️</div>
+                <div class="node-name">SERVICE_A</div>
+                <div class="node-status">
+                    <div class="status-dot"></div>
+                    <span>Healthy</span>
+                </div>
+                <div class="node-metrics">
+                    <div>
+                        <div class="metric-small">CPU</div>
+                        <div class="metric-value">45%</div>
+                    </div>
+                    <div>
+                        <div class="metric-small">Memory</div>
+                        <div class="metric-value">62%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SERVICE B -->
+            <div class="node-item" onclick="selectService(this, 'SERVICE_B')">
+                <div class="node-icon">🖥️</div>
+                <div class="node-name">SERVICE_B</div>
+                <div class="node-status">
+                    <div class="status-dot critical"></div>
+                    <span>Degraded</span>
+                </div>
+                <div class="node-metrics">
+                    <div>
+                        <div class="metric-small">CPU</div>
+                        <div class="metric-value critical">92%</div>
+                    </div>
+                    <div>
+                        <div class="metric-small">Memory</div>
+                        <div class="metric-value critical">87%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API GATEWAY -->
+            <div class="node-item" onclick="selectService(this, 'API_GATEWAY')">
+                <div class="node-icon">🌐</div>
+                <div class="node-name">API Gateway</div>
+                <div class="node-status">
+                    <div class="status-dot"></div>
+                    <span>Healthy</span>
+                </div>
+                <div class="node-metrics">
+                    <div>
+                        <div class="metric-small">Latency</div>
+                        <div class="metric-value">125ms</div>
+                    </div>
+                    <div>
+                        <div class="metric-small">Errors</div>
+                        <div class="metric-value">0.2%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SQL SERVER -->
+            <div class="node-item" onclick="selectService(this, 'SQL_SERVER')">
+                <div class="node-icon">🗄️</div>
+                <div class="node-name">SQL Server</div>
+                <div class="node-status">
+                    <div class="status-dot"></div>
+                    <span>Healthy</span>
+                </div>
+                <div class="node-metrics">
+                    <div>
+                        <div class="metric-small">CPU</div>
+                        <div class="metric-value">38%</div>
+                    </div>
+                    <div>
+                        <div class="metric-small">Conn Pool</div>
+                        <div class="metric-value">124/500</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REDIS CACHE -->
+            <div class="node-item" onclick="selectService(this, 'REDIS')">
+                <div class="node-icon">⚡</div>
+                <div class="node-name">Redis Cache</div>
+                <div class="node-status">
+                    <div class="status-dot"></div>
+                    <span>Healthy</span>
+                </div>
+                <div class="node-metrics">
+                    <div>
+                        <div class="metric-small">Hit Rate</div>
+                        <div class="metric-value">94%</div>
+                    </div>
+                    <div>
+                        <div class="metric-small">Memory</div>
+                        <div class="metric-value">2.1GB</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXTERNAL API -->
+            <div class="node-item" onclick="selectService(this, 'PAYMENT_API')">
+                <div class="node-icon">💳</div>
+                <div class="node-name">Payment API</div>
+                <div class="node-status">
+                    <div class="status-dot warning"></div>
+                    <span>Slow</span>
+                </div>
+                <div class="node-metrics">
+                    <div>
+                        <div class="metric-small">Latency</div>
+                        <div class="metric-value warning">2.3s</div>
+                    </div>
+                    <div>
+                        <div class="metric-small">Success</div>
+                        <div class="metric-value">99.2%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAIL PANEL -->
+        <div class="detail-panel" id="detailPanel">
+            <div class="detail-title">SERVICE_A Details</div>
+
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">Healthy ✓</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Last Deployment</span>
+                <span class="detail-value">2 hours ago</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Uptime</span>
+                <span class="detail-value">99.8%</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Instances</span>
+                <span class="detail-value">3 active</span>
+            </div>
+
+            <div class="detail-title" style="margin-top: var(--space-4);">Dependencies</div>
+
+            <div class="connection-list">
+                <div class="connection-item">
+                    <span>🖥️ SERVICE_A</span>
+                    <span class="connection-arrow">→</span>
+                    <span>🗄️ SQL Server</span>
+                </div>
+                <div class="connection-item">
+                    <span>🖥️ SERVICE_A</span>
+                    <span class="connection-arrow">→</span>
+                    <span>⚡ Redis Cache</span>
+                </div>
+                <div class="connection-item">
+                    <span>🌐 API Gateway</span>
+                    <span class="connection-arrow">→</span>
+                    <span>🖥️ SERVICE_A</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-small" onclick="viewMetrics()">📊 Metrics</button>
+                <button class="btn-small" onclick="viewLogs()">📝 Logs</button>
+                <button class="btn-small" onclick="viewTraces()">🔍 Traces</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function selectService(element, service) {
+        document.querySelectorAll('.node-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        element.classList.add('selected');
+
+        // Update detail panel
+        const detailPanel = document.getElementById('detailPanel');
+        detailPanel.innerHTML = `
+            <div class="detail-title">${service} Details</div>
+
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">Healthy ✓</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Last Deployment</span>
+                <span class="detail-value">2 hours ago</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Uptime</span>
+                <span class="detail-value">99.8%</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Instances</span>
+                <span class="detail-value">3 active</span>
+            </div>
+
+            <div class="detail-title" style="margin-top: var(--space-4);">Dependencies</div>
+
+            <div class="connection-list">
+                <div class="connection-item">
+                    <span>Service</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Database</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-small" onclick="viewMetrics()">📊 Metrics</button>
+                <button class="btn-small" onclick="viewLogs()">📝 Logs</button>
+                <button class="btn-small" onclick="viewTraces()">🔍 Traces</button>
+            </div>
+        `;
+    }
+
+    function viewMetrics() {
+        alert('Opening metrics for selected service...');
+    }
+
+    function viewLogs() {
+        alert('Opening logs explorer...');
+    }
+
+    function viewTraces() {
+        alert('Opening distributed traces...');
+    }
+
+    // Listen for topology changes
+    window.addEventListener('telemetry_update', function(event) {
+        const data = event.detail;
+        // Could update node statuses in real-time
+    });
+</script>
+{% endblock %}

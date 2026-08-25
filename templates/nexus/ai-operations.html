@@ -1,0 +1,711 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}AI Operations Center - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🤖 AI Operations Center - Davis AI Investigations{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .ai-workspace {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .investigation-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        border-radius: var(--radius-full);
+        background: var(--color-success-dim);
+        color: var(--color-success);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        text-transform: uppercase;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-badge::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: var(--color-success);
+        border-radius: var(--radius-full);
+        animation: glow 2s ease-in-out infinite;
+    }
+
+    .status-badge.investigating {
+        background: var(--color-info-dim);
+        color: var(--color-info);
+    }
+
+    .status-badge.investigating::before {
+        background: var(--color-info);
+    }
+
+    .status-badge.critical {
+        background: var(--color-critical-dim);
+        color: var(--color-critical);
+    }
+
+    .status-badge.critical::before {
+        background: var(--color-critical);
+    }
+
+    .timeline {
+        flex: 1;
+        margin-bottom: var(--space-6);
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+        padding-left: var(--space-4);
+        border-left: 2px solid var(--border-primary);
+        position: relative;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 2px;
+        width: 12px;
+        height: 12px;
+        background: var(--color-success);
+        border-radius: var(--radius-full);
+        border: 2px solid var(--bg-secondary);
+    }
+
+    .timeline-item.active {
+        border-left-color: var(--color-info);
+    }
+
+    .timeline-item.active::before {
+        background: var(--color-info);
+        animation: pulse 1s ease-in-out infinite;
+    }
+
+    .timeline-item.critical {
+        border-left-color: var(--color-critical);
+    }
+
+    .timeline-item.critical::before {
+        background: var(--color-critical);
+    }
+
+    .timeline-time {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        min-width: 50px;
+        font-family: var(--font-mono);
+    }
+
+    .timeline-content {
+        flex: 1;
+    }
+
+    .timeline-title {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .timeline-desc {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        line-height: var(--lh-normal);
+    }
+
+    .gauge-container {
+        margin-bottom: var(--space-6);
+    }
+
+    .gauge-label {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .gauge-circular {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        margin-bottom: var(--space-4);
+    }
+
+    .gauge-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .gauge-value-display {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .gauge-number {
+        font-size: var(--fs-3xl);
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+    }
+
+    .gauge-percent {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .evidence-section {
+        margin-bottom: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-primary);
+    }
+
+    .evidence-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+    }
+
+    .evidence-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .evidence-item:last-child {
+        border-bottom: none;
+    }
+
+    .evidence-name {
+        font-size: var(--fs-xs);
+        color: var(--text-primary);
+    }
+
+    .evidence-value {
+        font-size: var(--fs-xs);
+        color: var(--color-success);
+        font-family: var(--font-mono);
+        font-weight: var(--fw-medium);
+    }
+
+    .evidence-value.warning {
+        color: var(--color-warning);
+    }
+
+    .evidence-value.critical {
+        color: var(--color-critical);
+    }
+
+    .root-cause-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .root-cause-item {
+        padding: var(--space-3);
+        background: linear-gradient(135deg, var(--bg-primary), var(--bg-tertiary));
+        border-left: 3px solid var(--color-info);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .root-cause-item:hover {
+        border-left-color: var(--color-success);
+        background: var(--bg-hover);
+    }
+
+    .root-cause-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .root-cause-confidence {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .confidence-bar {
+        flex: 1;
+        height: 4px;
+        background: var(--bg-primary);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-info), var(--color-success));
+        border-radius: var(--radius-full);
+    }
+
+    .action-section {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--color-success-dim), var(--color-info-dim));
+        border: 1px solid var(--color-success);
+        border-radius: var(--radius-lg);
+        margin-top: var(--space-6);
+    }
+
+    .action-title {
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+        margin-bottom: var(--space-2);
+    }
+
+    .action-description {
+        font-size: var(--fs-sm);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        line-height: var(--lh-normal);
+    }
+
+    .action-risks {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        padding: var(--space-2);
+        background: rgba(0,0,0,0.2);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-3);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-2);
+    }
+
+    .btn-approve {
+        flex: 1;
+        padding: var(--space-3);
+        background: var(--color-success);
+        color: var(--text-inverse);
+        border: none;
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-approve:hover {
+        background: #5ce8a0;
+        transform: translateY(-2px);
+        box-shadow: var(--glow-success);
+    }
+
+    .btn-review {
+        flex: 1;
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-review:hover {
+        border-color: var(--color-success);
+        color: var(--color-success);
+    }
+
+    .similar-incidents {
+        margin-top: var(--space-4);
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+    }
+
+    .similar-title {
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+    }
+
+    .similar-item {
+        font-size: var(--fs-xs);
+        color: var(--text-primary);
+        padding: var(--space-2);
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-1);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .similar-item:hover {
+        background: var(--bg-hover);
+        color: var(--color-info);
+    }
+
+    .similar-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .ai-explanation {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+        border-left: 3px solid var(--color-info);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-6);
+    }
+
+    .ai-label {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        background: var(--color-info);
+        color: var(--text-inverse);
+        border-radius: var(--radius-sm);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        margin-bottom: var(--space-2);
+    }
+
+    .ai-text {
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        line-height: var(--lh-normal);
+    }
+
+    @media (max-width: 1280px) {
+        .ai-workspace {
+            grid-template-columns: 1fr 300px;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .ai-workspace {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .sidebar-panel {
+            order: -1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-workspace">
+    <!-- MAIN INVESTIGATION PANEL -->
+    <div class="investigation-panel">
+        <div class="header">
+            <div>
+                <h2 style="color: var(--text-primary); margin-bottom: var(--space-2);">Memory Leak - Service B</h2>
+                <div style="font-size: var(--fs-sm); color: var(--text-secondary);">Started 23 minutes ago • Auto-investigating</div>
+            </div>
+            <span class="status-badge investigating">
+                Investigating
+            </span>
+        </div>
+
+        <!-- AI EXPLANATION -->
+        <div class="ai-explanation">
+            <span class="ai-label">Davis AI Analysis</span>
+            <div class="ai-text">
+                <strong>High confidence memory leak detected in IIS Application Pool (Service B).</strong> Memory usage grew from 1.2GB to 3.8GB over 19 minutes. Correlation found with 3 historical incidents (96% similarity). Recommended action: Graceful restart of Application Pool. Estimated risk: Medium (0.5% user impact).
+            </div>
+        </div>
+
+        <!-- INVESTIGATION TIMELINE -->
+        <div class="timeline">
+            <div class="timeline-item critical">
+                <div class="timeline-time">09:11</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">🚨 Memory Anomaly Detected</div>
+                    <div class="timeline-desc">Memory usage exceeded baseline by 250% (3.8GB vs 1.2GB expected)</div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-time">09:12</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">📊 Correlation Analysis Complete</div>
+                    <div class="timeline-desc">Correlated with CPU spike (78%), IIS Event 5011, HTTP 500 errors (+240%)</div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-time">09:13</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">🔍 Historical Pattern Match</div>
+                    <div class="timeline-desc">Found 3 similar incidents (96%, 94%, 92% match). Previous resolution: Pool restart</div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-time">09:15</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">📈 Confidence Increased to 93%</div>
+                    <div class="timeline-desc">Root cause: Memory leak in w3wp.exe process (Service B worker)</div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-time">09:16</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">💡 Action Recommended</div>
+                    <div class="timeline-desc">Recommended: Restart IIS Application Pool (graceful, 30s drain)</div>
+                </div>
+            </div>
+
+            <div class="timeline-item active">
+                <div class="timeline-time">09:17</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">⏳ Awaiting Approval</div>
+                    <div class="timeline-desc">Waiting for administrator review and confirmation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EVIDENCE PANEL -->
+        <div class="ai-explanation" style="background: linear-gradient(135deg, var(--color-warning-dim), transparent); border-left-color: var(--color-warning); margin-top: var(--space-6);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="ai-label" style="background: var(--color-warning); color: var(--text-inverse);">Evidence</span>
+                <span style="font-size: var(--fs-xs); color: var(--text-secondary);">7 data points collected</span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4);">
+            <div class="evidence-section">
+                <div class="evidence-title">📊 Metrics</div>
+                <div class="evidence-item">
+                    <span class="evidence-name">Memory Usage</span>
+                    <span class="evidence-value critical">3.8GB</span>
+                </div>
+                <div class="evidence-item">
+                    <span class="evidence-name">CPU Usage</span>
+                    <span class="evidence-value warning">78%</span>
+                </div>
+                <div class="evidence-item">
+                    <span class="evidence-name">Process Handles</span>
+                    <span class="evidence-value warning">12,847</span>
+                </div>
+                <div class="evidence-item">
+                    <span class="evidence-name">Private Bytes</span>
+                    <span class="evidence-value critical">2.9GB</span>
+                </div>
+            </div>
+
+            <div class="evidence-section">
+                <div class="evidence-title">🔍 Diagnostics</div>
+                <div class="evidence-item">
+                    <span class="evidence-name">HTTP 500s</span>
+                    <span class="evidence-value critical">+240%</span>
+                </div>
+                <div class="evidence-item">
+                    <span class="evidence-name">Response Time</span>
+                    <span class="evidence-value warning">2,341ms</span>
+                </div>
+                <div class="evidence-item">
+                    <span class="evidence-name">Error Rate</span>
+                    <span class="evidence-value critical">12.3%</span>
+                </div>
+                <div class="evidence-item">
+                    <span class="evidence-name">IIS Events</span>
+                    <span class="evidence-value">Event 5011 x4</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar-panel">
+        <!-- CONFIDENCE GAUGE -->
+        <div class="gauge-container">
+            <div class="gauge-label">Confidence Level</div>
+            <div class="gauge-circular">
+                <svg class="gauge-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--border-primary)" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gaugeGradient)" stroke-width="8"
+                            stroke-linecap="round" stroke-dasharray="236 314" transform="rotate(-90 50 50)"/>
+                    <defs>
+                        <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color: var(--color-info); stop-opacity: 1" />
+                            <stop offset="100%" style="stop-color: var(--color-success); stop-opacity: 1" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="gauge-value-display">
+                    <div class="gauge-number">93%</div>
+                    <div class="gauge-percent">HIGH</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RISK GAUGE -->
+        <div class="gauge-container">
+            <div class="gauge-label">Risk Assessment</div>
+            <div class="gauge-circular">
+                <svg class="gauge-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--border-primary)" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#riskGradient)" stroke-width="8"
+                            stroke-linecap="round" stroke-dasharray="94.25 314" transform="rotate(-90 50 50)"/>
+                    <defs>
+                        <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color: var(--color-warning); stop-opacity: 1" />
+                            <stop offset="100%" style="stop-color: var(--color-warning); stop-opacity: 1" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="gauge-value-display">
+                    <div class="gauge-number" style="color: var(--color-warning);">30%</div>
+                    <div class="gauge-percent">MEDIUM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLAST RADIUS -->
+        <div class="gauge-container">
+            <div class="gauge-label">Impact Assessment</div>
+            <div style="font-size: var(--fs-sm); color: var(--text-primary); line-height: var(--lh-normal);">
+                <div style="margin-bottom: var(--space-2);">
+                    <strong>Affected Users:</strong> <span style="color: var(--color-warning);">0.5%</span>
+                </div>
+                <div style="margin-bottom: var(--space-2);">
+                    <strong>Services:</strong> 1 primary, 2 dependent
+                </div>
+                <div>
+                    <strong>Estimated Downtime:</strong> &lt;2 seconds
+                </div>
+            </div>
+        </div>
+
+        <!-- ROOT CAUSES -->
+        <div style="margin-top: var(--space-6);">
+            <div class="gauge-label">Candidate Root Causes</div>
+            <div class="root-cause-list">
+                <div class="root-cause-item">
+                    <div class="root-cause-title">Memory Leak in w3wp.exe</div>
+                    <div class="root-cause-confidence">
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 93%;"></div>
+                        </div>
+                        <span>93%</span>
+                    </div>
+                </div>
+
+                <div class="root-cause-item">
+                    <div class="root-cause-title">Connection Pool Exhaustion</div>
+                    <div class="root-cause-confidence">
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 45%;"></div>
+                        </div>
+                        <span>45%</span>
+                    </div>
+                </div>
+
+                <div class="root-cause-item">
+                    <div class="root-cause-title">Cache Invalidation Issue</div>
+                    <div class="root-cause-confidence">
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 28%;"></div>
+                        </div>
+                        <span>28%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIMILAR INCIDENTS -->
+        <div class="similar-incidents">
+            <div class="similar-title">Similar Incidents</div>
+            <div class="similar-item">INC-0142 (96% match) - Resolved</div>
+            <div class="similar-item">INC-0087 (94% match) - Resolved</div>
+            <div class="similar-item">INC-0041 (92% match) - Resolved</div>
+            <div style="font-size: var(--fs-xs); color: var(--text-secondary); margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border-primary);">
+                Avg resolution: 8.2 min
+            </div>
+        </div>
+
+        <!-- ACTION SECTION -->
+        <div class="action-section">
+            <div class="action-title">🔧 Recommended Action</div>
+            <div class="action-description">
+                <strong>Restart IIS Application Pool</strong>
+            </div>
+            <div class="action-risks">
+                ⚠️ Users in active sessions will be briefly disconnected. Auto-reconnect in &lt;2 seconds.
+            </div>
+            <div class="action-buttons">
+                <button class="btn-approve" onclick="executeAction()">Execute</button>
+                <button class="btn-review" onclick="reviewAction()">Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function executeAction() {
+        console.log('Executing recommended action...');
+        alert('✅ Action Executed!\n\nRestarting IIS Application Pool...\n\n09:17:30 - Pre-check completed\n09:17:45 - Application Pool restarted\n09:17:50 - Health verification passed\n09:18:00 - Incident closed automatically');
+    }
+
+    function reviewAction() {
+        alert('Opening approval review console...\n\nYou can review:\n- Full evidence panel\n- AI reasoning\n- Similar incidents\n- Risk assessment\n\nThen approve or reject the action.');
+    }
+
+    // Listen for real-time incidents
+    window.addEventListener('incident_update', function(event) {
+        const incident = event.detail;
+        console.log('🤖 AI received new incident:', incident);
+        // Could update the investigation in real-time
+    });
+</script>
+{% endblock %}
