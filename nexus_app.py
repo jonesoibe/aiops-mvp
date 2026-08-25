@@ -208,6 +208,142 @@ def initialize_users():
         # Store in memory
         in_memory_store['users'] = demo_users
 
+def initialize_approvals():
+    """Initialize sample approval requests in MongoDB or in-memory storage."""
+    now = datetime.utcnow()
+
+    demo_approvals = [
+        {
+            'approval_id': f"APP-{(now - timedelta(minutes=5)).strftime('%Y%m%d%H%M%S')}-001",
+            'type': 'remediation',
+            'title': 'Rollback Production Deployment',
+            'description': 'Revert SERVICE_C v2.1.4 due to critical memory leak',
+            'priority': 'CRITICAL',
+            'requested_by': 'aiops_engine',
+            'requested_at': (now - timedelta(minutes=5)).isoformat(),
+            'status': 'pending',
+            'impact': {
+                'users_affected': '~2,847 concurrent',
+                'estimated_downtime': '45-60 seconds',
+                'data_loss_risk': 'None'
+            },
+            'details': {
+                'service': 'SERVICE_C',
+                'version_from': 'v2.1.4',
+                'version_to': 'v2.1.3',
+                'reason': 'Critical memory leak detected'
+            }
+        },
+        {
+            'approval_id': f"APP-{(now - timedelta(minutes=12)).strftime('%Y%m%d%H%M%S')}-002",
+            'type': 'configuration',
+            'title': 'Scale Up Database Connections',
+            'description': 'Increase connection pool from 500 to 1000 on SQL Server',
+            'priority': 'HIGH',
+            'requested_by': 'auto_scaler',
+            'requested_at': (now - timedelta(minutes=12)).isoformat(),
+            'status': 'pending',
+            'impact': {
+                'users_affected': 'All',
+                'estimated_downtime': '0 seconds',
+                'data_loss_risk': 'None'
+            },
+            'details': {
+                'service': 'SQL_SERVER',
+                'pool_from': 500,
+                'pool_to': 1000,
+                'reason': 'Connection pool exhaustion detected'
+            }
+        },
+        {
+            'approval_id': f"APP-{(now - timedelta(minutes=25)).strftime('%Y%m%d%H%M%S')}-003",
+            'type': 'debugging',
+            'title': 'Enable Debug Logging for SERVICE_A',
+            'description': 'Temporarily increase log verbosity for issue diagnosis',
+            'priority': 'MEDIUM',
+            'requested_by': 'investigation_team',
+            'requested_at': (now - timedelta(minutes=25)).isoformat(),
+            'status': 'approved',
+            'approved_by': 'admin',
+            'approved_at': (now - timedelta(minutes=20)).isoformat(),
+            'impact': {
+                'users_affected': 'None',
+                'estimated_downtime': '0 seconds',
+                'data_loss_risk': 'None'
+            },
+            'details': {
+                'service': 'SERVICE_A',
+                'log_level': 'DEBUG',
+                'duration_minutes': 30,
+                'reason': 'Investigating intermittent timeout issues'
+            }
+        },
+        {
+            'approval_id': f"APP-{(now - timedelta(minutes=45)).strftime('%Y%m%d%H%M%S')}-004",
+            'type': 'security',
+            'title': 'Update Security Policy Configuration',
+            'description': 'Apply new WAF rules for DDoS protection',
+            'priority': 'HIGH',
+            'requested_by': 'security_team',
+            'requested_at': (now - timedelta(minutes=45)).isoformat(),
+            'status': 'rejected',
+            'rejected_by': 'admin',
+            'rejected_at': (now - timedelta(minutes=40)).isoformat(),
+            'rejection_reason': 'Needs further testing in staging environment',
+            'impact': {
+                'users_affected': 'None',
+                'estimated_downtime': '0 seconds',
+                'data_loss_risk': 'None'
+            },
+            'details': {
+                'service': 'WAF',
+                'rules': ['DDoS_MITIGATION_v3', 'RATE_LIMITING_v2'],
+                'reason': 'Proactive security enhancement'
+            }
+        },
+        {
+            'approval_id': f"APP-{(now - timedelta(hours=2)).strftime('%Y%m%d%H%M%S')}-005",
+            'type': 'maintenance',
+            'title': 'Cache Invalidation - Redis Cluster',
+            'description': 'Clear stale cache entries to free up 2.5GB memory',
+            'priority': 'MEDIUM',
+            'requested_by': 'cache_manager',
+            'requested_at': (now - timedelta(hours=2)).isoformat(),
+            'status': 'approved',
+            'approved_by': 'operator',
+            'approved_at': (now - timedelta(hours=1, minutes=55)).isoformat(),
+            'impact': {
+                'users_affected': 'Minimal (cache regeneration)',
+                'estimated_downtime': '0 seconds',
+                'data_loss_risk': 'None'
+            },
+            'details': {
+                'service': 'REDIS_CLUSTER',
+                'memory_freed_gb': 2.5,
+                'entry_count': '~125,000',
+                'reason': 'Scheduled maintenance to optimize memory usage'
+            }
+        }
+    ]
+
+    if db:
+        # Store in MongoDB
+        try:
+            approvals_collection = db['approvals']
+            for approval in demo_approvals:
+                approvals_collection.update_one(
+                    {'approval_id': approval['approval_id']},
+                    {'$set': approval},
+                    upsert=True
+                )
+            print(f"✅ Initialized {len(demo_approvals)} approval requests in MongoDB")
+        except Exception as e:
+            print(f"⚠️ Error initializing approvals: {e}")
+    else:
+        # Store in memory
+        in_memory_store['approvals'] = demo_approvals
+        print(f"✅ Initialized {len(demo_approvals)} approval requests in memory")
+
 # ==================== ROUTES ====================
 
 @app.route('/login')
@@ -532,6 +668,205 @@ def execute_action():
 
     return jsonify(action_record), 200
 
+# ==================== APPROVALS ENDPOINTS ====================
+
+@app.route('/api/test-approvals', methods=['GET'])
+def test_approvals_route():
+    """Test endpoint to verify routing works."""
+    return jsonify({
+        'message': 'Test approvals route works',
+        'approvals_in_store': len(in_memory_store.get('approvals', []))
+    })
+
+@app.route('/api/approvals', methods=['GET'])
+@require_auth
+def get_approvals():
+    """Get pending approval requests."""
+    status = request.args.get('status', 'pending')  # pending, approved, rejected, expired
+    limit = request.args.get('limit', 50, type=int)
+
+    print(f"DEBUG: Getting {status} approvals, total in store: {len(in_memory_store.get('approvals', []))}")
+
+    if db:
+        try:
+            query = {'status': status}
+            approvals = list(db['approvals'].find(query, {'_id': 0}).sort('requested_at', -1).limit(limit))
+            print(f"✅ Retrieved {len(approvals)} {status} approvals from MongoDB")
+            return jsonify({
+                'total': len(approvals),
+                'approvals': approvals
+            }), 200
+        except Exception as e:
+            print(f"⚠️ MongoDB query error: {e}")
+
+    # Fallback to in-memory
+    print(f"DEBUG: Using in-memory store, status filter: {status}")
+    all_approvals = in_memory_store.get('approvals', [])
+    print(f"DEBUG: Total approvals in store: {len(all_approvals)}")
+    if all_approvals:
+        print(f"DEBUG: First approval status: {all_approvals[0].get('status')}")
+
+    approvals = [a for a in all_approvals if a.get('status') == status]
+    print(f"DEBUG: Filtered approvals for status '{status}': {len(approvals)}")
+
+    approvals = approvals[-limit:]
+    return jsonify({
+        'total': len(approvals),
+        'approvals': list(reversed(approvals))
+    }), 200
+
+@app.route('/api/approvals/<approval_id>', methods=['GET'])
+@require_auth
+def get_approval_detail(approval_id):
+    """Get detailed approval information."""
+    if db:
+        try:
+            approval = db['approvals'].find_one({'approval_id': approval_id}, {'_id': 0})
+            if approval:
+                print(f"✅ Retrieved approval details: {approval_id}")
+                return jsonify(approval), 200
+        except Exception as e:
+            print(f"⚠️ MongoDB query error: {e}")
+
+    # Fallback to in-memory
+    for approval in in_memory_store['approvals']:
+        if approval.get('approval_id') == approval_id:
+            return jsonify(approval), 200
+
+    return jsonify({'error': 'Approval not found'}), 404
+
+@app.route('/api/approvals/<approval_id>/approve', methods=['POST'])
+@require_auth
+def approve_request(approval_id):
+    """Approve an approval request."""
+    user = request.user or {'username': 'system'}
+    timestamp = datetime.utcnow().isoformat()
+
+    # Update approval status
+    update_data = {
+        'status': 'approved',
+        'approved_by': user.get('username', 'system'),
+        'approved_at': timestamp,
+        'approval_id': approval_id
+    }
+
+    if db:
+        try:
+            result = db['approvals'].update_one(
+                {'approval_id': approval_id},
+                {'$set': update_data}
+            )
+            if result.modified_count > 0:
+                print(f"✅ Approval approved: {approval_id}")
+            else:
+                # Create if doesn't exist
+                update_data['requested_at'] = timestamp
+                update_data['priority'] = 'HIGH'
+                update_data['type'] = 'automated_action'
+                update_data['description'] = 'Automated approval request'
+                db['approvals'].insert_one(update_data)
+        except Exception as e:
+            print(f"⚠️ MongoDB update error: {e}")
+    else:
+        # Update in memory
+        for approval in in_memory_store['approvals']:
+            if approval.get('approval_id') == approval_id:
+                approval.update(update_data)
+                break
+
+    # Log to audit trail
+    audit_entry = {
+        'timestamp': timestamp,
+        'user_id': user.get('user_id', 'system'),
+        'username': user.get('username', 'system'),
+        'action_type': 'approval_granted',
+        'description': f"Approved request {approval_id}",
+        'approval_id': approval_id
+    }
+
+    if db:
+        try:
+            db['audit_log'].insert_one(audit_entry)
+        except Exception as e:
+            print(f"⚠️ Audit log error: {e}")
+    else:
+        in_memory_store['audit_log'].append(audit_entry)
+
+    return jsonify({
+        'status': 'approved',
+        'message': f'Approval request {approval_id} has been approved',
+        'approved_by': user.get('username', 'system'),
+        'timestamp': timestamp
+    }), 200
+
+@app.route('/api/approvals/<approval_id>/reject', methods=['POST'])
+@require_auth
+def reject_request(approval_id):
+    """Reject an approval request."""
+    data = request.get_json() or {}
+    user = request.user or {'username': 'system'}
+    timestamp = datetime.utcnow().isoformat()
+    reason = data.get('reason', 'No reason provided')
+
+    # Update approval status
+    update_data = {
+        'status': 'rejected',
+        'rejected_by': user.get('username', 'system'),
+        'rejected_at': timestamp,
+        'rejection_reason': reason,
+        'approval_id': approval_id
+    }
+
+    if db:
+        try:
+            result = db['approvals'].update_one(
+                {'approval_id': approval_id},
+                {'$set': update_data}
+            )
+            if result.modified_count > 0:
+                print(f"✅ Approval rejected: {approval_id}")
+            else:
+                # Create if doesn't exist
+                update_data['requested_at'] = timestamp
+                update_data['priority'] = 'HIGH'
+                update_data['type'] = 'automated_action'
+                update_data['description'] = 'Automated approval request'
+                db['approvals'].insert_one(update_data)
+        except Exception as e:
+            print(f"⚠️ MongoDB update error: {e}")
+    else:
+        # Update in memory
+        for approval in in_memory_store['approvals']:
+            if approval.get('approval_id') == approval_id:
+                approval.update(update_data)
+                break
+
+    # Log to audit trail
+    audit_entry = {
+        'timestamp': timestamp,
+        'user_id': user.get('user_id', 'system'),
+        'username': user.get('username', 'system'),
+        'action_type': 'approval_rejected',
+        'description': f"Rejected request {approval_id}: {reason}",
+        'approval_id': approval_id
+    }
+
+    if db:
+        try:
+            db['audit_log'].insert_one(audit_entry)
+        except Exception as e:
+            print(f"⚠️ Audit log error: {e}")
+    else:
+        in_memory_store['audit_log'].append(audit_entry)
+
+    return jsonify({
+        'status': 'rejected',
+        'message': f'Approval request {approval_id} has been rejected',
+        'rejected_by': user.get('username', 'system'),
+        'reason': reason,
+        'timestamp': timestamp
+    }), 200
+
 # ==================== WEBSOCKET EVENTS ====================
 
 @socketio.on('connect')
@@ -671,6 +1006,7 @@ if __name__ == '__main__':
     # Initialize
     connect_mongodb()
     initialize_users()
+    initialize_approvals()
     start_background_threads()
 
     print("\n📍 Access at: http://localhost:5000")

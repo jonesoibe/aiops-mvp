@@ -42,7 +42,29 @@
       "Bash(curl -s http://localhost:5000/api/incidents -H 'Authorization: Bearer test')",
       "Bash(curl -s \"http://localhost:5000/api/incidents\" -H \"Authorization: Bearer test\")",
       "Bash(git commit -m 'Phase 1: Implement real data ingestion from CSV files *)",
-      "Bash(git commit -m 'Phase 2: Complete implementation with real data and functional UI *)"
+      "Bash(git commit -m 'Phase 2: Complete implementation with real data and functional UI *)",
+      "Bash(python3 -c \"import sys, json; data=json.load\\(sys.stdin\\); print\\(f\\\\\"Active incidents: {data.get\\('active_incidents', 'unknown'\\)}\\\\nAvg confidence: {data.get\\('avg_confidence', 'unknown'\\)}\\\\nResolution rate: {data.get\\('resolution_rate', 'unknown'\\)}\\\\\"\\)\")",
+      "Bash(python3 -c \"import sys, json; data=json.load\\(sys.stdin\\); print\\(f'✅ Rejected: {data.get\\(\\\\\"total\\\\\", 0\\)}'\\); [print\\(f'  - {a.get\\(\\\\\"title\\\\\"\\)}'\\) for a in data.get\\('approvals', []\\)]\")",
+      "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Total: {d.get\\('total', 0\\)}\\\\\"\\); print\\([a.get\\('title'\\) for a in d.get\\('approvals', []\\)]\\)\")",
+      "Bash(python -m pip install flask-socketio python-socketio python-engineio -q)",
+      "Bash(python nexus_app.py)",
+      "Bash(pkill -f \"nexus_app.py\")",
+      "Bash(PYTHONIOENCODING=utf-8 python nexus_app.py)",
+      "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Total: {d.get\\('total', 0\\)}\\\\\"\\); [print\\(f\\\\\"  - {a.get\\('title'\\)}\\\\\"\\) for a in d.get\\('approvals', []\\)]\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(pkill -9 -f \"python\")",
+      "Bash(tee /tmp/flask_new.log)",
+      "Bash(curl -s http://localhost:5000/api/auth/login -X POST -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(python -c \"from nexus_app import app; routes = [str\\(rule\\) for rule in app.url_map.iter_rules\\(\\)]; approvals_routes = [r for r in routes if 'approval' in r]; print\\('Approval routes:', approvals_routes\\)\")",
+      "Bash(python3)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -i \"http://localhost:5000/api/approvals?status=pending\")",
+      "Bash(pkill -9 -f python)",
+      "Bash(curl -s \"http://localhost:5000/api/test-approvals\")",
+      "Bash(python3 -m py_compile nexus_app.py)",
+      "Bash(python3 -c \"import sys, json; print\\(json.load\\(sys.stdin\\).get\\('total', 0\\)\\)\")",
+      "Bash(curl -s \"http://localhost:5000/api/approvals\")",
+      "Bash(git commit -m 'WIP: Add approvals endpoints and fix approvals page *)"
     ]
   }
 }

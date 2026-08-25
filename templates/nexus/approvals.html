@@ -394,84 +394,8 @@
             </div>
 
             <div class="approval-list">
-                <!-- APPROVAL 1 - CRITICAL -->
-                <div class="approval-card critical" onclick="selectApproval(this, 'app-001')">
-                    <div class="approval-content">
-                        <div class="approval-title">Rollback Production Deployment</div>
-                        <div class="approval-desc">Revert SERVICE_C v2.1.4 due to critical memory leak</div>
-                        <div class="approval-meta">
-                            <span class="approval-badge critical">CRITICAL</span>
-                            <span class="approval-badge">Requested 5m ago</span>
-                        </div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="action-btn approve" onclick="approveAction(event)">✓ Approve</button>
-                        <button class="action-btn reject" onclick="rejectAction(event)">✕ Reject</button>
-                    </div>
-                </div>
-
-                <!-- APPROVAL 2 - HIGH -->
-                <div class="approval-card high" onclick="selectApproval(this, 'app-002')">
-                    <div class="approval-content">
-                        <div class="approval-title">Scale Up Database Connections</div>
-                        <div class="approval-desc">Increase connection pool from 500 to 1000 on SQL Server</div>
-                        <div class="approval-meta">
-                            <span class="approval-badge high">HIGH</span>
-                            <span class="approval-badge">Requested 12m ago</span>
-                        </div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="action-btn approve" onclick="approveAction(event)">✓ Approve</button>
-                        <button class="action-btn reject" onclick="rejectAction(event)">✕ Reject</button>
-                    </div>
-                </div>
-
-                <!-- APPROVAL 3 - MEDIUM -->
-                <div class="approval-card medium" onclick="selectApproval(this, 'app-003')">
-                    <div class="approval-content">
-                        <div class="approval-title">Enable Debug Logging for SERVICE_A</div>
-                        <div class="approval-desc">Temporarily increase log verbosity for issue diagnosis</div>
-                        <div class="approval-meta">
-                            <span class="approval-badge medium">MEDIUM</span>
-                            <span class="approval-badge">Requested 18m ago</span>
-                        </div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="action-btn approve" onclick="approveAction(event)">✓ Approve</button>
-                        <button class="action-btn reject" onclick="rejectAction(event)">✕ Reject</button>
-                    </div>
-                </div>
-
-                <!-- APPROVAL 4 - HIGH -->
-                <div class="approval-card high" onclick="selectApproval(this, 'app-004')">
-                    <div class="approval-content">
-                        <div class="approval-title">Update Security Policy Configuration</div>
-                        <div class="approval-desc">Apply new WAF rules for DDoS protection</div>
-                        <div class="approval-meta">
-                            <span class="approval-badge high">HIGH</span>
-                            <span class="approval-badge">Requested 24m ago</span>
-                        </div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="action-btn approve" onclick="approveAction(event)">✓ Approve</button>
-                        <button class="action-btn reject" onclick="rejectAction(event)">✕ Reject</button>
-                    </div>
-                </div>
-
-                <!-- APPROVAL 5 - MEDIUM -->
-                <div class="approval-card medium" onclick="selectApproval(this, 'app-005')">
-                    <div class="approval-content">
-                        <div class="approval-title">Cache Invalidation - Redis Cluster</div>
-                        <div class="approval-desc">Clear stale cache entries to free up 2.5GB memory</div>
-                        <div class="approval-meta">
-                            <span class="approval-badge medium">MEDIUM</span>
-                            <span class="approval-badge">Requested 31m ago</span>
-                        </div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="action-btn approve" onclick="approveAction(event)">✓ Approve</button>
-                        <button class="action-btn reject" onclick="rejectAction(event)">✕ Reject</button>
-                    </div>
+                <div style="padding: var(--space-4); text-align: center; color: var(--text-secondary);">
+                    Loading approvals...
                 </div>
             </div>
         </div>
@@ -492,16 +416,141 @@
 
 {% block extra_scripts %}
 <script>
-function selectApproval(element, approvalId) {
+let allApprovals = [];
+let currentStatus = 'pending';
+let currentPriority = 'all';
+let selectedApproval = null;
+
+const token = localStorage.getItem('token');
+
+async function loadApprovals(status = 'pending') {
+    try {
+        const response = await fetch(`/api/approvals?status=${status}&limit=50`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        allApprovals = data.approvals || [];
+        console.log(`✅ Loaded ${allApprovals.length} ${status} approvals`);
+        displayApprovals();
+        updateStatusCounts();
+    } catch (error) {
+        console.error('Error loading approvals:', error);
+    }
+}
+
+function displayApprovals() {
+    const list = document.querySelector('.approval-list');
+
+    if (!allApprovals || allApprovals.length === 0) {
+        list.innerHTML = '<div style="padding: var(--space-4); color: var(--text-secondary); text-align: center;">No approvals found</div>';
+        return;
+    }
+
+    let filteredApprovals = allApprovals;
+    if (currentPriority !== 'all') {
+        filteredApprovals = filteredApprovals.filter(a => a.priority.toLowerCase() === currentPriority.toLowerCase());
+    }
+
+    list.innerHTML = '';
+
+    filteredApprovals.forEach(approval => {
+        const card = document.createElement('div');
+        const priorityClass = approval.priority.toLowerCase();
+        const statusColor = approval.status === 'approved' ? 'success' :
+                           approval.status === 'rejected' ? 'critical' : 'warning';
+
+        let statusBadge = '';
+        if (approval.status === 'approved') {
+            statusBadge = `<span class="approval-badge" style="color: var(--color-success);">✓ ${approval.approved_by}</span>`;
+        } else if (approval.status === 'rejected') {
+            statusBadge = `<span class="approval-badge" style="color: var(--color-critical);">✕ ${approval.rejected_by}</span>`;
+        }
+
+        const timeAgo = getTimeAgo(approval.requested_at);
+
+        card.className = `approval-card ${priorityClass}`;
+        card.onclick = () => selectApproval(approval);
+        card.innerHTML = `
+            <div class="approval-content">
+                <div class="approval-title">${approval.title}</div>
+                <div class="approval-desc">${approval.description}</div>
+                <div class="approval-meta">
+                    <span class="approval-badge ${priorityClass}">${approval.priority}</span>
+                    <span class="approval-badge">Requested ${timeAgo}</span>
+                </div>
+            </div>
+            ${approval.status === 'pending' ? `
+            <div class="approval-actions">
+                <button class="action-btn approve" onclick="approveAction(event, '${approval.approval_id}')">✓ Approve</button>
+                <button class="action-btn reject" onclick="rejectAction(event, '${approval.approval_id}')">✕ Reject</button>
+            </div>
+            ` : `
+            <div class="approval-actions">
+                ${statusBadge}
+            </div>
+            `}
+        `;
+        list.appendChild(card);
+    });
+}
+
+function getTimeAgo(isoString) {
+    const date = new Date(isoString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return seconds + 's ago';
+    if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+    return Math.floor(seconds / 86400) + 'd ago';
+}
+
+function selectApproval(approval) {
+    selectedApproval = approval;
     const detailView = document.getElementById('detailView');
+    const timeAgo = getTimeAgo(approval.requested_at);
+
+    let statusHTML = '';
+    if (approval.status === 'approved') {
+        statusHTML = `
+            <div class="detail-item">
+                <span class="detail-label">Approved By</span>
+                <span class="detail-value" style="color: var(--color-success);">✓ ${approval.approved_by}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Approved At</span>
+                <span class="detail-value">${getTimeAgo(approval.approved_at)}</span>
+            </div>
+        `;
+    } else if (approval.status === 'rejected') {
+        statusHTML = `
+            <div class="detail-item">
+                <span class="detail-label">Rejected By</span>
+                <span class="detail-value" style="color: var(--color-critical);">✕ ${approval.rejected_by}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Rejection Reason</span>
+                <span class="detail-value">${approval.rejection_reason}</span>
+            </div>
+        `;
+    }
+
+    let actionButtons = '';
+    if (approval.status === 'pending') {
+        actionButtons = `
+            <div class="approval-controls">
+                <button class="control-btn approve" onclick="approveRequest('${approval.approval_id}')">✓ Approve</button>
+                <button class="control-btn reject" onclick="rejectRequest('${approval.approval_id}')">✕ Reject</button>
+            </div>
+        `;
+    }
 
     detailView.innerHTML = `
         <div class="detail-header">
-            <div class="detail-title">Rollback Production Deployment</div>
+            <div class="detail-title">${approval.title}</div>
             <div class="detail-meta">
-                <span class="detail-tag">CRITICAL</span>
-                <span class="detail-tag">SERVICE_C</span>
-                <span class="detail-tag">Automation</span>
+                <span class="detail-tag">${approval.priority}</span>
+                <span class="detail-tag">${approval.type.toUpperCase()}</span>
             </div>
         </div>
 
@@ -509,79 +558,160 @@ function selectApproval(element, approvalId) {
             <div class="detail-section-title">Request Details</div>
             <div class="detail-item">
                 <span class="detail-label">Requested By</span>
-                <span class="detail-value">AIOps (Automated)</span>
+                <span class="detail-value">${approval.requested_by}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Requested At</span>
-                <span class="detail-value">5 minutes ago</span>
+                <span class="detail-value">${timeAgo}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Reason</span>
-                <span class="detail-value">Critical memory leak</span>
+                <span class="detail-label">Description</span>
+                <span class="detail-value">${approval.description}</span>
             </div>
-            <div class="detail-item">
-                <span class="detail-label">Rollback To</span>
-                <span class="detail-value">v2.1.3 (Last stable)</span>
-            </div>
+            ${statusHTML}
         </div>
 
         <div class="detail-section">
             <div class="detail-section-title">Impact Analysis</div>
             <div class="detail-item">
                 <span class="detail-label">Users Affected</span>
-                <span class="detail-value">~2,847 concurrent</span>
+                <span class="detail-value">${approval.impact?.users_affected || 'N/A'}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Estimated Downtime</span>
-                <span class="detail-value">45-60 seconds</span>
+                <span class="detail-value">${approval.impact?.estimated_downtime || 'N/A'}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Data Loss Risk</span>
-                <span class="detail-value">None</span>
+                <span class="detail-value">${approval.impact?.data_loss_risk || 'None'}</span>
             </div>
         </div>
 
-        <div class="timeline">
-            <div class="detail-section-title">Status Timeline</div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-text">Approval request created by AIOps</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-text">Awaiting on-call engineer approval</div>
-            </div>
-        </div>
-
-        <div class="approval-controls">
-            <button class="control-btn approve" onclick="alert('Approval granted! Executing rollback...')">✓ Approve</button>
-            <button class="control-btn reject" onclick="alert('Request rejected.')">✕ Reject</button>
-        </div>
+        ${actionButtons}
     `;
 }
 
-function approveAction(event) {
-    event.stopPropagation();
-    alert('✓ Approved! Executing action...');
+async function approveRequest(approvalId) {
+    try {
+        const response = await fetch(`/api/approvals/${approvalId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        alert(`✅ ${result.message}`);
+
+        // Reload pending approvals
+        loadApprovals('pending');
+
+        // Clear detail view
+        document.getElementById('detailView').innerHTML = `
+            <div class="detail-empty">
+                <div>
+                    <div style="font-size: 2em; margin-bottom: 12px;">📄</div>
+                    <div>Select an approval to view details</div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('❌ Error approving request: ' + error.message);
+        console.error('Error:', error);
+    }
 }
 
-function rejectAction(event) {
+async function rejectRequest(approvalId) {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+
+    try {
+        const response = await fetch(`/api/approvals/${approvalId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        const result = await response.json();
+        alert(`✅ ${result.message}`);
+
+        // Reload pending approvals
+        loadApprovals('pending');
+
+        // Clear detail view
+        document.getElementById('detailView').innerHTML = `
+            <div class="detail-empty">
+                <div>
+                    <div style="font-size: 2em; margin-bottom: 12px;">📄</div>
+                    <div>Select an approval to view details</div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('❌ Error rejecting request: ' + error.message);
+        console.error('Error:', error);
+    }
+}
+
+function approveAction(event, approvalId) {
     event.stopPropagation();
-    alert('✕ Rejected! Request cancelled.');
+    approveRequest(approvalId);
+}
+
+function rejectAction(event, approvalId) {
+    event.stopPropagation();
+    const reason = prompt('Enter rejection reason:');
+    if (reason) rejectRequest(approvalId);
+}
+
+async function updateStatusCounts() {
+    try {
+        const statuses = ['pending', 'approved', 'rejected', 'expired'];
+        for (const status of statuses) {
+            const response = await fetch(`/api/approvals?status=${status}&limit=1`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            const btn = document.querySelector(`[onclick*="'${status}'"]`);
+            if (btn) {
+                const count = data.total || 0;
+                btn.textContent = btn.textContent.split('(')[0] + `(${count})`;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating status counts:', error);
+    }
 }
 
 function filterByStatus(element, status) {
+    currentStatus = status;
     document.querySelectorAll('.filter-tab').forEach(tab => {
         tab.classList.remove('active');
     });
     element.classList.add('active');
+    loadApprovals(status);
 }
 
 function filterByPriority(element, priority) {
+    currentPriority = priority;
     document.querySelectorAll('.filter-tab').forEach(tab => {
         tab.classList.remove('active');
     });
     element.classList.add('active');
+    displayApprovals();
 }
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadApprovals('pending');
+    updateStatusCounts();
+});
+
+// Refresh every 10 seconds
+setInterval(() => loadApprovals(currentStatus), 10000);
 </script>
 {% endblock %}
