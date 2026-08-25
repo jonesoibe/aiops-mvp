@@ -468,10 +468,10 @@
             <div class="panel-title">⚡ Quick Actions</div>
 
             <div class="control-buttons">
-                <button class="btn-control" onclick="alert('Draining connections from all services...')">🔌 Drain</button>
-                <button class="btn-control" onclick="alert('Scaling resources...')">📈 Scale</button>
-                <button class="btn-control secondary" onclick="alert('Opening deployment console...')">🚀 Deploy</button>
-                <button class="btn-control secondary" onclick="alert('Rolling back to last stable...')">↩️ Rollback</button>
+                <button class="btn-control" onclick="executeAction('drain')">🔌 Drain</button>
+                <button class="btn-control" onclick="executeAction('scale')">📈 Scale</button>
+                <button class="btn-control secondary" onclick="executeAction('deploy')">🚀 Deploy</button>
+                <button class="btn-control secondary" onclick="executeAction('rollback')">↩️ Rollback</button>
             </div>
         </div>
     </div>
@@ -481,15 +481,49 @@
 
 {% block extra_scripts %}
 <script>
+    async function executeAction(action) {
+        try {
+            const token = localStorage.getItem('token');
+            const actionLabels = {
+                'drain': '🔌 Draining Connections',
+                'scale': '📈 Scaling Resources',
+                'deploy': '🚀 Deploying Update',
+                'rollback': '↩️ Rolling Back'
+            };
+
+            const response = await fetch('/api/actions/execute', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: action,
+                    target: 'all-services',
+                    incident_id: 'MANUAL-ACTION'
+                })
+            });
+
+            const result = await response.json();
+
+            // Show success message
+            alert(`✅ ${actionLabels[action]}\n\n${result.message}\n\nStatus: ${result.status}\nTime: ${new Date().toLocaleTimeString()}`);
+
+            console.log('⚡ Action executed:', action, result);
+        } catch (error) {
+            alert('❌ Error executing action: ' + error.message);
+            console.error('Error:', error);
+        }
+    }
+
     // Listen for operation updates
     window.addEventListener('incident_update', function(event) {
         console.log('🔧 Operation updated:', event.detail);
-        // Could add real-time operation tracking here
     });
 
     // Auto-refresh metrics
     setInterval(() => {
-        console.log('Updating live operations...');
-    }, 2000);
+        console.log('📊 Updating live operations...');
+    }, 5000);
 </script>
 {% endblock %}

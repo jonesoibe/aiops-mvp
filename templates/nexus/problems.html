@@ -2,13 +2,13 @@
 
 {% block title %}Problems & Incidents - Nexus AIOps{% endblock %}
 
-{% block topbar_title %}🚨 Problems & Incidents - Full Investigation Workspace{% endblock %}
+{% block topbar_title %}🚨 Problems & Incidents - Real-Time Investigation{% endblock %}
 
 {% block extra_styles %}
 <style>
     .problems-layout {
         display: grid;
-        grid-template-columns: 1fr 400px;
+        grid-template-columns: 1fr 450px;
         gap: var(--space-6);
         height: calc(100vh - 120px);
     }
@@ -28,91 +28,88 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
+    }
+
+    .incidents-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
     }
 
     .incidents-count {
-        font-size: var(--fs-sm);
+        font-size: var(--fs-xs);
         color: var(--text-secondary);
+        background: var(--bg-primary);
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
     }
 
     .incidents-list {
         flex: 1;
         overflow-y: auto;
-        padding: var(--space-4);
+        padding: var(--space-3);
     }
 
     .incident-row {
-        padding: var(--space-4);
+        padding: var(--space-3);
         background: var(--bg-primary);
-        border-left: 4px solid var(--color-success);
+        border-left: 4px solid var(--color-info);
         border-radius: var(--radius-lg);
-        margin-bottom: var(--space-3);
+        margin-bottom: var(--space-2);
         cursor: pointer;
         transition: all var(--transition-base);
     }
 
     .incident-row:hover {
         background: var(--bg-hover);
-        border-left-color: var(--color-info);
+        border-left-color: var(--color-success);
+        transform: translateX(4px);
     }
 
     .incident-row.selected {
-        border-left-color: var(--color-info);
-        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+        border-left-color: var(--color-success);
+        background: linear-gradient(135deg, var(--color-success-dim), transparent);
     }
 
-    .incident-row.critical {
+    .incident-row.high-severity {
         border-left-color: var(--color-critical);
     }
 
-    .incident-row.critical:hover {
-        border-left-color: var(--color-critical);
-    }
-
-    .incident-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: var(--space-2);
+    .incident-row.medium-severity {
+        border-left-color: var(--color-warning);
     }
 
     .incident-title {
-        font-weight: var(--fw-medium);
-        color: var(--text-primary);
-        flex: 1;
-    }
-
-    .incident-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        background: rgba(255, 77, 166, 0.2);
-        color: var(--color-critical);
-        border-radius: 3px;
-        font-size: var(--fs-xs);
         font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+        font-size: var(--fs-sm);
     }
 
     .incident-meta {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-size: var(--fs-xs);
         color: var(--text-secondary);
+        margin-bottom: var(--space-2);
     }
 
-    .incident-service {
-        color: var(--color-success);
-    }
-
-    .incident-time {
-        text-align: right;
+    .incident-confidence {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--bg-secondary);
+        border-radius: 3px;
+        font-weight: var(--fw-bold);
+        color: var(--color-info);
     }
 
     .detail-panel {
         background: var(--bg-secondary);
         border: 1px solid var(--border-primary);
         border-radius: var(--radius-xl);
-        padding: var(--space-6);
+        padding: var(--space-4);
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -128,43 +125,28 @@
     }
 
     .detail-header {
-        margin-bottom: var(--space-6);
-        padding-bottom: var(--space-4);
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-3);
         border-bottom: 1px solid var(--border-primary);
     }
 
     .detail-title {
-        font-size: var(--fs-xl);
+        font-size: var(--fs-lg);
         font-weight: var(--fw-bold);
         color: var(--text-primary);
         margin-bottom: var(--space-2);
     }
 
-    .detail-meta {
-        display: flex;
-        gap: var(--space-3);
-        flex-wrap: wrap;
-    }
-
-    .detail-tag {
-        font-size: var(--fs-xs);
-        padding: var(--space-1) var(--space-2);
-        background: var(--bg-primary);
-        color: var(--text-secondary);
-        border-radius: 4px;
-    }
-
     .detail-section {
-        margin-bottom: var(--space-6);
+        margin-bottom: var(--space-4);
     }
 
     .detail-section-title {
-        font-size: var(--fs-sm);
+        font-size: var(--fs-xs);
         font-weight: var(--fw-bold);
-        color: var(--text-primary);
-        margin-bottom: var(--space-3);
+        color: var(--text-secondary);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin-bottom: var(--space-2);
     }
 
     .detail-item {
@@ -188,39 +170,6 @@
         font-weight: var(--fw-medium);
     }
 
-    .detail-value.critical {
-        color: var(--color-critical);
-    }
-
-    .detail-value.success {
-        color: var(--color-success);
-    }
-
-    .ai-section {
-        background: linear-gradient(135deg, var(--color-info-dim), transparent);
-        border-left: 3px solid var(--color-info);
-        padding: var(--space-3);
-        border-radius: var(--radius-lg);
-        margin-bottom: var(--space-4);
-    }
-
-    .ai-label {
-        display: inline-block;
-        padding: 2px 8px;
-        background: var(--color-info);
-        color: var(--text-inverse);
-        border-radius: 3px;
-        font-size: var(--fs-xs);
-        font-weight: var(--fw-bold);
-        margin-bottom: var(--space-2);
-    }
-
-    .ai-text {
-        font-size: var(--fs-sm);
-        color: var(--text-primary);
-        line-height: var(--lh-normal);
-    }
-
     .action-buttons {
         display: flex;
         gap: var(--space-2);
@@ -237,6 +186,7 @@
         font-weight: var(--fw-bold);
         cursor: pointer;
         transition: all var(--transition-base);
+        font-size: var(--fs-sm);
     }
 
     .btn-action:hover {
@@ -251,8 +201,31 @@
     }
 
     .btn-action.secondary:hover {
-        border-color: var(--color-success);
-        color: var(--color-success);
+        border-color: var(--color-info);
+        color: var(--color-info);
+    }
+
+    .severity-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+    }
+
+    .severity-high {
+        background: rgba(255, 77, 166, 0.2);
+        color: var(--color-critical);
+    }
+
+    .severity-medium {
+        background: rgba(255, 194, 71, 0.2);
+        color: var(--color-warning);
+    }
+
+    .severity-low {
+        background: rgba(45, 212, 255, 0.2);
+        color: var(--color-info);
     }
 
     @media (max-width: 1024px) {
@@ -274,82 +247,14 @@
     <div class="incidents-panel">
         <div class="incidents-header">
             <div>
-                <div style="font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-primary);">Active Problems</div>
-                <div class="incidents-count">17 incidents</div>
+                <div class="incidents-title">Active Problems</div>
             </div>
-            <input type="text" placeholder="Search..." style="padding: 6px 12px; background: var(--bg-primary); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 4px; font-size: 12px; width: 150px;">
+            <div class="incidents-count" id="incidentCount">0 items</div>
         </div>
 
-        <div class="incidents-list">
-            <!-- CRITICAL INCIDENT -->
-            <div class="incident-row critical selected" onclick="selectIncident(this, 'INC-001')">
-                <div class="incident-header">
-                    <span class="incident-title">Memory Leak - Service B</span>
-                    <span class="incident-badge">CRITICAL</span>
-                </div>
-                <div class="incident-meta">
-                    <span class="incident-service">SERVICE_B</span>
-                    <span class="incident-time">23 min ago</span>
-                </div>
-            </div>
-
-            <!-- HIGH INCIDENT -->
-            <div class="incident-row" onclick="selectIncident(this, 'INC-002')">
-                <div class="incident-header">
-                    <span class="incident-title">High CPU Usage - Service A</span>
-                    <span class="incident-badge" style="background: rgba(255, 194, 71, 0.2); color: var(--color-warning);">HIGH</span>
-                </div>
-                <div class="incident-meta">
-                    <span class="incident-service">SERVICE_A</span>
-                    <span class="incident-time">15 min ago</span>
-                </div>
-            </div>
-
-            <!-- MEDIUM INCIDENT -->
-            <div class="incident-row" onclick="selectIncident(this, 'INC-003')">
-                <div class="incident-header">
-                    <span class="incident-title">DB Connection Pool Exhausted</span>
-                    <span class="incident-badge" style="background: rgba(255, 194, 71, 0.2); color: var(--color-warning);">HIGH</span>
-                </div>
-                <div class="incident-meta">
-                    <span class="incident-service">SQL_SERVER</span>
-                    <span class="incident-time">8 min ago</span>
-                </div>
-            </div>
-
-            <!-- RESOLVED INCIDENT -->
-            <div class="incident-row" style="border-left-color: var(--color-success);" onclick="selectIncident(this, 'INC-004')">
-                <div class="incident-header">
-                    <span class="incident-title">✓ Network Latency Spike - Resolved</span>
-                    <span class="incident-badge" style="background: rgba(107, 255, 184, 0.2); color: var(--color-success);">RESOLVED</span>
-                </div>
-                <div class="incident-meta">
-                    <span class="incident-service">API_GATEWAY</span>
-                    <span class="incident-time">3 min ago</span>
-                </div>
-            </div>
-
-            <!-- MORE INCIDENTS -->
-            <div class="incident-row" onclick="selectIncident(this, 'INC-005')">
-                <div class="incident-header">
-                    <span class="incident-title">Cache Invalidation Error</span>
-                    <span class="incident-badge">MEDIUM</span>
-                </div>
-                <div class="incident-meta">
-                    <span class="incident-service">REDIS</span>
-                    <span class="incident-time">2 min ago</span>
-                </div>
-            </div>
-
-            <div class="incident-row" onclick="selectIncident(this, 'INC-006')">
-                <div class="incident-header">
-                    <span class="incident-title">Payment API Timeout</span>
-                    <span class="incident-badge" style="background: rgba(255, 194, 71, 0.2); color: var(--color-warning);">HIGH</span>
-                </div>
-                <div class="incident-meta">
-                    <span class="incident-service">PAYMENT_API</span>
-                    <span class="incident-time">1 min ago</span>
-                </div>
+        <div class="incidents-list" id="incidentsList">
+            <div style="padding: var(--space-4); text-align: center; color: var(--text-secondary);">
+                Loading real incidents...
             </div>
         </div>
     </div>
@@ -365,76 +270,143 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-function selectIncident(element, incidentId) {
-    document.querySelectorAll('.incident-row').forEach(row => {
-        row.classList.remove('selected');
-    });
-    element.classList.add('selected');
+    let allIncidents = [];
 
-    const detailPanel = document.getElementById('detailPanel');
+    async function loadIncidents() {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/incidents', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
 
-    detailPanel.innerHTML = `
-        <div class="detail-header">
-            <div class="detail-title">Memory Leak - Service B</div>
-            <div class="detail-meta">
-                <span class="detail-tag">SERVICE_B</span>
-                <span class="detail-tag">Critical</span>
-                <span class="detail-tag">Auto-Investigating</span>
-            </div>
-        </div>
+            allIncidents = data.incidents || [];
+            console.log('✅ Loaded', allIncidents.length, 'incidents');
 
-        <div class="detail-section">
-            <div class="detail-section-title">📊 Impact</div>
-            <div class="detail-item">
-                <span class="detail-label">Affected Users</span>
-                <span class="detail-value critical">2,847 active</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Response Time</span>
-                <span class="detail-value critical">4.2s (+200%)</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Error Rate</span>
-                <span class="detail-value critical">8.5%</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Revenue Impact</span>
-                <span class="detail-value critical">$2,341 lost</span>
-            </div>
-        </div>
+            displayIncidents();
+            if (allIncidents.length > 0) {
+                selectIncident(allIncidents[0]);
+            }
+        } catch (error) {
+            console.error('❌ Error loading incidents:', error);
+        }
+    }
 
-        <div class="detail-section">
-            <div class="ai-section">
-                <span class="ai-label">Davis AI</span>
-                <div class="ai-text">
-                    <strong>Memory leak detected</strong> in IIS w3wp.exe process. Confidence: <strong>94%</strong>. Recommended action: Graceful Application Pool restart. Estimated resolution time: <strong>&lt;2 seconds</strong>.
+    function displayIncidents() {
+        const list = document.getElementById('incidentsList');
+        const count = document.getElementById('incidentCount');
+
+        if (!allIncidents || allIncidents.length === 0) {
+            list.innerHTML = '<div style="padding: var(--space-4); color: var(--text-secondary);">No incidents found</div>';
+            count.textContent = '0 items';
+            return;
+        }
+
+        list.innerHTML = '';
+        count.textContent = allIncidents.length + ' items';
+
+        allIncidents.forEach((incident, index) => {
+            const row = document.createElement('div');
+            const severityClass = incident.severity === 'MEDIUM' ? 'medium-severity' :
+                                incident.severity === 'HIGH' ? 'high-severity' : '';
+
+            row.className = `incident-row ${severityClass}`;
+            row.onclick = () => selectIncident(incident);
+
+            const confidence = Math.round(incident.confidence * 100);
+
+            row.innerHTML = `
+                <div class="incident-title">${incident.issue_type.replace(/_/g, ' ').toUpperCase()}</div>
+                <div class="incident-meta">
+                    <span>${incident.machine}</span>
+                    <span class="incident-confidence">${confidence}%</span>
+                </div>
+                <div style="font-size: var(--fs-xs); color: var(--text-tertiary);">${incident.incident_id}</div>
+            `;
+
+            list.appendChild(row);
+        });
+    }
+
+    function selectIncident(incident) {
+        const detail = document.getElementById('detailPanel');
+        const confidence = Math.round(incident.confidence * 100);
+        const severityClass = incident.severity.toLowerCase().replace('critical', 'high');
+
+        detail.innerHTML = `
+            <div class="detail-header">
+                <div class="detail-title">${incident.issue_type.replace(/_/g, ' ').toUpperCase()}</div>
+                <div style="margin-bottom: var(--space-2);">
+                    <span class="severity-badge severity-${severityClass}">${incident.severity}</span>
+                    <span style="margin-left: var(--space-2); font-size: var(--fs-xs); color: var(--text-secondary);">${incident.timestamp}</span>
                 </div>
             </div>
-        </div>
 
-        <div class="detail-section">
-            <div class="detail-section-title">⏱️ Timeline</div>
-            <div class="detail-item">
-                <span class="detail-label">Detected</span>
-                <span class="detail-value">23 minutes ago</span>
+            <div class="detail-section">
+                <div class="detail-section-title">📊 Incident Details</div>
+                <div class="detail-item">
+                    <span class="detail-label">Incident ID</span>
+                    <span class="detail-value">${incident.incident_id}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Machine</span>
+                    <span class="detail-value">${incident.machine}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Issue Type</span>
+                    <span class="detail-value">${incident.issue_type.replace(/_/g, ' ').toUpperCase()}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Severity</span>
+                    <span class="detail-value">${incident.severity}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Confidence Score</span>
+                    <span class="detail-value">${confidence}%</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">${incident.status || 'active'}</span>
+                </div>
             </div>
-            <div class="detail-item">
-                <span class="detail-label">Last Update</span>
-                <span class="detail-value">2 minutes ago</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Status</span>
-                <span class="detail-value">Investigating</span>
-            </div>
-        </div>
 
-        <div class="action-buttons">
-            <button class="btn-action" onclick="alert('Executing recommended action...')">✓ Execute</button>
-            <button class="btn-action secondary" onclick="alert('Opening AI investigation center...')">🤖 Details</button>
-        </div>
-    `;
-}
+            <div class="detail-section">
+                <div class="detail-section-title">📝 Description</div>
+                <div style="padding: var(--space-3); background: var(--bg-primary); border-radius: var(--radius-lg); font-size: var(--fs-sm); line-height: var(--lh-normal); color: var(--text-secondary);">
+                    ${incident.message}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-section-title">🔧 Response Actions</div>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${incident.responses && incident.responses.length > 0 ?
+                        incident.responses.map(r => `
+                            <div class="detail-item">
+                                <span class="detail-label">${r.action.replace(/_/g, ' ')}</span>
+                                <span class="detail-value">${r.status}</span>
+                            </div>
+                        `).join('') :
+                        '<div style="color: var(--text-tertiary); font-size: var(--fs-sm);">No responses logged</div>'
+                    }
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-action" onclick="alert('Executing AIOps remediation for ${incident.incident_id}...')">✓ Execute Remediation</button>
+                <button class="btn-action secondary" onclick="alert('Opening AI Operations for detailed analysis...')">🤖 AI Analysis</button>
+            </div>
+        `;
+    }
+
+    // Load on page load
+    document.addEventListener('DOMContentLoaded', loadIncidents);
+
+    // Refresh every 15 seconds
+    setInterval(loadIncidents, 15000);
 </script>
-
 {% endblock %}

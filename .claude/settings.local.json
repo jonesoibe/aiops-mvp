@@ -41,7 +41,8 @@
       "Bash(curl -s http://localhost:5000/api/statistics -H 'Authorization: Bearer test')",
       "Bash(curl -s http://localhost:5000/api/incidents -H 'Authorization: Bearer test')",
       "Bash(curl -s \"http://localhost:5000/api/incidents\" -H \"Authorization: Bearer test\")",
-      "Bash(git commit -m 'Phase 1: Implement real data ingestion from CSV files *)"
+      "Bash(git commit -m 'Phase 1: Implement real data ingestion from CSV files *)",
+      "Bash(git commit -m 'Phase 2: Complete implementation with real data and functional UI *)"
     ]
   }
 }

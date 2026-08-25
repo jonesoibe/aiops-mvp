@@ -443,19 +443,34 @@
             });
             const incidentData = await incidentsResponse.json();
 
-            // Update metrics
-            document.getElementById('healthyCount').textContent = (100 - stats.active_incidents).toLocaleString();
-            document.getElementById('problemCount').textContent = stats.active_incidents;
-            document.getElementById('aiCount').textContent = Math.ceil(stats.active_incidents * 0.8);
-            document.getElementById('resolution').textContent = stats.resolution_rate + '%';
+            console.log('📊 Stats loaded:', stats);
+            console.log('📝 Incidents loaded:', incidentData);
 
-            console.log('✅ Real data loaded:', stats);
+            // Update metrics - handle cases where stats might not have expected fields
+            const totalIncidents = stats.total_incidents || 0;
+            const activeIncidents = stats.active_incidents || 0;
+            const healthyCount = Math.max(0, totalIncidents - activeIncidents);
+            const investigationCount = Math.ceil(activeIncidents * 0.7);
+            const resolutionRate = (stats.resolution_rate !== undefined) ? stats.resolution_rate : 0;
+
+            // Safely update DOM elements
+            const healthyEl = document.getElementById('healthyCount');
+            const problemEl = document.getElementById('problemCount');
+            const aiEl = document.getElementById('aiCount');
+            const resEl = document.getElementById('resolution');
+
+            if (healthyEl) healthyEl.textContent = healthyCount;
+            if (problemEl) problemEl.textContent = activeIncidents;
+            if (aiEl) aiEl.textContent = investigationCount;
+            if (resEl) resEl.textContent = Math.round(resolutionRate * 100) + '%';
+
+            console.log('✅ UI updated with real data');
 
             // Update incidents list with real data
-            updateIncidentsDisplay(incidentData.incidents);
+            updateIncidentsDisplay(incidentData.incidents || []);
 
         } catch (error) {
-            console.error('Error loading real data:', error);
+            console.error('❌ Error loading real data:', error);
         }
     }
 
