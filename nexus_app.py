@@ -972,18 +972,36 @@ def on_leave_simulation(data):
 
 # ==================== STARTUP ====================
 
+_initialized = False
+
 @app.before_request
 def setup():
     """Setup on first request."""
-    pass
+    global _initialized
+    if not _initialized:
+        initialize_on_startup()
+        _initialized = True
+
+def initialize_on_startup():
+    """Initialize app on first request (for production servers)"""
+    try:
+        connect_mongodb()
+        initialize_users()
+        initialize_approvals()
+        start_background_threads()
+    except Exception as e:
+        print(f"⚠️  Initialization warning: {e}")
 
 def start_background_threads():
     """Start telemetry and log streaming threads."""
-    telemetry_thread = threading.Thread(target=stream_telemetry, daemon=True)
-    telemetry_thread.start()
+    try:
+        telemetry_thread = threading.Thread(target=stream_telemetry, daemon=True)
+        telemetry_thread.start()
 
-    logs_thread = threading.Thread(target=stream_logs, daemon=True)
-    logs_thread.start()
+        logs_thread = threading.Thread(target=stream_logs, daemon=True)
+        logs_thread.start()
+    except Exception as e:
+        print(f"⚠️  Background thread error: {e}")
 
 # ==================== ERROR HANDLERS ====================
 
@@ -995,7 +1013,25 @@ def not_found(error):
 def server_error(error):
     return jsonify({'error': 'Server error'}), 500
 
-# ==================== MAIN ====================
+# ==================== INITIALIZATION FOR PRODUCTION ====================
+
+# Initialize for production WSGI servers (Gunicorn, etc.)
+try:
+    print("\n" + "="*70)
+    print("  🚀 NEXUS AIOPS - Enterprise Autonomous Observability Platform")
+    print("="*70)
+    connect_mongodb()
+    initialize_users()
+    initialize_approvals()
+    start_background_threads()
+    print("\n✅ NEXUS AIOPS initialized successfully")
+    print("📍 Access at: http://localhost:5000")
+    print("   Demo: admin / admin123\n")
+except Exception as e:
+    print(f"\n⚠️  Initialization completed with warnings: {e}")
+    print("   (App will initialize on first request)")
+
+# ==================== MAIN (Development) ====================
 
 if __name__ == '__main__':
     print("\n" + "="*70)
@@ -1003,10 +1039,13 @@ if __name__ == '__main__':
     print("="*70)
 
     # Initialize
-    connect_mongodb()
-    initialize_users()
-    initialize_approvals()
-    start_background_threads()
+    try:
+        connect_mongodb()
+        initialize_users()
+        initialize_approvals()
+        start_background_threads()
+    except Exception as e:
+        print(f"⚠️  Initialization warning: {e}")
 
     print("\n📍 Access at: http://localhost:5000")
     print("   Demo: admin / admin123\n")
