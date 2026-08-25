@@ -36,7 +36,8 @@
       "Bash(pkill -f \"python.*nexus_app.py\")",
       "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Where-Object {$_.CommandLine -match \"nexus_app\"} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Write-Output \"Flask app stopped\")",
       "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Select-Object Name, CommandLine)",
-      "Bash(git commit -m 'Add login page and authentication *)"
+      "Bash(git commit -m 'Add login page and authentication *)",
+      "Bash(git commit -m 'Enable real-time mock data simulation for Logs page *)"
     ]
   }
 }

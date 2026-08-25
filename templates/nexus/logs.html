@@ -329,7 +329,48 @@
 
 {% block extra_scripts %}
 <script>
-// Real-time log streaming
+// Mock log messages for demo
+const mockLogs = [
+    { severity: 'ERROR', service: 'SERVICE_B', message: 'Payment API returned HTTP 500 - Connection timeout' },
+    { severity: 'WARNING', service: 'SERVICE_A', message: 'Memory allocation exceeded configured threshold (3.8GB / 4.0GB)' },
+    { severity: 'INFO', service: 'SERVICE_A', message: 'Garbage collection completed - freed 512MB' },
+    { severity: 'WARNING', service: 'SQL_SERVER', message: 'Database lock timeout - query execution exceeded 30s' },
+    { severity: 'INFO', service: 'API_GATEWAY', message: 'Load balancer redirected 1,247 requests to SERVICE_A replica' },
+    { severity: 'WARNING', service: 'SERVICE_B', message: 'Network packet loss detected - retransmitting 4 segments' },
+    { severity: 'INFO', service: 'SERVICE_A', message: 'Cache invalidation triggered for user sessions' },
+    { severity: 'ERROR', service: 'SERVICE_B', message: 'IIS Application Pool 5011 event - abnormal termination' }
+];
+
+function addMockLogEntry() {
+    const logsContent = document.getElementById('logsContent');
+    const mockLog = mockLogs[Math.floor(Math.random() * mockLogs.length)];
+
+    const newEntry = document.createElement('div');
+    newEntry.className = `log-entry animate-slideIn`;
+
+    const time = new Date().toLocaleTimeString();
+    const severityClass = mockLog.severity.toLowerCase();
+
+    newEntry.innerHTML = `
+        <span class="log-time">${time}</span>
+        <span class="log-severity ${severityClass}">${mockLog.severity}</span>
+        <span class="log-message"><span class="log-service">${mockLog.service}</span> ${mockLog.message}</span>
+    `;
+
+    logsContent.insertBefore(newEntry, logsContent.firstChild);
+
+    // Keep only last 100 logs for performance
+    if (logsContent.children.length > 100) {
+        logsContent.removeChild(logsContent.lastChild);
+    }
+
+    console.log('📝 New mock log entry:', mockLog);
+}
+
+// Simulate new log entries every 3 seconds
+setInterval(addMockLogEntry, 3000);
+
+// Real-time log streaming (from WebSocket)
 window.addEventListener('log_update', function(event) {
     const log = event.detail;
     const logsContent = document.getElementById('logsContent');
@@ -354,7 +395,7 @@ window.addEventListener('log_update', function(event) {
         logsContent.removeChild(logsContent.lastChild);
     }
 
-    console.log('📝 New log entry:', log);
+    console.log('📝 WebSocket log entry:', log);
 });
 
 // Auto-scroll to latest logs

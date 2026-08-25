@@ -387,11 +387,12 @@ def stream_telemetry():
                         'unit': '%' if metric in ['cpu_usage', 'memory_usage', 'error_rate'] else 'ms' if metric == 'latency' else 'req/s'
                     }
 
-            socketio.emit('telemetry_update', telemetry_data, room='telemetry')
+            socketio.emit('telemetry_update', telemetry_data, room='telemetry', skip_sid=None)
+            print(f"📡 Telemetry emitted to room 'telemetry': {list(telemetry_data['services'].keys())}")
             time.sleep(2)  # Stream every 2 seconds
 
         except Exception as e:
-            print(f"Telemetry streaming error: {e}")
+            print(f"❌ Telemetry streaming error: {e}")
             time.sleep(5)
 
 def stream_logs():
