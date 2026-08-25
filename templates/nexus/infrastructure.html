@@ -1,0 +1,492 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Infrastructure - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🖥️ Windows Infrastructure Monitoring{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .infrastructure-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: var(--space-6);
+    }
+
+    .server-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        transition: all var(--transition-base);
+        cursor: pointer;
+    }
+
+    .server-card:hover {
+        border-color: var(--color-success);
+        box-shadow: var(--glow-success);
+    }
+
+    .server-card.critical {
+        border-color: var(--color-critical);
+    }
+
+    .server-card.critical:hover {
+        box-shadow: var(--glow-critical);
+    }
+
+    .server-header {
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .server-name {
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .server-ip {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+    }
+
+    .server-status {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: 4px 12px;
+        background: rgba(107, 255, 184, 0.2);
+        color: var(--color-success);
+        border-radius: var(--radius-full);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+    }
+
+    .server-status.warning {
+        background: rgba(255, 194, 71, 0.2);
+        color: var(--color-warning);
+    }
+
+    .server-status.critical {
+        background: rgba(255, 77, 166, 0.2);
+        color: var(--color-critical);
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        background: currentColor;
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .server-body {
+        padding: var(--space-4);
+    }
+
+    .metrics-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    .metric-box {
+        background: var(--bg-primary);
+        padding: var(--space-3);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-primary);
+    }
+
+    .metric-name {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-1);
+    }
+
+    .metric-value {
+        font-size: var(--fs-2xl);
+        font-weight: var(--fw-bold);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: var(--space-1);
+    }
+
+    .metric-value.warning {
+        background: none;
+        -webkit-text-fill-color: unset;
+        color: var(--color-warning);
+    }
+
+    .metric-value.critical {
+        background: none;
+        -webkit-text-fill-color: unset;
+        color: var(--color-critical);
+    }
+
+    .metric-bar {
+        height: 4px;
+        background: var(--border-primary);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+        margin-top: var(--space-1);
+    }
+
+    .metric-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-info), var(--color-success));
+        border-radius: var(--radius-full);
+    }
+
+    .services-section {
+        border-top: 1px solid var(--border-primary);
+        padding-top: var(--space-4);
+    }
+
+    .services-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+    }
+
+    .service-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-2);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-1);
+        font-size: var(--fs-xs);
+    }
+
+    .service-status-dot {
+        width: 4px;
+        height: 4px;
+        background: var(--color-success);
+        border-radius: 50%;
+        margin-right: var(--space-2);
+    }
+
+    .service-status-dot.stopped {
+        background: var(--color-critical);
+    }
+
+    .drill-down-btn {
+        width: 100%;
+        padding: var(--space-3);
+        margin-top: var(--space-4);
+        background: linear-gradient(135deg, var(--color-info), var(--color-success));
+        border: none;
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .drill-down-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--glow-info);
+    }
+
+    @media (max-width: 1024px) {
+        .infrastructure-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .infrastructure-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="infrastructure-grid">
+    <!-- SERVER 1 -->
+    <div class="server-card" onclick="drillDown('SERVER-01')">
+        <div class="server-header">
+            <div>
+                <div class="server-name">🖥️ SERVER-01</div>
+                <div class="server-ip">192.168.1.101</div>
+            </div>
+            <div class="server-status">
+                <div class="status-dot"></div>
+                Healthy
+            </div>
+        </div>
+        <div class="server-body">
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">CPU</div>
+                    <div class="metric-value">45%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 45%;"></div>
+                    </div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Memory</div>
+                    <div class="metric-value">62%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 62%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">Disk</div>
+                    <div class="metric-value">38%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 38%;"></div>
+                    </div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Network</div>
+                    <div class="metric-value">245 Mbps</div>
+                </div>
+            </div>
+
+            <div class="services-section">
+                <div class="services-title">Services</div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>IIS 10.0</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>SQL Server Agent</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>Windows Defender</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+            </div>
+
+            <button class="drill-down-btn">📊 Details</button>
+        </div>
+    </div>
+
+    <!-- SERVER 2 -->
+    <div class="server-card" onclick="drillDown('SERVER-02')">
+        <div class="server-header">
+            <div>
+                <div class="server-name">🖥️ SERVER-02</div>
+                <div class="server-ip">192.168.1.102</div>
+            </div>
+            <div class="server-status warning">
+                <div class="status-dot"></div>
+                Degraded
+            </div>
+        </div>
+        <div class="server-body">
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">CPU</div>
+                    <div class="metric-value warning">92%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 92%; background: linear-gradient(90deg, var(--color-warning), var(--color-critical));"></div>
+                    </div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Memory</div>
+                    <div class="metric-value warning">87%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 87%; background: linear-gradient(90deg, var(--color-warning), var(--color-critical));"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">Disk</div>
+                    <div class="metric-value">72%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 72%;"></div>
+                    </div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Network</div>
+                    <div class="metric-value">1.2 Gbps</div>
+                </div>
+            </div>
+
+            <div class="services-section">
+                <div class="services-title">Services</div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>IIS 10.0</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot stopped"></div>
+                        <span>Update Service</span>
+                    </div>
+                    <span style="color: var(--color-critical);">Stopped</span>
+                </div>
+            </div>
+
+            <button class="drill-down-btn">📊 Details</button>
+        </div>
+    </div>
+
+    <!-- SERVER 3 -->
+    <div class="server-card critical" onclick="drillDown('DB-SERVER-01')">
+        <div class="server-header">
+            <div>
+                <div class="server-name">🗄️ DB-SERVER-01</div>
+                <div class="server-ip">192.168.1.110</div>
+            </div>
+            <div class="server-status critical">
+                <div class="status-dot"></div>
+                Critical
+            </div>
+        </div>
+        <div class="server-body">
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">CPU</div>
+                    <div class="metric-value critical">98%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 98%; background: var(--color-critical);"></div>
+                    </div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Memory</div>
+                    <div class="metric-value critical">94%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 94%; background: var(--color-critical);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">Disk I/O</div>
+                    <div class="metric-value warning">85%</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Connection Pool</div>
+                    <div class="metric-value critical">498/500</div>
+                </div>
+            </div>
+
+            <div class="services-section">
+                <div class="services-title">Services</div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>SQL Server</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>SQL Agent</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+            </div>
+
+            <button class="drill-down-btn">📊 Details</button>
+        </div>
+    </div>
+
+    <!-- SERVER 4 -->
+    <div class="server-card" onclick="drillDown('CACHE-SERVER-01')">
+        <div class="server-header">
+            <div>
+                <div class="server-name">⚡ CACHE-SERVER-01</div>
+                <div class="server-ip">192.168.1.120</div>
+            </div>
+            <div class="server-status">
+                <div class="status-dot"></div>
+                Healthy
+            </div>
+        </div>
+        <div class="server-body">
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">CPU</div>
+                    <div class="metric-value">28%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 28%;"></div>
+                    </div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Memory</div>
+                    <div class="metric-value">78%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 78%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-name">Hit Rate</div>
+                    <div class="metric-value">94%</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-name">Throughput</div>
+                    <div class="metric-value">12.4K ops/s</div>
+                </div>
+            </div>
+
+            <div class="services-section">
+                <div class="services-title">Services</div>
+                <div class="service-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="service-status-dot"></div>
+                        <span>Redis 7.0</span>
+                    </div>
+                    <span style="color: var(--color-success);">Running</span>
+                </div>
+            </div>
+
+            <button class="drill-down-btn">📊 Details</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function drillDown(server) {
+    alert(`Opening detailed monitoring for ${server}...\n\n- CPU Timeline\n- Memory Analysis\n- Process List\n- Event Logs\n- IIS Logs\n- Performance Counters`);
+}
+
+// Listen for infrastructure updates
+window.addEventListener('telemetry_update', function(event) {
+    const data = event.detail;
+    console.log('Infrastructure telemetry:', data);
+    // Could update server cards in real-time
+});
+</script>
+{% endblock %}

@@ -1,0 +1,484 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Traces Explorer - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🔍 Distributed Traces - Request Flow Visualization{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .traces-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .traces-filters {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+    }
+
+    .filter-group {
+        margin-bottom: var(--space-6);
+    }
+
+    .filter-label {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        text-transform: uppercase;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        margin-bottom: var(--space-2);
+    }
+
+    .filter-option {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .filter-option:hover {
+        background: var(--bg-hover);
+    }
+
+    .filter-option.active {
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+        border-left: 3px solid var(--color-info);
+    }
+
+    .filter-checkbox {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .traces-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .traces-header {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .traces-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .traces-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-4);
+    }
+
+    .trace-item {
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-3);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .trace-item:hover {
+        border-color: var(--color-info);
+        background: var(--bg-hover);
+    }
+
+    .trace-item.selected {
+        border-color: var(--color-info);
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+    }
+
+    .trace-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-2);
+    }
+
+    .trace-id {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .trace-duration {
+        padding: 2px 8px;
+        background: var(--bg-secondary);
+        border-radius: 3px;
+        font-size: var(--fs-xs);
+        color: var(--color-success);
+        font-weight: var(--fw-bold);
+    }
+
+    .trace-duration.slow {
+        color: var(--color-warning);
+    }
+
+    .trace-duration.error {
+        color: var(--color-critical);
+    }
+
+    .trace-endpoint {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .trace-meta {
+        display: flex;
+        gap: var(--space-3);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .trace-detail {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .detail-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-tertiary);
+        text-align: center;
+    }
+
+    .span-timeline {
+        margin-bottom: var(--space-6);
+    }
+
+    .span-item {
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        border-left: 4px solid var(--color-info);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-3);
+    }
+
+    .span-item.error {
+        border-left-color: var(--color-critical);
+        background: linear-gradient(135deg, var(--color-critical-dim), transparent);
+    }
+
+    .span-name {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .span-details {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+    }
+
+    .span-bar {
+        height: 8px;
+        background: var(--border-primary);
+        border-radius: var(--radius-full);
+        margin-top: var(--space-2);
+        position: relative;
+    }
+
+    .span-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-info), var(--color-success));
+        border-radius: var(--radius-full);
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-3);
+        margin-bottom: var(--space-6);
+    }
+
+    .metric-card {
+        background: var(--bg-primary);
+        padding: var(--space-3);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-primary);
+        text-align: center;
+    }
+
+    .metric-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-1);
+    }
+
+    .metric-value {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+    }
+
+    @media (max-width: 1024px) {
+        .traces-layout {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .traces-filters {
+            max-height: 300px;
+        }
+
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="traces-layout">
+    <!-- FILTERS SIDEBAR -->
+    <div class="traces-filters">
+        <div class="filter-group">
+            <div class="filter-label">Search Trace ID</div>
+            <input type="text" class="filter-input" placeholder="e.g., 4a6c8f9e2d1b...">
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label">Service</div>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>SERVICE_A (4)</span>
+            </label>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>SERVICE_B (3)</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" class="filter-checkbox">
+                <span>API_GATEWAY (2)</span>
+            </label>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label">Status</div>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>Success (6)</span>
+            </label>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>Error (2)</span>
+            </label>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>Slow (1)</span>
+            </label>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label">Duration</div>
+            <input type="text" class="filter-input" placeholder="Min: 0ms">
+            <input type="text" class="filter-input" placeholder="Max: 5000ms">
+        </div>
+    </div>
+
+    <!-- TRACES VIEWER -->
+    <div class="traces-panel">
+        <div class="traces-header">
+            <div class="traces-title">🔍 Distributed Traces (9 total)</div>
+        </div>
+
+        <div class="traces-list">
+            <!-- TRACE 1 -->
+            <div class="trace-item selected" onclick="selectTrace(this, 'trace-001')">
+                <div class="trace-header">
+                    <span class="trace-id">4a6c8f9e2d1b7c3a5f8e2b0d</span>
+                    <span class="trace-duration">245ms</span>
+                </div>
+                <div class="trace-endpoint">GET /api/users/profile</div>
+                <div class="trace-meta">
+                    <span>SERVICE_A</span>
+                    <span>200 OK</span>
+                    <span>3 spans</span>
+                </div>
+            </div>
+
+            <!-- TRACE 2 -->
+            <div class="trace-item" onclick="selectTrace(this, 'trace-002')">
+                <div class="trace-header">
+                    <span class="trace-id">7e2f1a4c9b6d3e8f5a7c2b1d</span>
+                    <span class="trace-duration slow">1,245ms</span>
+                </div>
+                <div class="trace-endpoint">POST /api/orders/create</div>
+                <div class="trace-meta">
+                    <span>SERVICE_B</span>
+                    <span>201 Created</span>
+                    <span>8 spans</span>
+                </div>
+            </div>
+
+            <!-- TRACE 3 -->
+            <div class="trace-item" onclick="selectTrace(this, 'trace-003')">
+                <div class="trace-header">
+                    <span class="trace-id">3d8e1f7a9c2b4e6f8a3d5e7b</span>
+                    <span class="trace-duration error">3,871ms</span>
+                </div>
+                <div class="trace-endpoint">PUT /api/payments/process</div>
+                <div class="trace-meta">
+                    <span>SERVICE_A</span>
+                    <span>500 Error</span>
+                    <span>5 spans</span>
+                </div>
+            </div>
+
+            <!-- TRACE 4 -->
+            <div class="trace-item" onclick="selectTrace(this, 'trace-004')">
+                <div class="trace-header">
+                    <span class="trace-id">1b4f7e2a9d6c3f8e5a7c0b2d</span>
+                    <span class="trace-duration">189ms</span>
+                </div>
+                <div class="trace-endpoint">GET /api/products/search</div>
+                <div class="trace-meta">
+                    <span>API_GATEWAY</span>
+                    <span>200 OK</span>
+                    <span>4 spans</span>
+                </div>
+            </div>
+
+            <!-- TRACE 5 -->
+            <div class="trace-item" onclick="selectTrace(this, 'trace-005')">
+                <div class="trace-header">
+                    <span class="trace-id">6a3e9f1d2c7b4a8e5f0c3b1a</span>
+                    <span class="trace-duration">512ms</span>
+                </div>
+                <div class="trace-endpoint">POST /api/auth/login</div>
+                <div class="trace-meta">
+                    <span>SERVICE_A</span>
+                    <span>200 OK</span>
+                    <span>6 spans</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DETAIL VIEW (off to the right when selected) -->
+<div class="trace-detail" id="traceDetail" style="display: none; position: fixed; right: 0; top: 120px; width: 40%; height: calc(100vh - 120px); z-index: 100; border-left: 1px solid var(--border-primary);">
+    <div class="detail-empty">
+        <div>
+            <div style="font-size: 2em; margin-bottom: 12px;">📊</div>
+            <div>Select a trace to view details</div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function selectTrace(element, traceId) {
+    document.querySelectorAll('.trace-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    element.classList.add('selected');
+
+    const detailPanel = document.getElementById('traceDetail');
+    detailPanel.style.display = 'flex';
+
+    detailPanel.innerHTML = `
+        <div style="padding: var(--space-6); overflow-y: auto; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <div style="font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--text-primary);">GET /api/users/profile</div>
+                <button onclick="this.closest('.trace-detail').style.display = 'none';" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5em;">✕</button>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Duration</div>
+                    <div class="metric-value">245ms</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Spans</div>
+                    <div class="metric-value">3</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Status</div>
+                    <div class="metric-value" style="color: var(--color-success);">✓ OK</div>
+                </div>
+            </div>
+
+            <div style="font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-primary); margin-bottom: var(--space-3); text-transform: uppercase;">🔗 Trace Timeline</div>
+
+            <div class="span-item">
+                <div class="span-name">service.request.handler</div>
+                <div class="span-details">SERVICE_A • 0ms - 245ms</div>
+                <div class="span-bar">
+                    <div class="span-bar-fill" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="span-item">
+                <div class="span-name">database.query</div>
+                <div class="span-details">SQL_SERVER • 45ms - 178ms (133ms)</div>
+                <div class="span-bar">
+                    <div class="span-bar-fill" style="width: 54%; margin-left: 18%;"></div>
+                </div>
+            </div>
+
+            <div class="span-item">
+                <div class="span-name">cache.get</div>
+                <div class="span-details">REDIS • 15ms - 32ms (17ms)</div>
+                <div class="span-bar">
+                    <div class="span-bar-fill" style="width: 7%; margin-left: 6%;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Auto-select first trace on load
+window.addEventListener('load', () => {
+    const firstTrace = document.querySelector('.trace-item');
+    if (firstTrace) {
+        setTimeout(() => selectTrace(firstTrace, 'trace-001'), 100);
+    }
+});
+</script>
+{% endblock %}

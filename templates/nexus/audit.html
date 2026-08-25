@@ -1,0 +1,461 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Audit Timeline - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}📋 Audit Timeline - Compliance & Activity Log{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .audit-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .audit-filters {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+    }
+
+    .filter-block {
+        margin-bottom: var(--space-6);
+    }
+
+    .filter-label {
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-3);
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        margin-bottom: var(--space-2);
+    }
+
+    .filter-option {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        font-size: var(--fs-sm);
+    }
+
+    .filter-option:hover {
+        background: var(--bg-hover);
+        border: 1px solid var(--color-info);
+    }
+
+    .filter-option.active {
+        background: linear-gradient(135deg, var(--color-success-dim), transparent);
+        color: var(--color-success);
+    }
+
+    .filter-checkbox {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .audit-main {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .audit-header {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .audit-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .export-button {
+        padding: 6px 12px;
+        background: linear-gradient(135deg, var(--color-info), var(--color-success));
+        border: none;
+        color: var(--text-inverse);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .export-button:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--glow-info);
+    }
+
+    .audit-timeline {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-4);
+        position: relative;
+    }
+
+    .timeline-line {
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-primary);
+    }
+
+    .audit-event {
+        margin-left: var(--space-6);
+        margin-bottom: var(--space-6);
+        position: relative;
+    }
+
+    .event-dot {
+        position: absolute;
+        left: -34px;
+        top: 4px;
+        width: 14px;
+        height: 14px;
+        background: var(--color-info);
+        border: 3px solid var(--bg-secondary);
+        border-radius: 50%;
+        z-index: 10;
+    }
+
+    .event-dot.success {
+        background: var(--color-success);
+    }
+
+    .event-dot.warning {
+        background: var(--color-warning);
+    }
+
+    .event-dot.error {
+        background: var(--color-critical);
+    }
+
+    .event-card {
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-base);
+    }
+
+    .event-card:hover {
+        border-color: var(--color-info);
+        background: var(--bg-hover);
+    }
+
+    .event-time {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        margin-bottom: var(--space-1);
+    }
+
+    .event-action {
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .event-details {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+        line-height: var(--lh-normal);
+    }
+
+    .event-meta {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+        font-size: var(--fs-xs);
+    }
+
+    .meta-badge {
+        padding: 2px 8px;
+        background: var(--bg-secondary);
+        border-radius: 3px;
+        color: var(--text-secondary);
+    }
+
+    .meta-badge.user {
+        color: var(--color-info);
+    }
+
+    .meta-badge.system {
+        color: var(--color-success);
+    }
+
+    .meta-badge.critical {
+        background: rgba(255, 77, 166, 0.2);
+        color: var(--color-critical);
+    }
+
+    .timestamp-group {
+        padding: var(--space-2);
+        background: var(--bg-tertiary);
+        border-left: 3px solid var(--border-primary);
+        margin-left: -6px;
+        margin-bottom: var(--space-4);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 1024px) {
+        .audit-layout {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .audit-filters {
+            max-height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="audit-layout">
+    <!-- FILTERS SIDEBAR -->
+    <div class="audit-filters">
+        <div class="filter-block">
+            <div class="filter-label">Search Events</div>
+            <input type="text" class="filter-input" placeholder="Keyword...">
+        </div>
+
+        <div class="filter-block">
+            <div class="filter-label">Event Type</div>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>Login/Logout</span>
+            </label>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>Configuration Change</span>
+            </label>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>Execution</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" class="filter-checkbox">
+                <span>Access Denied</span>
+            </label>
+        </div>
+
+        <div class="filter-block">
+            <div class="filter-label">User</div>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>All Users</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" class="filter-checkbox">
+                <span>System</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" class="filter-checkbox">
+                <span>Admin Only</span>
+            </label>
+        </div>
+
+        <div class="filter-block">
+            <div class="filter-label">Severity</div>
+            <label class="filter-option active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span>All Levels</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" class="filter-checkbox">
+                <span>🔴 Critical</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" class="filter-checkbox">
+                <span>🟠 Warning</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- AUDIT TIMELINE -->
+    <div class="audit-main">
+        <div class="audit-header">
+            <div class="audit-title">📋 Audit Log (847 events)</div>
+            <button class="export-button" onclick="alert('Exporting audit log as CSV...')">⬇️ Export</button>
+        </div>
+
+        <div class="audit-timeline">
+            <div class="timeline-line"></div>
+
+            <!-- TODAY HEADER -->
+            <div class="timestamp-group">📅 Today, August 25, 2026</div>
+
+            <!-- EVENT 1 -->
+            <div class="audit-event">
+                <div class="event-dot success"></div>
+                <div class="event-card">
+                    <div class="event-time">15:42:38</div>
+                    <div class="event-action">✓ Playbook Executed: Restart IIS Application Pool</div>
+                    <div class="event-details">SERVICE_B memory leak remediation completed successfully. 94% memory usage reduction achieved.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge system">System</span>
+                        <span class="meta-badge">SERVICE_B</span>
+                        <span class="meta-badge">Execution</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENT 2 -->
+            <div class="audit-event">
+                <div class="event-dot"></div>
+                <div class="event-card">
+                    <div class="event-time">15:38:15</div>
+                    <div class="event-action">⚠️ Policy: Debug Logging Enabled</div>
+                    <div class="event-details">Temporary increase in log verbosity initiated for SERVICE_A diagnosis. Expires in 2 hours.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge user">Jones Oibe</span>
+                        <span class="meta-badge">SERVICE_A</span>
+                        <span class="meta-badge">Configuration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENT 3 -->
+            <div class="audit-event">
+                <div class="event-dot success"></div>
+                <div class="event-card">
+                    <div class="event-time">15:35:22</div>
+                    <div class="event-action">✓ Approval: Scale Up Database Connections</div>
+                    <div class="event-details">Connection pool increased from 500 to 750 on SQL_SERVER. Approved by on-call team.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge user">On-Call Engineer</span>
+                        <span class="meta-badge">SQL_SERVER</span>
+                        <span class="meta-badge">Approval</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENT 4 -->
+            <div class="audit-event">
+                <div class="event-dot warning"></div>
+                <div class="event-card">
+                    <div class="event-time">15:28:47</div>
+                    <div class="event-action">⚠️ Access: Attempt to Modify System Settings</div>
+                    <div class="event-details">Access denied: Viewer role cannot modify system configurations. Operation blocked by RBAC.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge user">viewer_account@nexus</span>
+                        <span class="meta-badge">Settings</span>
+                        <span class="meta-badge">Access Denied</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENT 5 -->
+            <div class="audit-event">
+                <div class="event-dot success"></div>
+                <div class="event-card">
+                    <div class="event-time">15:15:30</div>
+                    <div class="event-action">✓ User Login Successful</div>
+                    <div class="event-details">Operator role logged in from 192.168.1.45. MFA authentication verified.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge user">Operator Alice</span>
+                        <span class="meta-badge">Operator</span>
+                        <span class="meta-badge">Login</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- YESTERDAY HEADER -->
+            <div class="timestamp-group" style="margin-top: var(--space-8);">📅 Yesterday, August 24, 2026</div>
+
+            <!-- EVENT 6 -->
+            <div class="audit-event">
+                <div class="event-dot"></div>
+                <div class="event-card">
+                    <div class="event-time">23:47:12</div>
+                    <div class="event-action">🔐 Configuration: WAF Rules Updated</div>
+                    <div class="event-details">New DDoS protection rules deployed to API Gateway. 3 existing rules deprecated.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge user">Admin Engineer</span>
+                        <span class="meta-badge">API_GATEWAY</span>
+                        <span class="meta-badge">Configuration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENT 7 -->
+            <div class="audit-event">
+                <div class="event-dot error"></div>
+                <div class="event-card">
+                    <div class="event-time">22:15:38</div>
+                    <div class="event-action">❌ Critical: Unauthorized API Access Blocked</div>
+                    <div class="event-details">Multiple failed authentication attempts detected from unknown source. Rate limiter activated. IP flagged for 24h suspension.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge critical">CRITICAL</span>
+                        <span class="meta-badge">Security</span>
+                        <span class="meta-badge">Access Blocked</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENT 8 -->
+            <div class="audit-event">
+                <div class="event-dot success"></div>
+                <div class="event-card">
+                    <div class="event-time">18:32:05</div>
+                    <div class="event-action">✓ Backup Completed: Full Database Snapshot</div>
+                    <div class="event-details">Daily automated backup of SQL_SERVER completed. Size: 47.2 GB. Retention: 30 days.</div>
+                    <div class="event-meta">
+                        <span class="meta-badge system">System</span>
+                        <span class="meta-badge">Backup</span>
+                        <span class="meta-badge">Maintenance</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Filter functionality
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            console.log('Filter updated:', this.parentElement.textContent);
+            // Could implement real filtering here
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,364 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Logs Explorer - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}📝 Logs Explorer - Real-Time Streaming{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .logs-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .logs-filter {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+    }
+
+    .filter-section {
+        margin-bottom: var(--space-6);
+    }
+
+    .filter-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        text-transform: uppercase;
+    }
+
+    .filter-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .filter-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .filter-item.active {
+        background: linear-gradient(135deg, var(--color-success-dim), transparent);
+        border-left: 3px solid var(--color-success);
+    }
+
+    .filter-checkbox {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .filter-label {
+        font-size: var(--fs-sm);
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .filter-count {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .logs-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .logs-header {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-4);
+    }
+
+    .logs-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .live-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: 4px 12px;
+        background: rgba(107, 255, 184, 0.2);
+        color: var(--color-success);
+        border-radius: var(--radius-full);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+    }
+
+    .live-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--color-success);
+        border-radius: 50%;
+        animation: pulse 1s ease-in-out infinite;
+    }
+
+    .logs-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        line-height: 1.6;
+    }
+
+    .log-entry {
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--border-primary);
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        gap: var(--space-3);
+    }
+
+    .log-entry:last-child {
+        border-bottom: none;
+    }
+
+    .log-time {
+        color: var(--text-secondary);
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .log-severity {
+        display: inline-block;
+        min-width: 60px;
+        flex-shrink: 0;
+        font-weight: var(--fw-bold);
+    }
+
+    .log-severity.info {
+        color: var(--color-info);
+    }
+
+    .log-severity.warning {
+        color: var(--color-warning);
+    }
+
+    .log-severity.error {
+        color: var(--color-critical);
+    }
+
+    .log-message {
+        flex: 1;
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+
+    .log-service {
+        color: var(--text-secondary);
+        font-size: 0.9em;
+    }
+
+    @media (max-width: 1024px) {
+        .logs-layout {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .logs-filter {
+            max-height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logs-layout">
+    <!-- FILTERS SIDEBAR -->
+    <div class="logs-filter">
+        <div class="filter-section">
+            <div class="filter-title">Severity</div>
+            <label class="filter-item active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span class="filter-label">Info</span>
+                <span class="filter-count">142</span>
+            </label>
+            <label class="filter-item active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span class="filter-label">Warning</span>
+                <span class="filter-count">28</span>
+            </label>
+            <label class="filter-item active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span class="filter-label">Error</span>
+                <span class="filter-count">7</span>
+            </label>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-title">Service</div>
+            <label class="filter-item active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span class="filter-label">SERVICE_A</span>
+                <span class="filter-count">62</span>
+            </label>
+            <label class="filter-item active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span class="filter-label">SERVICE_B</span>
+                <span class="filter-count">45</span>
+            </label>
+            <label class="filter-item">
+                <input type="checkbox" class="filter-checkbox">
+                <span class="filter-label">API_GATEWAY</span>
+                <span class="filter-count">38</span>
+            </label>
+            <label class="filter-item">
+                <input type="checkbox" class="filter-checkbox">
+                <span class="filter-label">SQL_SERVER</span>
+                <span class="filter-count">12</span>
+            </label>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-title">Time Range</div>
+            <label class="filter-item active">
+                <input type="checkbox" class="filter-checkbox" checked>
+                <span class="filter-label">Last Hour</span>
+            </label>
+            <label class="filter-item">
+                <input type="checkbox" class="filter-checkbox">
+                <span class="filter-label">Last 4 Hours</span>
+            </label>
+            <label class="filter-item">
+                <input type="checkbox" class="filter-checkbox">
+                <span class="filter-label">Last 24 Hours</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- LOGS VIEWER -->
+    <div class="logs-container">
+        <div class="logs-header">
+            <div class="logs-title">📝 Log Stream</div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                LIVE (177 logs)
+            </div>
+        </div>
+
+        <div class="logs-content" id="logsContent">
+            <div class="log-entry">
+                <span class="log-time">15:57:42</span>
+                <span class="log-severity error">ERROR</span>
+                <span class="log-message"><span class="log-service">SERVICE_B</span> Payment API returned HTTP 500 - Connection timeout</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:57:28</span>
+                <span class="log-severity warning">WARN</span>
+                <span class="log-message"><span class="log-service">SERVICE_A</span> Memory allocation exceeded configured threshold (3.8GB / 4.0GB)</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:57:15</span>
+                <span class="log-severity info">INFO</span>
+                <span class="log-message"><span class="log-service">SERVICE_A</span> Garbage collection completed - freed 512MB</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:57:03</span>
+                <span class="log-severity warning">WARN</span>
+                <span class="log-message"><span class="log-service">SQL_SERVER</span> Database lock timeout - query execution exceeded 30s</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:56:48</span>
+                <span class="log-severity info">INFO</span>
+                <span class="log-message"><span class="log-service">API_GATEWAY</span> Load balancer redirected 1,247 requests to SERVICE_A replica</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:56:32</span>
+                <span class="log-severity warning">WARN</span>
+                <span class="log-message"><span class="log-service">SERVICE_B</span> Network packet loss detected - retransmitting 4 segments</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:56:18</span>
+                <span class="log-severity info">INFO</span>
+                <span class="log-message"><span class="log-service">SERVICE_A</span> Cache invalidation triggered for user sessions</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:56:05</span>
+                <span class="log-severity info">INFO</span>
+                <span class="log-message"><span class="log-service">API_GATEWAY</span> Health check passed - all backends operational</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:55:52</span>
+                <span class="log-severity error">ERROR</span>
+                <span class="log-message"><span class="log-service">SERVICE_B</span> IIS Application Pool 5011 event - abnormal termination</span>
+            </div>
+
+            <div class="log-entry">
+                <span class="log-time">15:55:38</span>
+                <span class="log-severity warning">WARN</span>
+                <span class="log-message"><span class="log-service">SQL_SERVER</span> Disk I/O wait increased to 85% - potential bottleneck</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Real-time log streaming
+window.addEventListener('log_update', function(event) {
+    const log = event.detail;
+    const logsContent = document.getElementById('logsContent');
+
+    // Add new log entry at the top
+    const newEntry = document.createElement('div');
+    newEntry.className = `log-entry animate-slideIn`;
+
+    const time = new Date(log.timestamp).toLocaleTimeString();
+    const severityClass = log.severity.toLowerCase();
+
+    newEntry.innerHTML = `
+        <span class="log-time">${time}</span>
+        <span class="log-severity ${severityClass}">${log.severity}</span>
+        <span class="log-message"><span class="log-service">${log.service}</span> ${log.message}</span>
+    `;
+
+    logsContent.insertBefore(newEntry, logsContent.firstChild);
+
+    // Keep only last 100 logs for performance
+    if (logsContent.children.length > 100) {
+        logsContent.removeChild(logsContent.lastChild);
+    }
+
+    console.log('📝 New log entry:', log);
+});
+
+// Auto-scroll to latest logs
+const logsContent = document.getElementById('logsContent');
+logsContent.parentElement.scrollTop = logsContent.parentElement.scrollHeight;
+</script>
+{% endblock %}

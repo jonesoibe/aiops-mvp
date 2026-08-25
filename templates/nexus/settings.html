@@ -1,0 +1,669 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Settings & Policies - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}⚙️ Settings & Policies - System Configuration{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-layout {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .settings-nav {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-3);
+        overflow-y: auto;
+    }
+
+    .nav-item {
+        display: block;
+        width: 100%;
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        border: none;
+        color: var(--text-secondary);
+        border-radius: var(--radius-lg);
+        text-align: left;
+        cursor: pointer;
+        margin-bottom: var(--space-2);
+        transition: all var(--transition-base);
+        font-weight: var(--fw-medium);
+    }
+
+    .nav-item:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .nav-item.active {
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+        color: var(--color-info);
+        border-left: 3px solid var(--color-info);
+    }
+
+    .settings-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        overflow-y: auto;
+    }
+
+    .section-header {
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .section-title {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .section-desc {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .settings-group {
+        margin-bottom: var(--space-6);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-primary);
+    }
+
+    .group-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        text-transform: uppercase;
+    }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-3) 0;
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+
+    .setting-label {
+        flex: 1;
+    }
+
+    .setting-name {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .setting-hint {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .toggle-switch {
+        width: 48px;
+        height: 24px;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-primary);
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        position: relative;
+        transition: all var(--transition-base);
+    }
+
+    .toggle-switch.active {
+        background: var(--color-success);
+        border-color: var(--color-success);
+    }
+
+    .toggle-dot {
+        width: 18px;
+        height: 18px;
+        background: var(--text-inverse);
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: all var(--transition-base);
+    }
+
+    .toggle-switch.active .toggle-dot {
+        left: 26px;
+    }
+
+    .setting-input {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+    }
+
+    .setting-select {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        cursor: pointer;
+    }
+
+    .action-row {
+        display: flex;
+        gap: var(--space-3);
+        margin-top: var(--space-6);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-primary);
+    }
+
+    .btn-primary {
+        padding: var(--space-3) var(--space-4);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        border: none;
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--glow-success);
+    }
+
+    .btn-secondary {
+        padding: var(--space-3) var(--space-4);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-primary);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--color-info);
+        color: var(--color-info);
+    }
+
+    .btn-danger {
+        padding: var(--space-3) var(--space-4);
+        background: rgba(255, 77, 166, 0.2);
+        border: 1px solid var(--color-critical);
+        color: var(--color-critical);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-danger:hover {
+        background: var(--color-critical);
+        color: var(--text-inverse);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(107, 255, 184, 0.2);
+        color: var(--color-success);
+        border-radius: var(--radius-full);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+    }
+
+    @media (max-width: 1024px) {
+        .settings-layout {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .settings-nav {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-2);
+            max-height: 150px;
+        }
+
+        .nav-item {
+            margin-bottom: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+    <!-- NAVIGATION -->
+    <div class="settings-nav">
+        <button class="nav-item active" onclick="switchSection(this, 'general')">🎯 General</button>
+        <button class="nav-item" onclick="switchSection(this, 'alerts')">🚨 Alerts</button>
+        <button class="nav-item" onclick="switchSection(this, 'rbac')">🔐 Access Control</button>
+        <button class="nav-item" onclick="switchSection(this, 'integrations')">🔗 Integrations</button>
+        <button class="nav-item" onclick="switchSection(this, 'backup')">💾 Backup</button>
+        <button class="nav-item" onclick="switchSection(this, 'policies')">📋 Policies</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="settings-content" id="content">
+        <!-- GENERAL SETTINGS -->
+        <div id="general-section">
+            <div class="section-header">
+                <div class="section-title">🎯 General Settings</div>
+                <div class="section-desc">Configure basic platform settings and preferences</div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Platform Configuration</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Platform Name</div>
+                        <div class="setting-hint">Display name for this Nexus instance</div>
+                    </div>
+                    <input type="text" class="setting-input" value="Nexus AIOps - Production" style="width: 200px;">
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Environment</div>
+                        <div class="setting-hint">Current deployment environment</div>
+                    </div>
+                    <select class="setting-select" style="width: 200px;">
+                        <option>Production</option>
+                        <option>Staging</option>
+                        <option>Development</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Data Retention</div>
+                        <div class="setting-hint">How long to keep historical data</div>
+                    </div>
+                    <select class="setting-select" style="width: 200px;">
+                        <option>30 Days</option>
+                        <option>90 Days</option>
+                        <option>6 Months</option>
+                        <option>1 Year</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Features</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">AI-Powered Investigation</div>
+                        <div class="setting-hint">Enable Davis AI for automated root cause analysis</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Real-Time Streaming</div>
+                        <div class="setting-hint">Enable WebSocket connections for live telemetry</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Automated Remediation</div>
+                        <div class="setting-hint">Allow playbooks to execute without approval</div>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" onclick="alert('Settings saved!')">✓ Save Changes</button>
+                <button class="btn-secondary" onclick="alert('Settings reset to defaults')">↻ Reset</button>
+            </div>
+        </div>
+
+        <!-- ALERT SETTINGS -->
+        <div id="alerts-section" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">🚨 Alert Settings</div>
+                <div class="section-desc">Configure alert thresholds and notification preferences</div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Alert Routing</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Critical Alerts to Email</div>
+                        <div class="setting-hint">Send critical severity alerts via email</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Slack Integration</div>
+                        <div class="setting-hint">Post alerts to Slack channel #nexus-incidents</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Thresholds</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">CPU Alert Threshold</div>
+                        <div class="setting-hint">Alert when CPU exceeds this percentage</div>
+                    </div>
+                    <input type="number" class="setting-input" value="85" style="width: 100px;">%
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Memory Alert Threshold</div>
+                        <div class="setting-hint">Alert when memory exceeds this percentage</div>
+                    </div>
+                    <input type="number" class="setting-input" value="90" style="width: 100px;">%
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Error Rate Threshold</div>
+                        <div class="setting-hint">Alert when error rate exceeds this percentage</div>
+                    </div>
+                    <input type="number" class="setting-input" value="2" style="width: 100px;">%
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" onclick="alert('Alert settings saved!')">✓ Save Changes</button>
+            </div>
+        </div>
+
+        <!-- RBAC SETTINGS -->
+        <div id="rbac-section" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">🔐 Access Control (RBAC)</div>
+                <div class="section-desc">Manage roles, permissions, and user access policies</div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Roles</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Admin</div>
+                        <div class="setting-hint">Full platform access including configuration</div>
+                    </div>
+                    <button class="btn-secondary" onclick="alert('Editing Admin role...')">✎ Edit</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Operator</div>
+                        <div class="setting-hint">Can execute actions and view all data</div>
+                    </div>
+                    <button class="btn-secondary" onclick="alert('Editing Operator role...')">✎ Edit</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Viewer</div>
+                        <div class="setting-hint">Read-only access to platform</div>
+                    </div>
+                    <button class="btn-secondary" onclick="alert('Editing Viewer role...')">✎ Edit</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Security Policies</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Require MFA for Admin</div>
+                        <div class="setting-hint">Multi-factor authentication mandatory for admin access</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Session Timeout</div>
+                        <div class="setting-hint">Automatically logout after inactivity</div>
+                    </div>
+                    <input type="number" class="setting-input" value="30" style="width: 100px;">minutes
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Password Expiry</div>
+                        <div class="setting-hint">Force password reset every X days</div>
+                    </div>
+                    <input type="number" class="setting-input" value="90" style="width: 100px;">days
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" onclick="alert('RBAC settings saved!')">✓ Save Changes</button>
+            </div>
+        </div>
+
+        <!-- INTEGRATIONS -->
+        <div id="integrations-section" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">🔗 Third-Party Integrations</div>
+                <div class="section-desc">Connect external tools and data sources</div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Notification Services</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Slack</div>
+                        <div class="setting-hint">Send alerts to Slack channels</div>
+                    </div>
+                    <span class="status-badge">✓ Connected</span>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">PagerDuty</div>
+                        <div class="setting-hint">On-call escalation and incident management</div>
+                    </div>
+                    <button class="btn-secondary" onclick="alert('Configuring PagerDuty...')">⚙️ Configure</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Email</div>
+                        <div class="setting-hint">SMTP server for email notifications</div>
+                    </div>
+                    <button class="btn-secondary" onclick="alert('Configuring Email...')">⚙️ Configure</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Data Sources</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">MongoDB</div>
+                        <div class="setting-hint">Primary data store connection</div>
+                    </div>
+                    <span class="status-badge">✓ Connected</span>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Prometheus</div>
+                        <div class="setting-hint">Metrics collection and aggregation</div>
+                    </div>
+                    <button class="btn-secondary" onclick="alert('Configuring Prometheus...')">⚙️ Configure</button>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" onclick="alert('Integration settings saved!')">✓ Save Changes</button>
+            </div>
+        </div>
+
+        <!-- BACKUP SETTINGS -->
+        <div id="backup-section" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">💾 Backup & Recovery</div>
+                <div class="section-desc">Configure automated backups and recovery procedures</div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Backup Schedule</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Daily Backup</div>
+                        <div class="setting-hint">Automated daily backup at 02:00 UTC</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Retention Period</div>
+                        <div class="setting-hint">Keep backups for this duration</div>
+                    </div>
+                    <select class="setting-select" style="width: 200px;">
+                        <option>7 Days</option>
+                        <option>30 Days</option>
+                        <option>90 Days</option>
+                        <option>6 Months</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Backup Location</div>
+                        <div class="setting-hint">Cloud storage bucket for backups</div>
+                    </div>
+                    <input type="text" class="setting-input" value="s3://nexus-backups/prod" style="width: 300px;">
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Recovery Options</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Last Backup</div>
+                        <div class="setting-hint">Latest successful backup</div>
+                    </div>
+                    <span style="color: var(--text-secondary);">2026-08-25 02:15 UTC (47.2 GB)</span>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" onclick="alert('Backup settings saved!')">✓ Save Changes</button>
+                <button class="btn-secondary" onclick="alert('Testing backup and recovery...')">🧪 Test Restore</button>
+            </div>
+        </div>
+
+        <!-- POLICIES -->
+        <div id="policies-section" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">📋 System Policies</div>
+                <div class="section-desc">Define and enforce system-wide policies</div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Change Management</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Require Approval for Critical Changes</div>
+                        <div class="setting-hint">Mandatory approval from admin for critical operations</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Change Notification Window</div>
+                        <div class="setting-hint">Notify team X hours before scheduled changes</div>
+                    </div>
+                    <input type="number" class="setting-input" value="4" style="width: 100px;">hours
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-title">Compliance</div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Audit Logging</div>
+                        <div class="setting-hint">Log all user actions and system changes</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">Data Encryption at Rest</div>
+                        <div class="setting-hint">Encrypt all stored data</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div class="setting-name">TLS 1.2+ Enforcement</div>
+                        <div class="setting-hint">Require encryption for all connections</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" onclick="alert('Policies saved!')">✓ Save Changes</button>
+                <button class="btn-danger" onclick="alert('Resetting to default policies...')">↻ Reset to Defaults</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchSection(element, sectionId) {
+    // Update nav
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    element.classList.add('active');
+
+    // Update content
+    document.querySelectorAll('[id$="-section"]').forEach(section => {
+        section.style.display = 'none';
+    });
+    document.getElementById(sectionId + '-section').style.display = 'block';
+}
+
+function toggleSwitch(element) {
+    element.classList.toggle('active');
+}
+</script>
+{% endblock %}

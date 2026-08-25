@@ -1,0 +1,532 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Remediation Center - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🔧 Remediation Center - Automated Response Engine{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .remediation-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .playbooks-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .panel-header {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-4);
+    }
+
+    .playbook-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-3);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .playbook-card:hover {
+        border-color: var(--color-info);
+        background: var(--bg-hover);
+    }
+
+    .playbook-card.active {
+        border-color: var(--color-success);
+        background: linear-gradient(135deg, var(--color-success-dim), transparent);
+    }
+
+    .playbook-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-3);
+    }
+
+    .playbook-name {
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .playbook-icon {
+        font-size: 1.5em;
+    }
+
+    .playbook-desc {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+        line-height: var(--lh-normal);
+    }
+
+    .playbook-meta {
+        display: flex;
+        gap: var(--space-3);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .playbook-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--bg-secondary);
+        border-radius: 3px;
+    }
+
+    .action-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .steps-container {
+        flex: 1;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        overflow-y: auto;
+        margin: var(--space-4) 0;
+    }
+
+    .step-item {
+        display: flex;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .step-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .step-number {
+        min-width: 32px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-info);
+        color: var(--text-inverse);
+        border-radius: var(--radius-full);
+        font-weight: var(--fw-bold);
+        flex-shrink: 0;
+    }
+
+    .step-number.completed {
+        background: var(--color-success);
+    }
+
+    .step-number.failed {
+        background: var(--color-critical);
+    }
+
+    .step-content {
+        flex: 1;
+    }
+
+    .step-title {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .step-desc {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+    }
+
+    .step-status {
+        display: inline-block;
+        padding: 2px 8px;
+        background: rgba(45, 212, 255, 0.2);
+        color: var(--color-info);
+        border-radius: 3px;
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+    }
+
+    .step-status.completed {
+        background: rgba(107, 255, 184, 0.2);
+        color: var(--color-success);
+    }
+
+    .step-status.failed {
+        background: rgba(255, 77, 166, 0.2);
+        color: var(--color-critical);
+    }
+
+    .execution-timeline {
+        margin-top: var(--space-6);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-primary);
+    }
+
+    .timeline-title {
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-3);
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: var(--space-2);
+        align-items: flex-start;
+        margin-bottom: var(--space-3);
+        font-size: var(--fs-xs);
+    }
+
+    .timeline-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--color-success);
+        border-radius: 50%;
+        margin-top: 4px;
+        flex-shrink: 0;
+    }
+
+    .timeline-text {
+        color: var(--text-secondary);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-3);
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: var(--space-3);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        border: none;
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--glow-success);
+    }
+
+    .btn-action.secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+    }
+
+    .btn-action.secondary:hover {
+        border-color: var(--color-info);
+        color: var(--color-info);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-4);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-1);
+    }
+
+    .stat-value {
+        font-size: var(--fs-2xl);
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+    }
+
+    @media (max-width: 1024px) {
+        .remediation-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .action-panel {
+            order: -1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="remediation-grid">
+    <!-- PLAYBOOKS PANEL -->
+    <div class="playbooks-panel">
+        <div class="panel-header">
+            <div class="panel-title">📋 Remediation Playbooks</div>
+            <div style="font-size: var(--fs-xs); color: var(--text-secondary);">11 Total</div>
+        </div>
+
+        <div class="panel-content">
+            <!-- PLAYBOOK 1 -->
+            <div class="playbook-card active" onclick="selectPlaybook(this, 'pb-001')">
+                <div class="playbook-header">
+                    <div>
+                        <div class="playbook-name">🔄 Restart IIS Application Pool</div>
+                        <div class="playbook-desc">Gracefully restart w3wp.exe and clear memory leaks</div>
+                    </div>
+                </div>
+                <div class="playbook-meta">
+                    <span class="playbook-badge">CRITICAL</span>
+                    <span class="playbook-badge">Service B</span>
+                    <span class="playbook-badge">Success: 94%</span>
+                </div>
+            </div>
+
+            <!-- PLAYBOOK 2 -->
+            <div class="playbook-card" onclick="selectPlaybook(this, 'pb-002')">
+                <div class="playbook-header">
+                    <div>
+                        <div class="playbook-name">📈 Scale Up Instances</div>
+                        <div class="playbook-desc">Add 2-4 additional compute instances to distribute load</div>
+                    </div>
+                </div>
+                <div class="playbook-meta">
+                    <span class="playbook-badge">HIGH</span>
+                    <span class="playbook-badge">Service A</span>
+                    <span class="playbook-badge">Success: 98%</span>
+                </div>
+            </div>
+
+            <!-- PLAYBOOK 3 -->
+            <div class="playbook-card" onclick="selectPlaybook(this, 'pb-003')">
+                <div class="playbook-header">
+                    <div>
+                        <div class="playbook-name">🗑️ Clear Cache</div>
+                        <div class="playbook-desc">Invalidate Redis cache and force refresh from database</div>
+                    </div>
+                </div>
+                <div class="playbook-meta">
+                    <span class="playbook-badge">MEDIUM</span>
+                    <span class="playbook-badge">API Gateway</span>
+                    <span class="playbook-badge">Success: 100%</span>
+                </div>
+            </div>
+
+            <!-- PLAYBOOK 4 -->
+            <div class="playbook-card" onclick="selectPlaybook(this, 'pb-004')">
+                <div class="playbook-header">
+                    <div>
+                        <div class="playbook-name">↩️ Rollback Deployment</div>
+                        <div class="playbook-desc">Revert to previous stable version and restart services</div>
+                    </div>
+                </div>
+                <div class="playbook-meta">
+                    <span class="playbook-badge">CRITICAL</span>
+                    <span class="playbook-badge">Service C</span>
+                    <span class="playbook-badge">Success: 92%</span>
+                </div>
+            </div>
+
+            <!-- PLAYBOOK 5 -->
+            <div class="playbook-card" onclick="selectPlaybook(this, 'pb-005')">
+                <div class="playbook-header">
+                    <div>
+                        <div class="playbook-name">🔌 Drain Connections</div>
+                        <div class="playbook-desc">Gracefully close existing connections and prevent new ones</div>
+                    </div>
+                </div>
+                <div class="playbook-meta">
+                    <span class="playbook-badge">HIGH</span>
+                    <span class="playbook-badge">SQL Server</span>
+                    <span class="playbook-badge">Success: 96%</span>
+                </div>
+            </div>
+
+            <!-- PLAYBOOK 6 -->
+            <div class="playbook-card" onclick="selectPlaybook(this, 'pb-006')">
+                <div class="playbook-header">
+                    <div>
+                        <div class="playbook-name">📊 Enable Debug Logging</div>
+                        <div class="playbook-desc">Increase log verbosity and capture detailed diagnostic data</div>
+                    </div>
+                </div>
+                <div class="playbook-meta">
+                    <span class="playbook-badge">INFO</span>
+                    <span class="playbook-badge">All Services</span>
+                    <span class="playbook-badge">Success: 99%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION PANEL -->
+    <div class="action-panel">
+        <div class="panel-header" style="padding: 0; border: none; margin-bottom: var(--space-4);">
+            <div class="panel-title">⚙️ Playbook Execution</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">Executions (24h)</div>
+                <div class="stat-value">47</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Success Rate</div>
+                <div class="stat-value">94%</div>
+            </div>
+        </div>
+
+        <div style="font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-3);">Execution Steps</div>
+
+        <div class="steps-container">
+            <!-- STEP 1 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Pre-flight Checks</div>
+                    <div class="step-desc">Verify service health and dependencies before restart</div>
+                    <span class="step-status completed">Completed - 2s</span>
+                </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Notify Stakeholders</div>
+                    <div class="step-desc">Send notifications to on-call team and incident channel</div>
+                    <span class="step-status completed">Completed - 1s</span>
+                </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Drain Connections</div>
+                    <div class="step-desc">Wait for in-flight requests to complete</div>
+                    <span class="step-status completed">Completed - 8s</span>
+                </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Stop Application Pool</div>
+                    <div class="step-desc">Gracefully stop IIS w3wp.exe process</div>
+                    <span class="step-status completed">Completed - 3s</span>
+                </div>
+            </div>
+
+            <!-- STEP 5 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Clear Memory Cache</div>
+                    <div class="step-desc">Force garbage collection and release unused memory</div>
+                    <span class="step-status completed">Completed - 2s</span>
+                </div>
+            </div>
+
+            <!-- STEP 6 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Start Application Pool</div>
+                    <div class="step-desc">Initialize new IIS process and warm up application</div>
+                    <span class="step-status completed">Completed - 4s</span>
+                </div>
+            </div>
+
+            <!-- STEP 7 -->
+            <div class="step-item">
+                <div class="step-number completed">✓</div>
+                <div class="step-content">
+                    <div class="step-title">Health Verification</div>
+                    <div class="step-desc">Run comprehensive health checks and validate endpoints</div>
+                    <span class="step-status completed">Completed - 3s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="execution-timeline">
+            <div class="timeline-title">Recent Executions</div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-text">Execution completed - 94% reduction in memory usage</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-text">All health checks passed in 3.2 seconds</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-text">Service back to normal operation</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-action" onclick="alert('Executing playbook...')">▶️ Execute Now</button>
+            <button class="btn-action secondary" onclick="alert('Opening playbook editor...')">✎ Edit</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function selectPlaybook(element, playbookId) {
+    document.querySelectorAll('.playbook-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    element.classList.add('active');
+    console.log('📋 Selected playbook:', playbookId);
+}
+</script>
+{% endblock %}
