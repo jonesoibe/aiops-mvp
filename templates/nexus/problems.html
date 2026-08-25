@@ -1,0 +1,440 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Problems & Incidents - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🚨 Problems & Incidents - Full Investigation Workspace{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .problems-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .incidents-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .incidents-header {
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .incidents-count {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .incidents-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-4);
+    }
+
+    .incident-row {
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border-left: 4px solid var(--color-success);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-3);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .incident-row:hover {
+        background: var(--bg-hover);
+        border-left-color: var(--color-info);
+    }
+
+    .incident-row.selected {
+        border-left-color: var(--color-info);
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+    }
+
+    .incident-row.critical {
+        border-left-color: var(--color-critical);
+    }
+
+    .incident-row.critical:hover {
+        border-left-color: var(--color-critical);
+    }
+
+    .incident-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-2);
+    }
+
+    .incident-title {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .incident-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: rgba(255, 77, 166, 0.2);
+        color: var(--color-critical);
+        border-radius: 3px;
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+    }
+
+    .incident-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .incident-service {
+        color: var(--color-success);
+    }
+
+    .incident-time {
+        text-align: right;
+    }
+
+    .detail-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .detail-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-tertiary);
+        text-align: center;
+    }
+
+    .detail-header {
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .detail-title {
+        font-size: var(--fs-xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .detail-meta {
+        display: flex;
+        gap: var(--space-3);
+        flex-wrap: wrap;
+    }
+
+    .detail-tag {
+        font-size: var(--fs-xs);
+        padding: var(--space-1) var(--space-2);
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        border-radius: 4px;
+    }
+
+    .detail-section {
+        margin-bottom: var(--space-6);
+    }
+
+    .detail-section-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--border-primary);
+        font-size: var(--fs-sm);
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        color: var(--text-secondary);
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        font-weight: var(--fw-medium);
+    }
+
+    .detail-value.critical {
+        color: var(--color-critical);
+    }
+
+    .detail-value.success {
+        color: var(--color-success);
+    }
+
+    .ai-section {
+        background: linear-gradient(135deg, var(--color-info-dim), transparent);
+        border-left: 3px solid var(--color-info);
+        padding: var(--space-3);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-4);
+    }
+
+    .ai-label {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--color-info);
+        color: var(--text-inverse);
+        border-radius: 3px;
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-bold);
+        margin-bottom: var(--space-2);
+    }
+
+    .ai-text {
+        font-size: var(--fs-sm);
+        color: var(--text-primary);
+        line-height: var(--lh-normal);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-2);
+        margin-top: var(--space-4);
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: var(--space-3);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        border: none;
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--glow-success);
+    }
+
+    .btn-action.secondary {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+    }
+
+    .btn-action.secondary:hover {
+        border-color: var(--color-success);
+        color: var(--color-success);
+    }
+
+    @media (max-width: 1024px) {
+        .problems-layout {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .detail-panel {
+            order: -1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="problems-layout">
+    <!-- INCIDENTS LIST -->
+    <div class="incidents-panel">
+        <div class="incidents-header">
+            <div>
+                <div style="font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-primary);">Active Problems</div>
+                <div class="incidents-count">17 incidents</div>
+            </div>
+            <input type="text" placeholder="Search..." style="padding: 6px 12px; background: var(--bg-primary); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 4px; font-size: 12px; width: 150px;">
+        </div>
+
+        <div class="incidents-list">
+            <!-- CRITICAL INCIDENT -->
+            <div class="incident-row critical selected" onclick="selectIncident(this, 'INC-001')">
+                <div class="incident-header">
+                    <span class="incident-title">Memory Leak - Service B</span>
+                    <span class="incident-badge">CRITICAL</span>
+                </div>
+                <div class="incident-meta">
+                    <span class="incident-service">SERVICE_B</span>
+                    <span class="incident-time">23 min ago</span>
+                </div>
+            </div>
+
+            <!-- HIGH INCIDENT -->
+            <div class="incident-row" onclick="selectIncident(this, 'INC-002')">
+                <div class="incident-header">
+                    <span class="incident-title">High CPU Usage - Service A</span>
+                    <span class="incident-badge" style="background: rgba(255, 194, 71, 0.2); color: var(--color-warning);">HIGH</span>
+                </div>
+                <div class="incident-meta">
+                    <span class="incident-service">SERVICE_A</span>
+                    <span class="incident-time">15 min ago</span>
+                </div>
+            </div>
+
+            <!-- MEDIUM INCIDENT -->
+            <div class="incident-row" onclick="selectIncident(this, 'INC-003')">
+                <div class="incident-header">
+                    <span class="incident-title">DB Connection Pool Exhausted</span>
+                    <span class="incident-badge" style="background: rgba(255, 194, 71, 0.2); color: var(--color-warning);">HIGH</span>
+                </div>
+                <div class="incident-meta">
+                    <span class="incident-service">SQL_SERVER</span>
+                    <span class="incident-time">8 min ago</span>
+                </div>
+            </div>
+
+            <!-- RESOLVED INCIDENT -->
+            <div class="incident-row" style="border-left-color: var(--color-success);" onclick="selectIncident(this, 'INC-004')">
+                <div class="incident-header">
+                    <span class="incident-title">✓ Network Latency Spike - Resolved</span>
+                    <span class="incident-badge" style="background: rgba(107, 255, 184, 0.2); color: var(--color-success);">RESOLVED</span>
+                </div>
+                <div class="incident-meta">
+                    <span class="incident-service">API_GATEWAY</span>
+                    <span class="incident-time">3 min ago</span>
+                </div>
+            </div>
+
+            <!-- MORE INCIDENTS -->
+            <div class="incident-row" onclick="selectIncident(this, 'INC-005')">
+                <div class="incident-header">
+                    <span class="incident-title">Cache Invalidation Error</span>
+                    <span class="incident-badge">MEDIUM</span>
+                </div>
+                <div class="incident-meta">
+                    <span class="incident-service">REDIS</span>
+                    <span class="incident-time">2 min ago</span>
+                </div>
+            </div>
+
+            <div class="incident-row" onclick="selectIncident(this, 'INC-006')">
+                <div class="incident-header">
+                    <span class="incident-title">Payment API Timeout</span>
+                    <span class="incident-badge" style="background: rgba(255, 194, 71, 0.2); color: var(--color-warning);">HIGH</span>
+                </div>
+                <div class="incident-meta">
+                    <span class="incident-service">PAYMENT_API</span>
+                    <span class="incident-time">1 min ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel" id="detailPanel">
+        <div class="detail-empty">
+            <div>
+                <div style="font-size: 2em; margin-bottom: 12px;">🔍</div>
+                <div>Select an incident to view details</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectIncident(element, incidentId) {
+    document.querySelectorAll('.incident-row').forEach(row => {
+        row.classList.remove('selected');
+    });
+    element.classList.add('selected');
+
+    const detailPanel = document.getElementById('detailPanel');
+
+    detailPanel.innerHTML = `
+        <div class="detail-header">
+            <div class="detail-title">Memory Leak - Service B</div>
+            <div class="detail-meta">
+                <span class="detail-tag">SERVICE_B</span>
+                <span class="detail-tag">Critical</span>
+                <span class="detail-tag">Auto-Investigating</span>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">📊 Impact</div>
+            <div class="detail-item">
+                <span class="detail-label">Affected Users</span>
+                <span class="detail-value critical">2,847 active</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Response Time</span>
+                <span class="detail-value critical">4.2s (+200%)</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Error Rate</span>
+                <span class="detail-value critical">8.5%</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Revenue Impact</span>
+                <span class="detail-value critical">$2,341 lost</span>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="ai-section">
+                <span class="ai-label">Davis AI</span>
+                <div class="ai-text">
+                    <strong>Memory leak detected</strong> in IIS w3wp.exe process. Confidence: <strong>94%</strong>. Recommended action: Graceful Application Pool restart. Estimated resolution time: <strong>&lt;2 seconds</strong>.
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">⏱️ Timeline</div>
+            <div class="detail-item">
+                <span class="detail-label">Detected</span>
+                <span class="detail-value">23 minutes ago</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Last Update</span>
+                <span class="detail-value">2 minutes ago</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">Investigating</span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-action" onclick="alert('Executing recommended action...')">✓ Execute</button>
+            <button class="btn-action secondary" onclick="alert('Opening AI investigation center...')">🤖 Details</button>
+        </div>
+    `;
+}
+</script>
+
+{% endblock %}

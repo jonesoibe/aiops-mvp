@@ -1,0 +1,495 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Live Operations - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}⚡ Live Operations Center - Real-Time Control Room{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .operations-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 120px);
+    }
+
+    .main-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+
+    .metric-widget {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        text-align: center;
+    }
+
+    .metric-widget.critical {
+        border-color: var(--color-critical);
+        background: linear-gradient(135deg, var(--color-critical-dim), transparent);
+    }
+
+    .metric-widget.warning {
+        border-color: var(--color-warning);
+        background: linear-gradient(135deg, var(--color-warning-dim), transparent);
+    }
+
+    .metric-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+    }
+
+    .metric-number {
+        font-size: var(--fs-4xl);
+        font-weight: var(--fw-bold);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: var(--space-1);
+    }
+
+    .metric-widget.critical .metric-number,
+    .metric-widget.warning .metric-number {
+        background: none;
+        -webkit-text-fill-color: unset;
+    }
+
+    .metric-widget.critical .metric-number {
+        color: var(--color-critical);
+    }
+
+    .metric-widget.warning .metric-number {
+        color: var(--color-warning);
+    }
+
+    .metric-change {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .operation-item {
+        padding: var(--space-4);
+        background: var(--bg-tertiary);
+        border-left: 3px solid var(--color-success);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-3);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .operation-item.in-progress {
+        border-left-color: var(--color-info);
+    }
+
+    .operation-item.warning {
+        border-left-color: var(--color-warning);
+    }
+
+    .operation-item.critical {
+        border-left-color: var(--color-critical);
+    }
+
+    .operation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-2);
+    }
+
+    .operation-title {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+    }
+
+    .operation-time {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+    }
+
+    .operation-desc {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-2);
+    }
+
+    .operation-progress {
+        height: 4px;
+        background: var(--border-primary);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+
+    .operation-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-info), var(--color-success));
+        width: 65%;
+        border-radius: var(--radius-full);
+    }
+
+    .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+    }
+
+    .panel-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        overflow-y: auto;
+    }
+
+    .panel-title {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        padding-bottom: var(--space-3);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .status-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .status-item {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--fs-xs);
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: var(--radius-full);
+        background: var(--color-success);
+        margin-right: var(--space-2);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.warning {
+        background: var(--color-warning);
+    }
+
+    .status-dot.critical {
+        background: var(--color-critical);
+    }
+
+    .alert-item {
+        padding: var(--space-3);
+        background: linear-gradient(135deg, var(--color-critical-dim), transparent);
+        border-left: 3px solid var(--color-critical);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .alert-item:hover {
+        background: linear-gradient(135deg, var(--color-critical-dim), var(--bg-hover));
+    }
+
+    .alert-time {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-1);
+    }
+
+    .alert-msg {
+        font-size: var(--fs-xs);
+        color: var(--color-critical);
+        line-height: var(--lh-normal);
+    }
+
+    .control-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-2);
+        margin-top: var(--space-4);
+    }
+
+    .btn-control {
+        padding: var(--space-3);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        border: none;
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        font-size: var(--fs-sm);
+    }
+
+    .btn-control:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--glow-success);
+    }
+
+    .btn-control.secondary {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+    }
+
+    .btn-control.secondary:hover {
+        border-color: var(--color-success);
+        color: var(--color-success);
+    }
+
+    .section-divider {
+        height: 1px;
+        background: var(--border-primary);
+        margin: var(--space-4) 0;
+    }
+
+    @media (max-width: 1024px) {
+        .operations-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .right-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .right-panel {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="operations-grid">
+    <!-- MAIN OPERATIONS PANEL -->
+    <div class="main-panel">
+        <!-- TOP METRICS -->
+        <div class="metrics-grid">
+            <div class="metric-widget">
+                <div class="metric-label">Active Operations</div>
+                <div class="metric-number">12</div>
+                <div class="metric-change">↑ +3 this hour</div>
+            </div>
+
+            <div class="metric-widget">
+                <div class="metric-label">Avg Response Time</div>
+                <div class="metric-number">1.2s</div>
+                <div class="metric-change">✓ Within SLA</div>
+            </div>
+
+            <div class="metric-widget warning">
+                <div class="metric-label">Queued Actions</div>
+                <div class="metric-number">8</div>
+                <div class="metric-change">Awaiting approval</div>
+            </div>
+
+            <div class="metric-widget critical">
+                <div class="metric-label">Failed Ops</div>
+                <div class="metric-number">2</div>
+                <div class="metric-change">Last 24h</div>
+            </div>
+        </div>
+
+        <!-- LIVE OPERATIONS STREAM -->
+        <div style="margin-bottom: var(--space-4);">
+            <div style="font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-primary); margin-bottom: var(--space-3);">📊 Live Operations Stream</div>
+
+            <div class="operation-item in-progress">
+                <div class="operation-header">
+                    <span class="operation-title">Restart IIS Application Pool</span>
+                    <span class="operation-time">09:17:45</span>
+                </div>
+                <div class="operation-desc">Service B remediation - In progress</div>
+                <div class="operation-progress">
+                    <div class="operation-progress-bar" style="width: 85%;"></div>
+                </div>
+            </div>
+
+            <div class="operation-item">
+                <div class="operation-header">
+                    <span class="operation-title">✓ Clear Cache</span>
+                    <span class="operation-time">09:15:22</span>
+                </div>
+                <div class="operation-desc">API Gateway - Completed successfully</div>
+                <div class="operation-progress">
+                    <div class="operation-progress-bar" style="width: 100%; background: var(--color-success);"></div>
+                </div>
+            </div>
+
+            <div class="operation-item">
+                <div class="operation-header">
+                    <span class="operation-title">✓ Scale Up Instances</span>
+                    <span class="operation-time">09:12:08</span>
+                </div>
+                <div class="operation-desc">SERVICE_A - Added 2 instances</div>
+                <div class="operation-progress">
+                    <div class="operation-progress-bar" style="width: 100%; background: var(--color-success);"></div>
+                </div>
+            </div>
+
+            <div class="operation-item warning">
+                <div class="operation-header">
+                    <span class="operation-title">Retry: DB Connection Pool</span>
+                    <span class="operation-time">09:10:33</span>
+                </div>
+                <div class="operation-desc">SQL Server - Retrying... Attempt 2/3</div>
+                <div class="operation-progress">
+                    <div class="operation-progress-bar" style="width: 60%;"></div>
+                </div>
+            </div>
+
+            <div class="operation-item">
+                <div class="operation-header">
+                    <span class="operation-title">✓ Rollback Deployment</span>
+                    <span class="operation-time">09:08:15</span>
+                </div>
+                <div class="operation-desc">SERVICE_C - Previous version restored</div>
+                <div class="operation-progress">
+                    <div class="operation-progress-bar" style="width: 100%; background: var(--color-success);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="right-panel">
+        <!-- SYSTEM STATUS -->
+        <div class="panel-card">
+            <div class="panel-title">🔍 System Status</div>
+
+            <div class="status-list">
+                <div class="status-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="status-dot"></div>
+                        <span>Services Healthy</span>
+                    </div>
+                    <span style="color: var(--color-success); font-weight: var(--fw-bold);">6/6</span>
+                </div>
+
+                <div class="status-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="status-dot"></div>
+                        <span>CPU Avg</span>
+                    </div>
+                    <span>54%</span>
+                </div>
+
+                <div class="status-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="status-dot"></div>
+                        <span>Memory Avg</span>
+                    </div>
+                    <span>62%</span>
+                </div>
+
+                <div class="status-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="status-dot warning"></div>
+                        <span>Error Rate</span>
+                    </div>
+                    <span style="color: var(--color-warning);">0.8%</span>
+                </div>
+
+                <div class="status-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="status-dot"></div>
+                        <span>Avg Latency</span>
+                    </div>
+                    <span>145ms</span>
+                </div>
+            </div>
+
+            <div class="control-buttons">
+                <button class="btn-control">🔄 Refresh</button>
+                <button class="btn-control secondary">⚙️ Config</button>
+            </div>
+        </div>
+
+        <!-- ACTIVE ALERTS -->
+        <div class="panel-card">
+            <div class="panel-title">🚨 Active Alerts</div>
+
+            <div class="alert-item">
+                <div class="alert-time">09:17:30</div>
+                <div class="alert-msg"><strong>Critical:</strong> Memory leak Service B - Restart initiated</div>
+            </div>
+
+            <div class="alert-item" style="background: linear-gradient(135deg, var(--color-warning-dim), transparent); border-left-color: var(--color-warning);">
+                <div class="alert-time">09:15:15</div>
+                <div class="alert-msg" style="color: var(--color-warning);"><strong>Warning:</strong> Database connections at 95% capacity</div>
+            </div>
+
+            <div class="alert-item" style="background: linear-gradient(135deg, var(--color-success-dim), transparent); border-left-color: var(--color-success);">
+                <div class="alert-time">09:12:45</div>
+                <div class="alert-msg" style="color: var(--color-success);"><strong>Resolved:</strong> CPU spike on Service A - Auto-scaled</div>
+            </div>
+
+            <div class="control-buttons">
+                <button class="btn-control secondary" style="grid-column: 1/-1;">📋 View All Alerts</button>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="panel-card">
+            <div class="panel-title">⚡ Quick Actions</div>
+
+            <div class="control-buttons">
+                <button class="btn-control" onclick="alert('Draining connections from all services...')">🔌 Drain</button>
+                <button class="btn-control" onclick="alert('Scaling resources...')">📈 Scale</button>
+                <button class="btn-control secondary" onclick="alert('Opening deployment console...')">🚀 Deploy</button>
+                <button class="btn-control secondary" onclick="alert('Rolling back to last stable...')">↩️ Rollback</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Listen for operation updates
+    window.addEventListener('incident_update', function(event) {
+        console.log('🔧 Operation updated:', event.detail);
+        // Could add real-time operation tracking here
+    });
+
+    // Auto-refresh metrics
+    setInterval(() => {
+        console.log('Updating live operations...');
+    }, 2000);
+</script>
+{% endblock %}
