@@ -1,0 +1,752 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Chaos Injection Simulator - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}
+<span class="topbar-title">
+    <span style="font-size: 20px; margin-right: 10px;">⚡</span>Chaos Injection Simulator
+</span>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .simulator-container {
+        display: grid;
+        grid-template-columns: 350px 1fr 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 100px);
+        overflow: hidden;
+    }
+
+    /* LEFT PANEL: Configuration */
+    .config-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: var(--space-6);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .config-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .config-label {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+        font-weight: var(--fw-semibold);
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .input-group label {
+        font-size: var(--fs-sm);
+        color: var(--text-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .input-group input,
+    .input-group select {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        transition: all var(--transition-base);
+    }
+
+    .input-group input:hover,
+    .input-group select:hover {
+        border-color: var(--border-secondary);
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 2px rgba(45, 212, 255, 0.2);
+    }
+
+    .input-value {
+        color: var(--color-info);
+        font-weight: var(--fw-semibold);
+    }
+
+    .start-button {
+        padding: var(--space-3) var(--space-4);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        color: var(--text-inverse);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-weight: var(--fw-semibold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        font-size: var(--fs-sm);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .start-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(107, 255, 184, 0.3);
+    }
+
+    .start-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* MIDDLE PANEL: Output Console */
+    .output-panel {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .console-header {
+        font-size: var(--fs-lg);
+        color: var(--text-primary);
+        font-weight: var(--fw-semibold);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .console-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .console-output {
+        background: #0a0e27;
+        color: #00ff88;
+        padding: var(--space-4);
+        overflow-y: auto;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        flex: 1;
+    }
+
+    .console-line {
+        margin: 2px 0;
+        display: flex;
+        gap: var(--space-2);
+    }
+
+    .console-timestamp {
+        color: #666;
+        flex-shrink: 0;
+    }
+
+    .console-level {
+        flex-shrink: 0;
+        font-weight: bold;
+        min-width: 60px;
+    }
+
+    .console-level.info { color: #2DD4FF; }
+    .console-level.success { color: #6BFFB8; }
+    .console-level.warning { color: #FFC247; }
+    .console-level.error { color: #FF4DA6; }
+    .console-level.debug { color: #888; }
+
+    .console-message {
+        flex: 1;
+        word-break: break-word;
+    }
+
+    /* RIGHT PANEL: Steps & Status */
+    .status-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: var(--space-6);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+    }
+
+    .status-header {
+        font-size: var(--fs-lg);
+        color: var(--text-primary);
+        font-weight: var(--fw-semibold);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .status-info {
+        background: var(--bg-primary);
+        border-left: 3px solid var(--color-info);
+        padding: var(--space-3);
+        border-radius: var(--radius-sm);
+        font-size: var(--fs-sm);
+    }
+
+    .status-info-item {
+        display: flex;
+        justify-content: space-between;
+        margin: var(--space-2) 0;
+    }
+
+    .status-info-label {
+        color: var(--text-secondary);
+    }
+
+    .status-info-value {
+        color: var(--color-info);
+        font-weight: var(--fw-semibold);
+    }
+
+    .execution-steps {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .step {
+        background: var(--bg-primary);
+        padding: var(--space-3);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid var(--border-primary);
+        transition: all var(--transition-base);
+    }
+
+    .step.running {
+        border-left-color: var(--color-info);
+        background: rgba(45, 212, 255, 0.1);
+    }
+
+    .step.completed {
+        border-left-color: var(--color-success);
+        background: rgba(107, 255, 184, 0.1);
+    }
+
+    .step.failed {
+        border-left-color: var(--color-critical);
+        background: rgba(255, 77, 166, 0.1);
+    }
+
+    .step-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-bottom: var(--space-2);
+    }
+
+    .step-icon {
+        font-size: 16px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .step-name {
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .step-status {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: var(--radius-sm);
+        background: var(--bg-secondary);
+    }
+
+    .step-status.running {
+        background: rgba(45, 212, 255, 0.2);
+        color: var(--color-info);
+    }
+
+    .step-status.completed {
+        background: rgba(107, 255, 184, 0.2);
+        color: var(--color-success);
+    }
+
+    .step-status.failed {
+        background: rgba(255, 77, 166, 0.2);
+        color: var(--color-critical);
+    }
+
+    .step-details {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        margin-top: var(--space-2);
+        padding-top: var(--space-2);
+        border-top: 1px solid var(--border-primary);
+    }
+
+    /* Bottom: Data & Charts */
+    .results-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+        margin-top: var(--space-6);
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        padding: var(--space-6);
+        min-height: 400px;
+    }
+
+    .result-section {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-sm);
+        padding: var(--space-4);
+        overflow: hidden;
+    }
+
+    .result-title {
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        padding-bottom: var(--space-2);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .result-content {
+        overflow-y: auto;
+        max-height: 350px;
+    }
+
+    .chart-container {
+        width: 100%;
+        text-align: center;
+    }
+
+    .chart-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-sm);
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--fs-xs);
+    }
+
+    .data-table th {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        padding: var(--space-2);
+        text-align: left;
+        font-weight: var(--fw-semibold);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .data-table td {
+        padding: var(--space-2);
+        border-bottom: 1px solid var(--border-primary);
+        color: var(--text-primary);
+    }
+
+    .data-table tr:hover {
+        background: var(--bg-secondary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+        .simulator-container {
+            grid-template-columns: 1fr;
+        }
+
+        .results-panel {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #2DD4FF;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="simulator-container">
+    <!-- LEFT: Configuration -->
+    <div class="config-panel">
+        <div class="config-section">
+            <div class="config-label">🎛️ Configuration</div>
+
+            <div class="input-group">
+                <label>Metrics to Generate</label>
+                <input type="number" id="numMetrics" value="50" min="10" max="500">
+            </div>
+
+            <div class="input-group">
+                <label>
+                    Noise Level
+                    <span class="input-value" id="noiseValue">0.10</span>
+                </label>
+                <input type="range" id="noiseLevel" value="0.10" min="0" max="1" step="0.01">
+            </div>
+
+            <div class="input-group">
+                <label>Random Seed</label>
+                <input type="number" id="randomSeed" value="42" min="0" max="9999">
+            </div>
+        </div>
+
+        <div class="config-section" style="margin-top: auto;">
+            <button class="start-button" id="startBtn" onclick="startSimulation()">
+                ⚡ Start Simulation
+            </button>
+            <button class="start-button" style="background: var(--color-warning); margin-top: var(--space-2);" onclick="clearResults()">
+                🗑️ Clear Results
+            </button>
+        </div>
+
+        <div class="status-info" style="margin-top: auto;">
+            <div class="status-info-item">
+                <span class="status-info-label">Status:</span>
+                <span class="status-info-value" id="statusText">Ready</span>
+            </div>
+            <div class="status-info-item">
+                <span class="status-info-label">Execution ID:</span>
+                <span class="status-info-value" id="executionId">—</span>
+            </div>
+            <div class="status-info-item">
+                <span class="status-info-label">Duration:</span>
+                <span class="status-info-value" id="duration">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MIDDLE: Console Output -->
+    <div class="output-panel">
+        <div class="console-header">
+            <span>📝 Execution Console</span>
+            <span id="liveIndicator" style="display: none;">
+                <span class="spinner"></span>
+            </span>
+        </div>
+        <div class="console-container">
+            <div class="console-output" id="console"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Status & Steps -->
+    <div class="status-panel">
+        <div class="status-header">📊 Execution Pipeline</div>
+
+        <div class="execution-steps" id="executionSteps">
+            <div class="step" data-step="chaos_generation">
+                <div class="step-header">
+                    <div class="step-icon">📊</div>
+                    <div class="step-name">Chaos Generation</div>
+                    <span class="step-status">pending</span>
+                </div>
+                <div class="step-details">Injecting faults into services...</div>
+            </div>
+
+            <div class="step" data-step="preprocessing">
+                <div class="step-header">
+                    <div class="step-icon">🔧</div>
+                    <div class="step-name">Preprocessing</div>
+                    <span class="step-status">pending</span>
+                </div>
+                <div class="step-details">Engineering features and normalizing...</div>
+            </div>
+
+            <div class="step" data-step="detection">
+                <div class="step-header">
+                    <div class="step-icon">🔍</div>
+                    <div class="step-name">Anomaly Detection</div>
+                    <span class="step-status">pending</span>
+                </div>
+                <div class="step-details">Training Isolation Forest model...</div>
+            </div>
+
+            <div class="step" data-step="classification">
+                <div class="step-header">
+                    <div class="step-icon">🏷️</div>
+                    <div class="step-name">Issue Classification</div>
+                    <span class="step-status">pending</span>
+                </div>
+                <div class="step-details">Classifying detected issues...</div>
+            </div>
+
+            <div class="step" data-step="visualization">
+                <div class="step-header">
+                    <div class="step-icon">📈</div>
+                    <div class="step-name">Visualization</div>
+                    <span class="step-status">pending</span>
+                </div>
+                <div class="step-details">Generating charts and graphs...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM: Results -->
+<div class="results-panel" style="display: none;" id="resultsPanel">
+    <div class="result-section">
+        <div class="result-title">📊 Time Series with Anomalies</div>
+        <div class="result-content chart-container" id="chart1"></div>
+    </div>
+
+    <div class="result-section">
+        <div class="result-title">📈 Anomaly Score Distribution</div>
+        <div class="result-content chart-container" id="chart2"></div>
+    </div>
+
+    <div class="result-section">
+        <div class="result-title">🔗 Correlation Matrix</div>
+        <div class="result-content chart-container" id="chart3"></div>
+    </div>
+
+    <div class="result-section">
+        <div class="result-title">🏷️ Classified Issues</div>
+        <div class="result-content">
+            <table class="data-table" id="issuesTable">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Confidence</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const socket = io();
+    let currentSimulationId = null;
+    let startTime = null;
+
+    // Join simulation room
+    socket.on('connect', () => {
+        console.log('Connected to WebSocket');
+    });
+
+    // Listen for simulation events
+    socket.on('simulation_event', (event) => {
+        handleSimulationEvent(event.type, event.data);
+    });
+
+    // Handle specific event types
+    socket.on('simulation_output', (data) => {
+        appendConsoleOutput(data);
+    });
+
+    socket.on('simulation_step', (data) => {
+        updateStepStatus(data);
+    });
+
+    socket.on('simulation_chart', (data) => {
+        displayChart(data);
+    });
+
+    socket.on('simulation_data', (data) => {
+        displayData(data);
+    });
+
+    function handleSimulationEvent(type, data) {
+        console.log(`Event: ${type}`, data);
+
+        if (type === 'simulation_output') {
+            appendConsoleOutput(data);
+        } else if (type === 'simulation_step') {
+            updateStepStatus(data);
+        } else if (type === 'simulation_chart') {
+            displayChart(data);
+        } else if (type === 'simulation_data') {
+            displayData(data);
+        }
+    }
+
+    function appendConsoleOutput(data) {
+        const console = document.getElementById('console');
+        const line = document.createElement('div');
+        line.className = 'console-line';
+
+        const time = new Date(data.timestamp).toLocaleTimeString();
+
+        line.innerHTML = `
+            <span class="console-timestamp">[${time}]</span>
+            <span class="console-level ${data.level}">${data.level.toUpperCase()}</span>
+            <span class="console-message">${escapeHtml(data.message)}</span>
+        `;
+
+        console.appendChild(line);
+        console.scrollTop = console.scrollHeight;
+    }
+
+    function updateStepStatus(data) {
+        const step = document.querySelector(`.step[data-step="${data.step}"]`);
+        if (!step) return;
+
+        const statusEl = step.querySelector('.step-status');
+        const details = step.querySelector('.step-details');
+
+        step.classList.remove('pending', 'running', 'completed', 'failed');
+        step.classList.add(data.status);
+
+        statusEl.className = `step-status ${data.status}`;
+        statusEl.textContent = data.status.toUpperCase();
+
+        if (data.details && Object.keys(data.details).length > 0) {
+            details.innerHTML = Object.entries(data.details)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(' | ');
+        }
+
+        if (data.status === 'completed') {
+            document.getElementById('resultsPanel').style.display = 'grid';
+        }
+    }
+
+    function displayChart(data) {
+        const chartId = {
+            'Time_Series_With_Anomalies': 'chart1',
+            'Anomaly_Score_Distribution': 'chart2',
+            'Correlation_Heatmap': 'chart3'
+        }[data.chart_name];
+
+        if (!chartId) return;
+
+        const container = document.getElementById(chartId);
+        container.innerHTML = `<img src="${data.image}" style="max-width: 100%;">`;
+    }
+
+    function displayData(data) {
+        if (data.data.name === 'Classified_Issues') {
+            const tbody = document.querySelector('#issuesTable tbody');
+            tbody.innerHTML = '';
+
+            data.data.records?.forEach(issue => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${issue.type}</td>
+                    <td>${(issue.confidence * 100).toFixed(1)}%</td>
+                    <td>${issue.timestamp}</td>
+                `;
+            });
+        }
+    }
+
+    function startSimulation() {
+        const btn = document.getElementById('startBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Running...';
+
+        currentSimulationId = `sim_${Date.now()}`;
+        startTime = Date.now();
+
+        const config = {
+            execution_id: currentSimulationId,
+            num_metrics: parseInt(document.getElementById('numMetrics').value),
+            noise_level: parseFloat(document.getElementById('noiseLevel').value)
+        };
+
+        document.getElementById('executionId').textContent = currentSimulationId;
+        document.getElementById('statusText').textContent = 'Running';
+        document.getElementById('liveIndicator').style.display = 'inline-block';
+
+        // Clear previous
+        document.getElementById('console').innerHTML = '';
+
+        // Join simulation room
+        socket.emit('join_simulation', { simulation_id: currentSimulationId });
+
+        // Start simulation
+        fetch('/api/simulator/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(config)
+        })
+        .then(r => r.json())
+        .then(data => {
+            console.log('Simulation started:', data);
+
+            // Poll for completion
+            const checkInterval = setInterval(() => {
+                fetch(`/api/simulator/${currentSimulationId}/status`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                })
+                .then(r => r.json())
+                .then(status => {
+                    if (status.status === 'completed' || status.status === 'failed') {
+                        clearInterval(checkInterval);
+                        btn.disabled = false;
+                        btn.innerHTML = '⚡ Start Simulation';
+                        document.getElementById('statusText').textContent = status.status;
+                        document.getElementById('liveIndicator').style.display = 'none';
+
+                        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+                        document.getElementById('duration').textContent = `${duration}s`;
+                    }
+                });
+            }, 500);
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            btn.disabled = false;
+            btn.innerHTML = '⚡ Start Simulation';
+        });
+    }
+
+    function clearResults() {
+        document.getElementById('console').innerHTML = '';
+        document.getElementById('resultsPanel').style.display = 'none';
+        document.querySelectorAll('.step').forEach(step => {
+            step.classList.remove('running', 'completed', 'failed');
+            step.classList.add('pending');
+            step.querySelector('.step-status').className = 'step-status';
+            step.querySelector('.step-status').textContent = 'PENDING';
+        });
+        document.getElementById('statusText').textContent = 'Ready';
+        document.getElementById('executionId').textContent = '—';
+        document.getElementById('duration').textContent = '—';
+    }
+
+    // Noise slider update
+    document.getElementById('noiseLevel').addEventListener('input', (e) => {
+        document.getElementById('noiseValue').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

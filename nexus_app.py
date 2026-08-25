@@ -866,6 +866,110 @@ def stream_logs():
             print(f"Log streaming error: {e}")
             time.sleep(5)
 
+# ==================== CHAOS SIMULATOR ====================
+
+from chaos_executor import ChaosExecutor
+
+# Store active simulations
+active_simulations = {}
+
+@app.route('/simulator', methods=['GET'])
+@require_auth
+def simulator_page(user=None):
+    """Chaos injection simulator page."""
+    return render_template('nexus/simulator.html')
+
+@app.route('/api/simulator/start', methods=['POST'])
+@require_auth
+def start_simulation(user=None):
+    """Start a new chaos injection simulation."""
+    try:
+        config = request.json or {}
+
+        # Create executor with WebSocket emit capability
+        def emit_to_client(event_type, data):
+            socketio.emit('simulation_event', {
+                'type': event_type,
+                'data': data
+            }, room=f"sim_{config.get('execution_id')}")
+
+        executor = ChaosExecutor(emit_callback=emit_to_client)
+
+        # Run in background thread
+        sim_id = config.get('execution_id', f"sim_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
+        active_simulations[sim_id] = {
+            'status': 'running',
+            'started': datetime.utcnow(),
+            'executor': executor
+        }
+
+        def run_async():
+            try:
+                result = executor.run_simulation(config)
+                active_simulations[sim_id]['status'] = 'completed'
+                active_simulations[sim_id]['result'] = result
+            except Exception as e:
+                active_simulations[sim_id]['status'] = 'failed'
+                active_simulations[sim_id]['error'] = str(e)
+
+        thread = threading.Thread(target=run_async, daemon=True)
+        thread.start()
+
+        return jsonify({
+            'status': 'started',
+            'simulation_id': sim_id
+        }), 202
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/simulator/<sim_id>/status', methods=['GET'])
+@require_auth
+def get_simulation_status(sim_id, user=None):
+    """Get simulation status."""
+    if sim_id not in active_simulations:
+        return jsonify({'error': 'Simulation not found'}), 404
+
+    sim = active_simulations[sim_id]
+    return jsonify({
+        'simulation_id': sim_id,
+        'status': sim['status'],
+        'started': sim['started'].isoformat(),
+        'result': sim.get('result'),
+        'error': sim.get('error')
+    })
+
+@app.route('/api/simulator/<sim_id>/result', methods=['GET'])
+@require_auth
+def get_simulation_result(sim_id, user=None):
+    """Get complete simulation result."""
+    if sim_id not in active_simulations:
+        return jsonify({'error': 'Simulation not found'}), 404
+
+    sim = active_simulations[sim_id]
+    if sim['status'] != 'completed':
+        return jsonify({'error': f'Simulation {sim["status"]}'}), 400
+
+    return jsonify(sim.get('result', {}))
+
+# ==================== WEBSOCKET: SIMULATOR ====================
+
+@socketio.on('join_simulation')
+def on_join_simulation(data):
+    """Join simulation room for updates."""
+    sim_id = data.get('simulation_id')
+    if sim_id:
+        join_room(f"sim_{sim_id}")
+        emit('status', {'data': f'Joined simulation {sim_id}'})
+
+@socketio.on('leave_simulation')
+def on_leave_simulation(data):
+    """Leave simulation room."""
+    sim_id = data.get('simulation_id')
+    if sim_id:
+        leave_room(f"sim_{sim_id}")
+        emit('status', {'data': f'Left simulation {sim_id}'})
+
 # ==================== STARTUP ====================
 
 @app.before_request
