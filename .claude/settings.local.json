@@ -32,7 +32,11 @@
       "Bash(git commit -m 'Phase 1: Foundation for Nexus AIOps - Enterprise Observability Platform *)",
       "Bash(git commit -m 'Phase 2 & 3: AI Operations Center + Smart Topology + Placeholder Pages *)",
       "Bash(git commit -m 'Phase 4: Live Operations + Problems & Incidents Full Implementation *)",
-      "Bash(git commit -m 'Phase 5 Complete: Implement remaining 6 Nexus dashboard pages *)"
+      "Bash(git commit -m 'Phase 5 Complete: Implement remaining 6 Nexus dashboard pages *)",
+      "Bash(pkill -f \"python.*nexus_app.py\")",
+      "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Where-Object {$_.CommandLine -match \"nexus_app\"} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Write-Output \"Flask app stopped\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Select-Object Name, CommandLine)",
+      "Bash(git commit -m 'Add login page and authentication *)"
     ]
   }
 }

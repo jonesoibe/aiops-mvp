@@ -158,6 +158,11 @@ def initialize_users():
 
 # ==================== ROUTES ====================
 
+@app.route('/login')
+def login_page():
+    """Login Page"""
+    return render_template('nexus/login.html')
+
 @app.route('/')
 def index():
     """Executive Overview - Landing Page"""

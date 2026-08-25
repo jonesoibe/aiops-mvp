@@ -20,6 +20,16 @@
       ],
       "port": 8889,
       "url": "http://localhost:8889"
+    },
+    {
+      "name": "nexus",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        ".venv\\Scripts\\activate && python nexus_app.py"
+      ],
+      "port": 5000,
+      "url": "http://localhost:5000"
     }
   ]
 }
