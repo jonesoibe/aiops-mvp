@@ -3,8 +3,8 @@ services:
     name: aiops-mvp
     runtime: python
     runtimeVersion: 3.11.0
-    buildCommand: pip install -r requirements_minimal.txt
-    startCommand: python dashboard_lite.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: python nexus_app.py
     envVars:
       - key: FLASK_ENV
         value: production
@@ -12,5 +12,9 @@ services:
         generateValue: true
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONIOENCODING
+        value: "utf-8"
       - key: PORT
         value: "5000"
