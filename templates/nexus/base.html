@@ -100,6 +100,27 @@
             width: 24px;
         }
 
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: var(--space-2);
+            color: var(--text-primary);
+            font-size: var(--fs-xl);
+        }
+
+        .hamburger-menu span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
         .topbar {
             grid-column: 2;
             grid-row: 1;
@@ -166,21 +187,28 @@
             background: var(--border-secondary);
         }
 
-        /* Responsive */
+        /* Responsive - Tablet and Smaller */
         @media (max-width: 1024px) {
             body {
                 grid-template-columns: 1fr;
                 grid-template-rows: 60px 1fr;
             }
 
+            .hamburger-menu {
+                display: flex;
+            }
+
             .sidebar {
                 display: none;
                 position: fixed;
                 width: 240px;
-                z-index: var(--z-fixed);
+                z-index: 9999;
                 height: 100vh;
                 left: 0;
                 top: 0;
+                background: var(--bg-secondary);
+                border-right: 1px solid var(--border-primary);
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
 
             .sidebar.open {
@@ -193,6 +221,41 @@
 
             .main-content {
                 grid-column: 1;
+            }
+        }
+
+        /* Mobile Overlay - Close sidebar when clicking outside */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Mobile - Extra small screens */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--space-4);
+            }
+
+            .topbar {
+                padding: 0 var(--space-4);
+            }
+
+            .topbar-title {
+                font-size: var(--fs-lg);
+            }
+
+            .sidebar-header {
+                padding: var(--space-4);
             }
         }
     </style>
@@ -284,6 +347,11 @@
 
     <!-- TOPBAR -->
     <header class="topbar">
+        <button class="hamburger-menu" id="hamburgerBtn" onclick="toggleSidebar()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div>
         <div class="user-menu">
             <div style="text-align: right; font-size: var(--fs-sm);">
@@ -293,6 +361,9 @@
             <div class="user-avatar" onclick="logout()">👤</div>
         </div>
     </header>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
@@ -306,6 +377,41 @@
     <script>
         // Initialize Socket.IO
         const socket = io();
+
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // Close sidebar
+        function closeSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // Close sidebar when a link is clicked
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Close sidebar when window resizes to desktop size
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    closeSidebar();
+                }
+            });
+        });
 
         // Load user info
         document.addEventListener('DOMContentLoaded', function() {
