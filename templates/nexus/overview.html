@@ -1,0 +1,459 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Executive Overview - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}Executive Overview{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .metric-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        transition: all var(--transition-base);
+    }
+
+    .metric-card:hover {
+        border-color: var(--color-success);
+        box-shadow: var(--glow-success);
+    }
+
+    .metric-label {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+        margin-bottom: var(--space-3);
+    }
+
+    .metric-value {
+        font-size: var(--fs-5xl);
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+        margin-bottom: var(--space-2);
+    }
+
+    .metric-trend {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .metric-trend.positive {
+        color: var(--color-success);
+    }
+
+    .metric-trend.negative {
+        color: var(--color-critical);
+    }
+
+    .section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .section-title {
+        font-size: var(--fs-xl);
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: var(--space-2) var(--space-3);
+        border-radius: var(--radius-full);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-medium);
+        text-transform: uppercase;
+    }
+
+    .badge-success {
+        background: var(--color-success-dim);
+        color: var(--color-success);
+    }
+
+    .badge-critical {
+        background: var(--color-critical-dim);
+        color: var(--color-critical);
+    }
+
+    .badge-warning {
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+    }
+
+    .incident-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .incident-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+        border-left: 3px solid var(--color-critical);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .incident-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .incident-content {
+        flex: 1;
+    }
+
+    .incident-title {
+        font-weight: var(--fw-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .incident-time {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    .confidence-gauge {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .gauge-bar {
+        flex: 1;
+        height: 4px;
+        background: var(--bg-primary);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+
+    .gauge-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-success), var(--color-info));
+        width: 85%;
+        border-radius: var(--radius-full);
+    }
+
+    .gauge-value {
+        font-size: var(--fs-sm);
+        color: var(--text-primary);
+        font-weight: var(--fw-medium);
+        min-width: 40px;
+        text-align: right;
+    }
+
+    .ai-insight {
+        background: linear-gradient(135deg, var(--color-info-dim), var(--color-success-dim));
+        border: 1px solid var(--color-info);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+    }
+
+    .ai-insight-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-bottom: var(--space-2);
+    }
+
+    .ai-label {
+        font-size: var(--fs-xs);
+        color: var(--color-info);
+        font-weight: var(--fw-bold);
+        text-transform: uppercase;
+    }
+
+    .ai-content {
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        line-height: var(--lh-normal);
+    }
+
+    .chart-container {
+        height: 300px;
+        position: relative;
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .data-stream {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--space-4);
+        margin-top: var(--space-4);
+    }
+
+    .data-point {
+        background: var(--bg-primary);
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        border-left: 3px solid var(--color-success);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .data-point.warning {
+        border-left-color: var(--color-warning);
+    }
+
+    .data-point.critical {
+        border-left-color: var(--color-critical);
+    }
+
+    .data-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-1);
+    }
+
+    .data-value {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-bold);
+        color: var(--color-success);
+    }
+
+    @media (max-width: 1024px) {
+        .grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .grid-4 {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-3);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 100%;">
+    <!-- KEY METRICS -->
+    <div class="grid-4">
+        <div class="metric-card">
+            <div class="metric-label">Healthy Entities</div>
+            <div class="metric-value" id="healthyCount">1,284</div>
+            <div class="metric-trend positive" id="healthyTrend">↑ +4.8% vs yesterday</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">Active Problems</div>
+            <div class="metric-value" id="problemCount">17</div>
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2);">
+                <span class="badge badge-critical">2 Critical</span>
+                <span class="badge badge-warning">4 Warning</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">AI Investigations</div>
+            <div class="metric-value" id="aiCount">11</div>
+            <div class="metric-trend" id="aiStatus">7 Autonomous</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">Resolution Rate</div>
+            <div class="metric-value" id="resolution">94%</div>
+            <div class="metric-trend positive">24h average</div>
+        </div>
+    </div>
+
+    <!-- AI INSIGHTS -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">🤖 AI Insights</div>
+            <span class="badge badge-success">LIVE</span>
+        </div>
+
+        <div class="ai-insight">
+            <div class="ai-insight-header">
+                <span class="ai-label">Davis AI</span>
+                <span style="color: var(--text-secondary); font-size: var(--fs-xs);">2 min ago</span>
+            </div>
+            <div class="ai-content">
+                <strong>Memory leak detected in Service B</strong>. Confidence: 94%. Correlated with 3 historical incidents. Recommended action: Restart Application Pool. Risk level: Medium.
+            </div>
+        </div>
+
+        <div class="ai-insight" style="background: linear-gradient(135deg, var(--color-success-dim), var(--color-info-dim)); border-color: var(--color-success);">
+            <div class="ai-insight-header">
+                <span class="ai-label" style="color: var(--color-success);">Auto Remediated</span>
+                <span style="color: var(--text-secondary); font-size: var(--fs-xs);">5 min ago</span>
+            </div>
+            <div class="ai-content">
+                <strong>IIS Application Pool restart completed</strong>. Verification passed. Incident closed automatically. Blast radius: 0.3% of users.
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIVE INCIDENTS -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">🚨 Active Problems</div>
+            <a href="/problems" style="color: var(--color-info); text-decoration: none; font-size: var(--fs-sm);">View All →</a>
+        </div>
+
+        <div class="incident-list">
+            <div class="incident-item" onclick="location.href='/problems'">
+                <div class="incident-content">
+                    <div class="incident-title">High CPU Usage - Service A</div>
+                    <div class="incident-time">Detected 15 minutes ago</div>
+                </div>
+                <div class="confidence-gauge">
+                    <div class="gauge-bar">
+                        <div class="gauge-fill" style="width: 92%;"></div>
+                    </div>
+                    <div class="gauge-value">92%</div>
+                </div>
+            </div>
+
+            <div class="incident-item" onclick="location.href='/problems'" style="border-left-color: var(--color-warning);">
+                <div class="incident-content">
+                    <div class="incident-title">Database Connection Pool Exhausted</div>
+                    <div class="incident-time">Detected 8 minutes ago</div>
+                </div>
+                <div class="confidence-gauge">
+                    <div class="gauge-bar">
+                        <div class="gauge-fill" style="width: 78%;"></div>
+                    </div>
+                    <div class="gauge-value">78%</div>
+                </div>
+            </div>
+
+            <div class="incident-item" onclick="location.href='/problems'" style="border-left-color: var(--color-success);">
+                <div class="incident-content">
+                    <div class="incident-title">Network Latency Spike - API Gateway</div>
+                    <div class="incident-time">Detected 3 minutes ago</div>
+                </div>
+                <div class="confidence-gauge">
+                    <div class="gauge-bar">
+                        <div class="gauge-fill" style="width: 85%;"></div>
+                    </div>
+                    <div class="gauge-value">85%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REAL-TIME TELEMETRY STREAM -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">📡 Real-Time Telemetry</div>
+            <span style="font-size: var(--fs-xs); color: var(--color-success);">● LIVE</span>
+        </div>
+
+        <div class="data-stream" id="telemetryStream">
+            <div class="data-point">
+                <div class="data-label">CPU Usage</div>
+                <div class="data-value">45%</div>
+            </div>
+            <div class="data-point">
+                <div class="data-label">Memory</div>
+                <div class="data-value">62%</div>
+            </div>
+            <div class="data-point">
+                <div class="data-label">Latency</div>
+                <div class="data-value">125ms</div>
+            </div>
+            <div class="data-point warning">
+                <div class="data-label">Error Rate</div>
+                <div class="data-value" style="color: var(--color-warning);">2.3%</div>
+            </div>
+            <div class="data-point">
+                <div class="data-label">Throughput</div>
+                <div class="data-value">8,432 req/s</div>
+            </div>
+            <div class="data-point critical">
+                <div class="data-label">Disk I/O Wait</div>
+                <div class="data-value" style="color: var(--color-critical);">34%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SERVICE TOPOLOGY SNAPSHOT -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">🔗 Service Topology</div>
+            <a href="/topology" style="color: var(--color-info); text-decoration: none; font-size: var(--fs-sm);">View Full Topology →</a>
+        </div>
+
+        <div class="chart-container">
+            <div style="text-align: center; color: var(--text-secondary);">
+                <div style="font-size: 3em; margin-bottom: var(--space-4);">🌐</div>
+                <div>Interactive service dependency graph</div>
+                <div style="font-size: var(--fs-sm); margin-top: var(--space-2); color: var(--text-tertiary);">3 services, 8 dependencies, 2 external integrations</div>
+                <a href="/topology" style="display: inline-block; margin-top: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-success); color: var(--text-inverse); border-radius: var(--radius-lg); text-decoration: none; font-weight: var(--fw-medium);">View Topology →</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Real-time telemetry updates
+    window.addEventListener('telemetry_update', function(event) {
+        const data = event.detail;
+        console.log('Updating telemetry:', data);
+
+        // Update stream dynamically
+        const stream = document.getElementById('telemetryStream');
+        if (stream && data.services) {
+            // Update metrics (demo)
+            const services = Object.keys(data.services);
+            if (services.length > 0) {
+                const service = services[0];
+                const metrics = data.services[service];
+                // Could animate these updates here
+            }
+        }
+    });
+
+    // Log stream updates
+    window.addEventListener('log_update', function(event) {
+        const log = event.detail;
+        console.log('Log received:', log);
+    });
+
+    // Incident stream updates
+    window.addEventListener('incident_update', function(event) {
+        const incident = event.detail;
+        console.log('Incident received:', incident);
+    });
+</script>
+{% endblock %}

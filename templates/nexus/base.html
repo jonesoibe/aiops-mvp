@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nexus AIOps - Enterprise Observability{% endblock %}</title>
+
+    <!-- Design Tokens -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='design-tokens.css') }}">
+
+    <!-- Page Styles -->
+    <style>
+        body {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        .sidebar {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-primary);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--border-primary);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: var(--fs-2xl);
+            font-weight: var(--fw-bold);
+            background: linear-gradient(135deg, var(--color-success), var(--color-info));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--space-2);
+        }
+
+        .logo-text {
+            font-size: var(--fs-xs);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: var(--ls-wide);
+        }
+
+        .nav-section {
+            padding: var(--space-4) 0;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .nav-section:last-child {
+            border-bottom: none;
+        }
+
+        .nav-label {
+            font-size: var(--fs-xs);
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            padding: 0 var(--space-4);
+            margin-bottom: var(--space-2);
+            letter-spacing: var(--ls-wide);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all var(--transition-base);
+            cursor: pointer;
+            font-size: var(--fs-sm);
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--color-success);
+        }
+
+        .nav-item.active {
+            background: var(--bg-active);
+            color: var(--color-success);
+            border-right: 3px solid var(--color-success);
+            padding-right: calc(var(--space-4) - 3px);
+        }
+
+        .nav-icon {
+            font-size: var(--fs-lg);
+            width: 24px;
+        }
+
+        .topbar {
+            grid-column: 2;
+            grid-row: 1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-6);
+            height: 60px;
+        }
+
+        .topbar-title {
+            font-size: var(--fs-xl);
+            font-weight: var(--fw-semibold);
+            color: var(--text-primary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--color-success), var(--color-info));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--fw-bold);
+            color: var(--text-inverse);
+            cursor: pointer;
+        }
+
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            overflow-y: auto;
+            padding: var(--space-6);
+        }
+
+        /* Scrollbar Styling */
+        .sidebar::-webkit-scrollbar,
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track,
+        .main-content::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb,
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--border-primary);
+            border-radius: var(--radius-sm);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover,
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: var(--border-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr;
+            }
+
+            .sidebar {
+                display: none;
+                position: fixed;
+                width: 240px;
+                z-index: var(--z-fixed);
+                height: 100vh;
+                left: 0;
+                top: 0;
+            }
+
+            .sidebar.open {
+                display: flex;
+            }
+
+            .topbar {
+                grid-column: 1;
+            }
+
+            .main-content {
+                grid-column: 1;
+            }
+        }
+    </style>
+
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">⚡</div>
+            <div class="logo-text">Nexus</div>
+            <div style="font-size: var(--fs-xs); color: var(--text-tertiary); margin-top: var(--space-2);">AIOps</div>
+        </div>
+
+        <!-- Operations -->
+        <div class="nav-section">
+            <div class="nav-label">Operations</div>
+            <a href="/" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                <span class="nav-icon">📊</span>
+                <span>Overview</span>
+            </a>
+            <a href="/live-operations" class="nav-item {% if request.endpoint == 'live_operations' %}active{% endif %}">
+                <span class="nav-icon">⚡</span>
+                <span>Live Operations</span>
+            </a>
+            <a href="/problems" class="nav-item {% if request.endpoint == 'problems' %}active{% endif %}">
+                <span class="nav-icon">🚨</span>
+                <span>Problems</span>
+            </a>
+            <a href="/ai-operations" class="nav-item {% if request.endpoint == 'ai_operations' %}active{% endif %}">
+                <span class="nav-icon">🤖</span>
+                <span>AI Operations</span>
+            </a>
+        </div>
+
+        <!-- Infrastructure -->
+        <div class="nav-section">
+            <div class="nav-label">Infrastructure</div>
+            <a href="/topology" class="nav-item {% if request.endpoint == 'topology' %}active{% endif %}">
+                <span class="nav-icon">🔗</span>
+                <span>Topology</span>
+            </a>
+            <a href="/infrastructure" class="nav-item {% if request.endpoint == 'infrastructure' %}active{% endif %}">
+                <span class="nav-icon">🖥️</span>
+                <span>Infrastructure</span>
+            </a>
+        </div>
+
+        <!-- Observability -->
+        <div class="nav-section">
+            <div class="nav-label">Observability</div>
+            <a href="/logs" class="nav-item {% if request.endpoint == 'logs' %}active{% endif %}">
+                <span class="nav-icon">📝</span>
+                <span>Logs</span>
+            </a>
+            <a href="/traces" class="nav-item {% if request.endpoint == 'traces' %}active{% endif %}">
+                <span class="nav-icon">🔍</span>
+                <span>Traces</span>
+            </a>
+        </div>
+
+        <!-- Remediation -->
+        <div class="nav-section">
+            <div class="nav-label">Remediation</div>
+            <a href="/remediation" class="nav-item {% if request.endpoint == 'remediation' %}active{% endif %}">
+                <span class="nav-icon">🔧</span>
+                <span>Remediation</span>
+            </a>
+            <a href="/approvals" class="nav-item {% if request.endpoint == 'approvals' %}active{% endif %}">
+                <span class="nav-icon">✅</span>
+                <span>Approvals</span>
+            </a>
+        </div>
+
+        <!-- Admin -->
+        <div class="nav-section">
+            <div class="nav-label">Administration</div>
+            <a href="/audit" class="nav-item {% if request.endpoint == 'audit' %}active{% endif %}">
+                <span class="nav-icon">📋</span>
+                <span>Audit</span>
+            </a>
+            <a href="/settings" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+                <span class="nav-icon">⚙️</span>
+                <span>Settings</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div>
+        <div class="user-menu">
+            <div style="text-align: right; font-size: var(--fs-sm);">
+                <div id="userName" style="color: var(--text-primary); font-weight: var(--fw-medium);">User</div>
+                <div id="userRole" style="color: var(--text-secondary);">Role</div>
+            </div>
+            <div class="user-avatar" onclick="logout()">👤</div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Common Scripts -->
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+
+        // Load user info
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+
+            if (!user || !user.username || !token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            document.getElementById('userName').textContent = user.username;
+            document.getElementById('userRole').textContent = (user.role || 'user').toUpperCase();
+
+            // Subscribe to telemetry stream
+            socket.emit('subscribe_telemetry');
+            socket.emit('subscribe_logs');
+            socket.emit('subscribe_incidents');
+        });
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // Real-time telemetry updates
+        socket.on('telemetry_update', function(data) {
+            console.log('📡 Telemetry:', data);
+            // Dispatch custom event for pages to listen to
+            window.dispatchEvent(new CustomEvent('telemetry_update', { detail: data }));
+        });
+
+        // Real-time log updates
+        socket.on('log_update', function(data) {
+            console.log('📝 Log:', data);
+            window.dispatchEvent(new CustomEvent('log_update', { detail: data }));
+        });
+
+        // Real-time incident updates
+        socket.on('incident_update', function(data) {
+            console.log('🚨 Incident:', data);
+            window.dispatchEvent(new CustomEvent('incident_update', { detail: data }));
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
