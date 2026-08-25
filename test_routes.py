@@ -1,33 +1,28 @@
 #!/usr/bin/env python3
-"""Quick test to verify Flask routes are working."""
+import sys
+import os
 
-from flask import Flask, render_template
+# Set encoding
+os.environ['PYTHONIOENCODING'] = 'utf-8'
 
-app = Flask(__name__, template_folder='templates')
-
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
-
-@app.route('/audit-trail')
-def audit_trail():
-    return render_template('audit_trail.html')
-
-@app.route('/api-docs')
-def api_docs():
-    return render_template('api_docs.html')
-
-@app.route('/outputs')
-def outputs():
-    return render_template('outputs.html')
-
-if __name__ == '__main__':
-    print("Testing Flask routes...")
-    with app.app_context():
-        print("Routes available:")
-        for rule in app.url_map.iter_rules():
-            if 'settings' in rule.rule or 'audit' in rule.rule or 'api-docs' in rule.rule or 'outputs' in rule.rule:
-                print(f"  {rule.rule}")
-
-    print("\nStarting test server on http://localhost:5001")
-    app.run(debug=True, port=5001)
+# Try to import and check routes
+try:
+    from nexus_app import app
+    
+    print("Flask routes registered:")
+    routes = sorted(list(set([str(rule) for rule in app.url_map.iter_rules()])))
+    
+    api_routes = [r for r in routes if r.startswith('/api')]
+    for route in api_routes[-5:]:  # Last 5 API routes
+        print(f"  {route}")
+    
+    # Check if approvals route is there
+    if any('approvals' in r for r in routes):
+        print("\nApprovals routes found!")
+    else:
+        print("\nNO APPROVALS ROUTES FOUND!")
+        
+except Exception as e:
+    print(f"Error: {e}")
+    import traceback
+    traceback.print_exc()

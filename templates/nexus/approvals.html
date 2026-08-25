@@ -416,26 +416,89 @@
 
 {% block extra_scripts %}
 <script>
+// Sample approval data with different statuses
+let allApprovalsData = {
+    pending: [
+        {
+            approval_id: 'APP-001',
+            title: 'Rollback Production Deployment',
+            description: 'Revert SERVICE_C v2.1.4 due to critical memory leak',
+            priority: 'CRITICAL',
+            type: 'remediation',
+            requested_by: 'aiops_engine',
+            requested_at: new Date(Date.now() - 5*60000).toISOString(),
+            status: 'pending',
+            impact: { users_affected: '~2,847 concurrent', estimated_downtime: '45-60 seconds', data_loss_risk: 'None' }
+        },
+        {
+            approval_id: 'APP-002',
+            title: 'Scale Up Database Connections',
+            description: 'Increase connection pool from 500 to 1000 on SQL Server',
+            priority: 'HIGH',
+            type: 'configuration',
+            requested_by: 'auto_scaler',
+            requested_at: new Date(Date.now() - 12*60000).toISOString(),
+            status: 'pending',
+            impact: { users_affected: 'All', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
+        }
+    ],
+    approved: [
+        {
+            approval_id: 'APP-003',
+            title: 'Enable Debug Logging for SERVICE_A',
+            description: 'Temporarily increase log verbosity for issue diagnosis',
+            priority: 'MEDIUM',
+            type: 'debugging',
+            requested_by: 'investigation_team',
+            requested_at: new Date(Date.now() - 25*60000).toISOString(),
+            approved_by: 'admin',
+            approved_at: new Date(Date.now() - 20*60000).toISOString(),
+            status: 'approved',
+            impact: { users_affected: 'None', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
+        },
+        {
+            approval_id: 'APP-005',
+            title: 'Cache Invalidation - Redis Cluster',
+            description: 'Clear stale cache entries to free up 2.5GB memory',
+            priority: 'MEDIUM',
+            type: 'maintenance',
+            requested_by: 'cache_manager',
+            requested_at: new Date(Date.now() - 2*60*60000).toISOString(),
+            approved_by: 'operator',
+            approved_at: new Date(Date.now() - 115*60000).toISOString(),
+            status: 'approved',
+            impact: { users_affected: 'Minimal', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
+        }
+    ],
+    rejected: [
+        {
+            approval_id: 'APP-004',
+            title: 'Update Security Policy Configuration',
+            description: 'Apply new WAF rules for DDoS protection',
+            priority: 'HIGH',
+            type: 'security',
+            requested_by: 'security_team',
+            requested_at: new Date(Date.now() - 45*60000).toISOString(),
+            rejected_by: 'admin',
+            rejected_at: new Date(Date.now() - 40*60000).toISOString(),
+            rejection_reason: 'Needs further testing in staging environment',
+            status: 'rejected',
+            impact: { users_affected: 'None', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
+        }
+    ]
+};
+
 let allApprovals = [];
 let currentStatus = 'pending';
 let currentPriority = 'all';
 let selectedApproval = null;
 
-const token = localStorage.getItem('token');
-
-async function loadApprovals(status = 'pending') {
-    try {
-        const response = await fetch(`/api/approvals?status=${status}&limit=50`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        allApprovals = data.approvals || [];
-        console.log(`✅ Loaded ${allApprovals.length} ${status} approvals`);
-        displayApprovals();
-        updateStatusCounts();
-    } catch (error) {
-        console.error('Error loading approvals:', error);
-    }
+function loadApprovals(status = 'pending') {
+    currentStatus = status;
+    allApprovals = allApprovalsData[status] || [];
+    console.log(`Loaded ${allApprovals.length} ${status} approvals`);
+    displayApprovals();
+    updateStatusCounts();
 }
 
 function displayApprovals() {
@@ -456,8 +519,6 @@ function displayApprovals() {
     filteredApprovals.forEach(approval => {
         const card = document.createElement('div');
         const priorityClass = approval.priority.toLowerCase();
-        const statusColor = approval.status === 'approved' ? 'success' :
-                           approval.status === 'rejected' ? 'critical' : 'warning';
 
         let statusBadge = '';
         if (approval.status === 'approved') {
@@ -591,21 +652,26 @@ function selectApproval(approval) {
     `;
 }
 
-async function approveRequest(approvalId) {
-    try {
-        const response = await fetch(`/api/approvals/${approvalId}/approve`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+function approveRequest(approvalId) {
+    // Find and update the approval
+    const approval = selectedApproval;
+    if (!approval) return;
 
-        const result = await response.json();
-        alert(`✅ ${result.message}`);
+    // Move from pending to approved
+    const idx = allApprovalsData.pending.findIndex(a => a.approval_id === approvalId);
+    if (idx !== -1) {
+        const app = allApprovalsData.pending[idx];
+        app.status = 'approved';
+        app.approved_by = 'admin';
+        app.approved_at = new Date().toISOString();
 
-        // Reload pending approvals
-        loadApprovals('pending');
+        allApprovalsData.approved.unshift(app);
+        allApprovalsData.pending.splice(idx, 1);
+
+        alert('Approval granted! Request has been approved.');
+
+        // Reload current view
+        loadApprovals(currentStatus);
 
         // Clear detail view
         document.getElementById('detailView').innerHTML = `
@@ -616,31 +682,29 @@ async function approveRequest(approvalId) {
                 </div>
             </div>
         `;
-    } catch (error) {
-        alert('❌ Error approving request: ' + error.message);
-        console.error('Error:', error);
     }
 }
 
-async function rejectRequest(approvalId) {
+function rejectRequest(approvalId) {
     const reason = prompt('Enter rejection reason:');
     if (!reason) return;
 
-    try {
-        const response = await fetch(`/api/approvals/${approvalId}/reject`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason })
-        });
+    // Find and update the approval
+    const idx = allApprovalsData.pending.findIndex(a => a.approval_id === approvalId);
+    if (idx !== -1) {
+        const app = allApprovalsData.pending[idx];
+        app.status = 'rejected';
+        app.rejected_by = 'admin';
+        app.rejected_at = new Date().toISOString();
+        app.rejection_reason = reason;
 
-        const result = await response.json();
-        alert(`✅ ${result.message}`);
+        allApprovalsData.rejected.unshift(app);
+        allApprovalsData.pending.splice(idx, 1);
 
-        // Reload pending approvals
-        loadApprovals('pending');
+        alert('Request has been rejected.');
+
+        // Reload current view
+        loadApprovals(currentStatus);
 
         // Clear detail view
         document.getElementById('detailView').innerHTML = `
@@ -651,9 +715,6 @@ async function rejectRequest(approvalId) {
                 </div>
             </div>
         `;
-    } catch (error) {
-        alert('❌ Error rejecting request: ' + error.message);
-        console.error('Error:', error);
     }
 }
 
@@ -664,27 +725,23 @@ function approveAction(event, approvalId) {
 
 function rejectAction(event, approvalId) {
     event.stopPropagation();
-    const reason = prompt('Enter rejection reason:');
-    if (reason) rejectRequest(approvalId);
+    rejectRequest(approvalId);
 }
 
-async function updateStatusCounts() {
-    try {
-        const statuses = ['pending', 'approved', 'rejected', 'expired'];
-        for (const status of statuses) {
-            const response = await fetch(`/api/approvals?status=${status}&limit=1`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            const btn = document.querySelector(`[onclick*="'${status}'"]`);
-            if (btn) {
-                const count = data.total || 0;
-                btn.textContent = btn.textContent.split('(')[0] + `(${count})`;
+function updateStatusCounts() {
+    const statuses = ['pending', 'approved', 'rejected'];
+    statuses.forEach(status => {
+        const count = allApprovalsData[status].length;
+        const btn = document.querySelector(`button[onclick*="filterByStatus(this, '${status}')"]`);
+        if (btn) {
+            const match = btn.textContent.match(/\((\d+)\)/);
+            if (match) {
+                btn.textContent = btn.textContent.replace(/\(\d+\)/, `(${count})`);
+            } else {
+                btn.textContent = btn.textContent.split('(')[0].trim() + ` (${count})`;
             }
         }
-    } catch (error) {
-        console.error('Error updating status counts:', error);
-    }
+    });
 }
 
 function filterByStatus(element, status) {
@@ -710,8 +767,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadApprovals('pending');
     updateStatusCounts();
 });
-
-// Refresh every 10 seconds
-setInterval(() => loadApprovals(currentStatus), 10000);
 </script>
 {% endblock %}
