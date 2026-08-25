@@ -37,7 +37,11 @@
       "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Where-Object {$_.CommandLine -match \"nexus_app\"} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Write-Output \"Flask app stopped\")",
       "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Select-Object Name, CommandLine)",
       "Bash(git commit -m 'Add login page and authentication *)",
-      "Bash(git commit -m 'Enable real-time mock data simulation for Logs page *)"
+      "Bash(git commit -m 'Enable real-time mock data simulation for Logs page *)",
+      "Bash(curl -s http://localhost:5000/api/statistics -H 'Authorization: Bearer test')",
+      "Bash(curl -s http://localhost:5000/api/incidents -H 'Authorization: Bearer test')",
+      "Bash(curl -s \"http://localhost:5000/api/incidents\" -H \"Authorization: Bearer test\")",
+      "Bash(git commit -m 'Phase 1: Implement real data ingestion from CSV files *)"
     ]
   }
 }

@@ -29,6 +29,9 @@ from pymongo.errors import ConnectionFailure
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Data Loader
+from data_loader import get_data_loader
+
 # ==================== APP SETUP ====================
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -310,15 +313,67 @@ def get_current_telemetry():
 @app.route('/api/incidents', methods=['GET'])
 @require_auth
 def get_incidents():
-    """Get active incidents."""
-    if db:
-        incidents = list(db['incidents'].find().sort('timestamp', -1).limit(50))
-        for i in incidents:
-            i['_id'] = str(i['_id'])
-    else:
-        incidents = in_memory_store['incidents']
+    """Get active incidents (from CSV data)."""
+    data_loader = get_data_loader()
+    active = data_loader.get_active_incidents()
 
-    return jsonify({'incidents': incidents}), 200
+    # Sort by timestamp descending
+    active.sort(key=lambda x: x['timestamp'], reverse=True)
+
+    return jsonify({
+        'total': len(active),
+        'incidents': active
+    }), 200
+
+@app.route('/api/incidents/<incident_id>', methods=['GET'])
+@require_auth
+def get_incident_detail(incident_id):
+    """Get detailed incident information."""
+    data_loader = get_data_loader()
+    incident = data_loader.get_incident_by_id(incident_id)
+
+    if not incident:
+        return jsonify({'error': 'Incident not found'}), 404
+
+    return jsonify(incident), 200
+
+@app.route('/api/statistics', methods=['GET'])
+@require_auth
+def get_statistics():
+    """Get real-time statistics from incident data."""
+    data_loader = get_data_loader()
+    stats = data_loader.get_statistics()
+
+    return jsonify(stats), 200
+
+@app.route('/api/actions/execute', methods=['POST'])
+@require_auth
+def execute_action():
+    """Execute remediation action."""
+    data = request.get_json()
+    action = data.get('action')
+    target = data.get('target')
+    incident_id = data.get('incident_id')
+
+    actions_map = {
+        'drain': f'Draining connections from {target}...',
+        'scale': f'Scaling up instances for {target}...',
+        'deploy': f'Deploying patch to {target}...',
+        'rollback': f'Rolling back deployment on {target}...'
+    }
+
+    message = actions_map.get(action, 'Executing action...')
+
+    # Log action
+    print(f"⚡ Executing action: {action} on {target} (Incident: {incident_id})")
+
+    return jsonify({
+        'status': 'executing',
+        'action': action,
+        'target': target,
+        'message': message,
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
 
 # ==================== WEBSOCKET EVENTS ====================
 

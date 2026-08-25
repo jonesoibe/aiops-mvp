@@ -301,7 +301,7 @@
 
         <div class="ai-insight">
             <div class="ai-insight-header">
-                <span class="ai-label">Davis AI</span>
+                <span class="ai-label">AIOps Engine</span>
                 <span style="color: var(--text-secondary); font-size: var(--fs-xs);">2 min ago</span>
             </div>
             <div class="ai-content">
@@ -426,34 +426,100 @@
 
 {% block extra_scripts %}
 <script>
+    // Fetch real statistics from API
+    async function loadRealData() {
+        try {
+            const token = localStorage.getItem('token');
+
+            // Fetch statistics
+            const statsResponse = await fetch('/api/statistics', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const stats = await statsResponse.json();
+
+            // Fetch incidents
+            const incidentsResponse = await fetch('/api/incidents', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const incidentData = await incidentsResponse.json();
+
+            // Update metrics
+            document.getElementById('healthyCount').textContent = (100 - stats.active_incidents).toLocaleString();
+            document.getElementById('problemCount').textContent = stats.active_incidents;
+            document.getElementById('aiCount').textContent = Math.ceil(stats.active_incidents * 0.8);
+            document.getElementById('resolution').textContent = stats.resolution_rate + '%';
+
+            console.log('✅ Real data loaded:', stats);
+
+            // Update incidents list with real data
+            updateIncidentsDisplay(incidentData.incidents);
+
+        } catch (error) {
+            console.error('Error loading real data:', error);
+        }
+    }
+
+    function updateIncidentsDisplay(incidents) {
+        const listContainer = document.querySelector('.incident-list');
+        if (!listContainer || !incidents || incidents.length === 0) return;
+
+        // Clear and rebuild with first 3 real incidents
+        listContainer.innerHTML = '';
+
+        incidents.slice(0, 3).forEach((incident, index) => {
+            const confidence = Math.round(incident.confidence * 100);
+            const colors = ['var(--color-info)', 'var(--color-warning)', 'var(--color-success)'];
+            const borderColor = colors[index % 3];
+
+            const item = document.createElement('div');
+            item.className = 'incident-item';
+            item.style.cursor = 'pointer';
+            item.onclick = () => window.location.href = '/problems#' + incident.incident_id;
+            item.innerHTML = `
+                <div class="incident-content">
+                    <div class="incident-title">${incident.issue_type.replace(/_/g, ' ').toUpperCase()} - ${incident.machine}</div>
+                    <div class="incident-time">Confidence: ${confidence}%</div>
+                </div>
+                <div class="confidence-gauge">
+                    <div class="gauge-bar">
+                        <div class="gauge-fill" style="width: ${confidence}%; background: ${borderColor};"></div>
+                    </div>
+                    <div class="gauge-value">${confidence}%</div>
+                </div>
+            `;
+            item.style.borderLeftColor = borderColor;
+            listContainer.appendChild(item);
+        });
+    }
+
+    // Make metric cards clickable
+    document.addEventListener('DOMContentLoaded', function() {
+        const healthyCard = document.querySelector('.metric-card');
+        if (healthyCard) {
+            healthyCard.style.cursor = 'pointer';
+            healthyCard.onclick = () => window.location.href = '/infrastructure';
+        }
+
+        // Load real data on page load
+        loadRealData();
+
+        // Refresh every 10 seconds
+        setInterval(loadRealData, 10000);
+    });
+
     // Real-time telemetry updates
     window.addEventListener('telemetry_update', function(event) {
-        const data = event.detail;
-        console.log('Updating telemetry:', data);
-
-        // Update stream dynamically
-        const stream = document.getElementById('telemetryStream');
-        if (stream && data.services) {
-            // Update metrics (demo)
-            const services = Object.keys(data.services);
-            if (services.length > 0) {
-                const service = services[0];
-                const metrics = data.services[service];
-                // Could animate these updates here
-            }
-        }
+        console.log('📡 Telemetry update:', event.detail);
     });
 
     // Log stream updates
     window.addEventListener('log_update', function(event) {
-        const log = event.detail;
-        console.log('Log received:', log);
+        console.log('📝 Log update:', event.detail);
     });
 
     // Incident stream updates
     window.addEventListener('incident_update', function(event) {
-        const incident = event.detail;
-        console.log('Incident received:', incident);
+        console.log('🚨 Incident update:', event.detail);
     });
 </script>
 {% endblock %}
