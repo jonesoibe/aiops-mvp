@@ -1,0 +1,676 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Chaos Injection Simulator - Nexus AIOps{% endblock %}
+{% block topbar_title %}Chaos Injection Simulator - Live Environment{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .simulator-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-6);
+        height: calc(100vh - 100px);
+    }
+
+    .simulator-panel {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-tertiary);
+    }
+
+    .panel-title {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--space-4);
+    }
+
+    /* Config Panel */
+    .config-section {
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-6);
+        border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .config-section:last-child {
+        border-bottom: none;
+    }
+
+    .config-label {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .form-group {
+        margin-bottom: var(--space-4);
+    }
+
+    .form-label {
+        display: block;
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-1);
+    }
+
+    .form-input {
+        width: 100%;
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        font-family: var(--font-mono);
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 3px var(--color-info-dim);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+    }
+
+    .slider-container {
+        display: flex;
+        gap: var(--space-2);
+        align-items: center;
+    }
+
+    input[type="range"] {
+        flex: 1;
+    }
+
+    .slider-value {
+        min-width: 40px;
+        text-align: right;
+        color: var(--text-secondary);
+        font-size: var(--fs-sm);
+    }
+
+    .button-group {
+        display: flex;
+        gap: var(--space-2);
+        margin-top: var(--space-4);
+    }
+
+    .btn {
+        flex: 1;
+        padding: var(--space-3) var(--space-4);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-semibold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        color: var(--bg-primary);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(107, 255, 184, 0.3);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    /* Output Panel */
+    .output-tabs {
+        display: flex;
+        gap: var(--space-1);
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-primary);
+        overflow-x: auto;
+    }
+
+    .tab-button {
+        padding: var(--space-2) var(--space-3);
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: var(--fs-sm);
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        transition: all var(--transition-base);
+    }
+
+    .tab-button:hover {
+        color: var(--text-primary);
+    }
+
+    .tab-button.active {
+        color: var(--color-success);
+        border-bottom-color: var(--color-success);
+    }
+
+    .tab-content {
+        display: none;
+        height: 100%;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .output-window {
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        line-height: var(--lh-relaxed);
+        color: var(--text-secondary);
+        overflow: auto;
+        max-height: 100%;
+    }
+
+    .console-line {
+        margin-bottom: var(--space-1);
+    }
+
+    .console-error {
+        color: var(--color-error);
+    }
+
+    .console-warning {
+        color: var(--color-warning);
+    }
+
+    .console-success {
+        color: var(--color-success);
+    }
+
+    .console-info {
+        color: var(--color-info);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+        text-transform: uppercase;
+    }
+
+    .status-running {
+        background: var(--color-info-dim);
+        color: var(--color-info);
+        animation: pulse 1s infinite;
+    }
+
+    .status-success {
+        background: var(--color-success-dim);
+        color: var(--color-success);
+    }
+
+    .status-error {
+        background: var(--color-error-dim);
+        color: var(--color-error);
+    }
+
+    .status-pending {
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+    }
+
+    .output-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: var(--space-4);
+    }
+
+    .output-table th,
+    .output-table td {
+        padding: var(--space-2);
+        text-align: left;
+        border-bottom: 1px solid var(--border-secondary);
+        font-size: var(--fs-xs);
+    }
+
+    .output-table th {
+        background: var(--bg-tertiary);
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+    }
+
+    .output-table tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .metric-card {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-secondary);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin-bottom: var(--space-3);
+    }
+
+    .metric-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-1);
+    }
+
+    .metric-value {
+        font-size: var(--fs-2xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .metric-trend {
+        font-size: var(--fs-xs);
+        margin-top: var(--space-1);
+        color: var(--color-success);
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--color-info-dim);
+        border-top-color: var(--color-info);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 1024px) {
+        .simulator-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .simulator-panel {
+            min-height: 500px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="simulator-container">
+    <!-- Configuration Panel -->
+    <div class="simulator-panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <span>⚙️</span>
+                <span>Simulation Config</span>
+            </div>
+        </div>
+        <div class="panel-content">
+            <!-- Chaos Type -->
+            <div class="config-section">
+                <div class="config-label">Chaos Injection Type</div>
+                <div class="form-group">
+                    <select id="chaosType" class="form-select">
+                        <option value="cpu_spike">💻 CPU Spike (Resource Exhaustion)</option>
+                        <option value="memory_leak">🧠 Memory Leak (Gradual Degradation)</option>
+                        <option value="disk_io">💾 Disk I/O Bottleneck (Performance)</option>
+                        <option value="network_latency">🌐 Network Latency (Communication)</option>
+                        <option value="process_crash">💥 Process Crash (Service Failure)</option>
+                        <option value="database_deadlock">🔒 Database Deadlock (Lock Contention)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Intensity -->
+            <div class="config-section">
+                <div class="config-label">Chaos Intensity</div>
+                <div class="form-group">
+                    <div class="slider-container">
+                        <input type="range" id="intensity" min="10" max="100" value="50" class="form-input">
+                        <div class="slider-value"><span id="intensityValue">50</span>%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Duration -->
+            <div class="config-section">
+                <div class="config-label">Duration (Seconds)</div>
+                <div class="form-group">
+                    <input type="number" id="duration" class="form-input" value="60" min="10" max="300">
+                </div>
+            </div>
+
+            <!-- Sample Size -->
+            <div class="config-section">
+                <div class="config-label">Sample Data Size</div>
+                <div class="form-group">
+                    <select id="sampleSize" class="form-select">
+                        <option value="small">📦 Small (100 samples)</option>
+                        <option value="medium" selected>📊 Medium (1000 samples)</option>
+                        <option value="large">📈 Large (10000 samples)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Injection Strategy -->
+            <div class="config-section">
+                <div class="config-label">Injection Strategy</div>
+                <div class="form-group">
+                    <select id="strategy" class="form-select">
+                        <option value="immediate">⚡ Immediate (Instant Start)</option>
+                        <option value="gradual" selected">📈 Gradual (Ramp Up)</option>
+                        <option value="intermittent">🔄 Intermittent (Bursts)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button class="btn btn-primary" id="runBtn" onclick="runSimulation()">▶️ Run Simulation</button>
+                <button class="btn btn-secondary" onclick="resetSimulation()">🔄 Reset</button>
+            </div>
+
+            <!-- Status -->
+            <div style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border-secondary);">
+                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                    <div id="statusBadge" class="status-badge status-pending">Idle</div>
+                    <div id="statusText" style="color: var(--text-secondary); font-size: var(--fs-sm);">Ready</div>
+                </div>
+                <div id="executionTime" style="margin-top: var(--space-2); color: var(--text-tertiary); font-size: var(--fs-xs);">
+                    Execution time: -
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Panel -->
+    <div class="simulator-panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <span>📊</span>
+                <span>Simulation Output & Analysis</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="output-tabs">
+            <button class="tab-button active" onclick="switchTab(event, 'console')">Console</button>
+            <button class="tab-button" onclick="switchTab(event, 'metrics')">Metrics</button>
+            <button class="tab-button" onclick="switchTab(event, 'analysis')">Analysis</button>
+            <button class="tab-button" onclick="switchTab(event, 'anomalies')">Anomalies</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="console" class="tab-content active">
+            <div class="output-window" id="consoleOutput">
+                <div class="console-line console-info">🔵 Simulation engine ready. Configure and click "Run Simulation".</div>
+            </div>
+        </div>
+
+        <div id="metrics" class="tab-content">
+            <div class="output-window">
+                <div id="metricsOutput"></div>
+            </div>
+        </div>
+
+        <div id="analysis" class="tab-content">
+            <div class="output-window">
+                <div id="analysisOutput"></div>
+            </div>
+        </div>
+
+        <div id="anomalies" class="tab-content">
+            <div class="output-window">
+                <div id="anomaliesOutput"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(event, tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    document.getElementById('intensity').addEventListener('input', function() {
+        document.getElementById('intensityValue').textContent = this.value;
+    });
+
+    function appendConsole(message, type = 'info') {
+        const output = document.getElementById('consoleOutput');
+        const line = document.createElement('div');
+        line.className = 'console-line console-' + type;
+        const timestamp = new Date().toLocaleTimeString();
+        line.innerHTML = `<span style="color: var(--text-tertiary);">[${timestamp}]</span> ${message}`;
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
+    }
+
+    async function runSimulation() {
+        const runBtn = document.getElementById('runBtn');
+        runBtn.disabled = true;
+
+        const config = {
+            chaos_type: document.getElementById('chaosType').value,
+            intensity: parseFloat(document.getElementById('intensity').value),
+            duration: parseInt(document.getElementById('duration').value),
+            sample_size: document.getElementById('sampleSize').value,
+            strategy: document.getElementById('strategy').value
+        };
+
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        statusBadge.className = 'status-badge status-running';
+        statusBadge.textContent = 'RUNNING';
+        statusText.textContent = 'Executing...';
+
+        const startTime = Date.now();
+        document.getElementById('consoleOutput').innerHTML = '';
+        appendConsole(`🚀 Starting ${config.chaos_type} simulation...`, 'info');
+        appendConsole(`   Intensity: ${config.intensity}% | Duration: ${config.duration}s | Strategy: ${config.strategy}`, 'info');
+        appendConsole(`   Sample Size: ${config.sample_size}`, 'info');
+        appendConsole('', 'info');
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/simulator/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ config })
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const simId = data.simulation_id;
+
+            appendConsole(`📍 Simulation ID: ${simId}`, 'success');
+            appendConsole(`⏳ Processing chaos scenario...`, 'info');
+
+            pollSimulationStatus(simId, startTime, runBtn, statusBadge, statusText);
+
+        } catch (error) {
+            appendConsole(`❌ Error: ${error.message}`, 'error');
+            statusBadge.className = 'status-badge status-error';
+            statusBadge.textContent = 'ERROR';
+            runBtn.disabled = false;
+        }
+    }
+
+    function pollSimulationStatus(simId, startTime, runBtn, statusBadge, statusText) {
+        const poll = setInterval(async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/simulator/${simId}/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Status failed');
+                const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+                if (data.status === 'running') {
+                    appendConsole(`⏳ Processing... (${elapsed}s elapsed)`, 'info');
+                } else if (data.status === 'completed') {
+                    clearInterval(poll);
+                    appendConsole(`✅ Simulation complete in ${elapsed}s!`, 'success');
+                    displayResults(data.result);
+
+                    statusBadge.className = 'status-badge status-success';
+                    statusBadge.textContent = 'SUCCESS';
+                    statusText.textContent = `Completed in ${elapsed}s`;
+                    document.getElementById('executionTime').textContent = `Execution time: ${elapsed}s`;
+                    runBtn.disabled = false;
+                } else if (data.status === 'failed') {
+                    clearInterval(poll);
+                    appendConsole(`❌ Failed: ${data.error}`, 'error');
+                    statusBadge.className = 'status-badge status-error';
+                    statusBadge.textContent = 'ERROR';
+                    runBtn.disabled = false;
+                }
+            } catch (error) {
+                appendConsole(`❌ Error: ${error.message}`, 'error');
+                clearInterval(poll);
+                runBtn.disabled = false;
+            }
+        }, 1000);
+    }
+
+    function displayResults(results) {
+        if (!results) return;
+
+        if (results.metrics) {
+            const metricsHtml = `
+                <div class="metric-card">
+                    <div class="metric-label">Detection Rate</div>
+                    <div class="metric-value">${(results.metrics.detection_rate * 100).toFixed(1)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Anomalies Detected</div>
+                    <div class="metric-value">${results.metrics.anomalies_count}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">False Positive Rate</div>
+                    <div class="metric-value">${(results.metrics.false_positive_rate * 100).toFixed(2)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Processing Time</div>
+                    <div class="metric-value">${results.metrics.processing_time_ms.toFixed(0)}ms</div>
+                </div>
+            `;
+            document.getElementById('metricsOutput').innerHTML = metricsHtml;
+            appendConsole(`📊 Detected ${results.metrics.anomalies_count} anomalies`, 'success');
+        }
+
+        if (results.analysis) {
+            const analysisHtml = `
+                <table class="output-table">
+                    <thead>
+                        <tr><th>Parameter</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Feature Mean</td><td>${parseFloat(results.analysis.feature_mean).toFixed(4)}</td></tr>
+                        <tr><td>Feature Std Dev</td><td>${parseFloat(results.analysis.feature_std).toFixed(4)}</td></tr>
+                        <tr><td>Anomaly Min Score</td><td>${parseFloat(results.analysis.anomaly_min).toFixed(4)}</td></tr>
+                        <tr><td>Anomaly Max Score</td><td>${parseFloat(results.analysis.anomaly_max).toFixed(4)}</td></tr>
+                        <tr><td>Threshold</td><td>${parseFloat(results.analysis.threshold).toFixed(4)}</td></tr>
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('analysisOutput').innerHTML = analysisHtml;
+            appendConsole(`📈 Analysis: Feature normalization & threshold calibration complete`, 'success');
+        }
+
+        if (results.anomalies && results.anomalies.length > 0) {
+            let anomaliesHtml = `<table class="output-table"><thead><tr><th>Index</th><th>Score</th><th>Severity</th></tr></thead><tbody>`;
+            results.anomalies.slice(0, 25).forEach(anom => {
+                const severity = anom.score > 0.8 ? '🔴 Critical' : anom.score > 0.5 ? '🟠 High' : '🟡 Medium';
+                anomaliesHtml += `<tr><td>${anom.index}</td><td>${parseFloat(anom.score).toFixed(4)}</td><td>${severity}</td></tr>`;
+            });
+            anomaliesHtml += '</tbody></table>';
+            document.getElementById('anomaliesOutput').innerHTML = anomaliesHtml;
+            appendConsole(`🚨 Detailed anomaly data ready (${results.anomalies.length} total)`, 'warning');
+        }
+    }
+
+    function resetSimulation() {
+        document.getElementById('consoleOutput').innerHTML = '<div class="console-line console-info">🔵 Ready</div>';
+        document.getElementById('metricsOutput').innerHTML = '';
+        document.getElementById('analysisOutput').innerHTML = '';
+        document.getElementById('anomaliesOutput').innerHTML = '';
+
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        statusBadge.className = 'status-badge status-pending';
+        statusBadge.textContent = 'IDLE';
+        statusText.textContent = 'Ready';
+        document.getElementById('executionTime').textContent = 'Execution time: -';
+    }
+</script>
+{% endblock %}

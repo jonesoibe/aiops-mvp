@@ -876,8 +876,8 @@ active_simulations = {}
 @app.route('/simulator', methods=['GET'])
 @require_auth
 def simulator_page(user=None):
-    """Chaos injection simulator page."""
-    return render_template('nexus/simulator.html')
+    """Chaos injection simulator page with live Python execution."""
+    return render_template('nexus/simulator_advanced.html')
 
 @app.route('/api/simulator/start', methods=['POST'])
 @require_auth
