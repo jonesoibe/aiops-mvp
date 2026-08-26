@@ -484,6 +484,17 @@
 </div>
 
 <script>
+    // Initialize on page load
+    window.addEventListener('load', function() {
+        const token = localStorage.getItem('token');
+        const output = document.getElementById('consoleOutput');
+        if (!token) {
+            output.innerHTML = '<div class="console-line console-warning">⚠️ No authentication token found. Please login first.</div>';
+        } else {
+            output.innerHTML = '<div class="console-line console-success">✅ Authentication verified. Ready to run simulations.</div>';
+        }
+    });
+
     function switchTab(event, tabName) {
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active');
@@ -514,6 +525,17 @@
         const runBtn = document.getElementById('runBtn');
         runBtn.disabled = true;
 
+        // Check token first
+        const token = localStorage.getItem('token');
+        if (!token) {
+            appendConsole(`❌ Authentication Error: No token found. Please login again.`, 'error');
+            document.getElementById('statusBadge').className = 'status-badge status-error';
+            document.getElementById('statusBadge').textContent = 'ERROR';
+            document.getElementById('statusText').textContent = 'Authentication failed';
+            runBtn.disabled = false;
+            return;
+        }
+
         const config = {
             chaos_type: document.getElementById('chaosType').value,
             intensity: parseFloat(document.getElementById('intensity').value),
@@ -536,7 +558,6 @@
         appendConsole('', 'info');
 
         try {
-            const token = localStorage.getItem('token');
             const response = await fetch('/api/simulator/start', {
                 method: 'POST',
                 headers: {
@@ -546,27 +567,32 @@
                 body: JSON.stringify({ config })
             });
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const errorMsg = errorData.error || `HTTP ${response.status}`;
+                throw new Error(errorMsg);
+            }
+
             const data = await response.json();
             const simId = data.simulation_id;
 
             appendConsole(`📍 Simulation ID: ${simId}`, 'success');
             appendConsole(`⏳ Processing chaos scenario...`, 'info');
 
-            pollSimulationStatus(simId, startTime, runBtn, statusBadge, statusText);
+            pollSimulationStatus(simId, startTime, runBtn, statusBadge, statusText, token);
 
         } catch (error) {
             appendConsole(`❌ Error: ${error.message}`, 'error');
             statusBadge.className = 'status-badge status-error';
             statusBadge.textContent = 'ERROR';
+            statusText.textContent = error.message;
             runBtn.disabled = false;
         }
     }
 
-    function pollSimulationStatus(simId, startTime, runBtn, statusBadge, statusText) {
+    function pollSimulationStatus(simId, startTime, runBtn, statusBadge, statusText, token) {
         const poll = setInterval(async () => {
             try {
-                const token = localStorage.getItem('token');
                 const response = await fetch(`/api/simulator/${simId}/status`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
