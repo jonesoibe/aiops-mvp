@@ -80,7 +80,28 @@
       "Bash(curl -s \"http://localhost:5000/api/approvals?status=approved\")",
       "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Result: {d.get\\('total', 'error'\\)} approved\\\\\"\\)\")",
       "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\(f\\\\\"Result: {d.get\\('message', d.get\\('error', 'unknown'\\)\\)}\\\\\"\\)\")",
-      "Bash(git commit -m 'Refactor: Clean up duplicate approval endpoints and add MongoDB setup guide *)"
+      "Bash(git commit -m 'Refactor: Clean up duplicate approval endpoints and add MongoDB setup guide *)",
+      "Bash(git commit -m 'Add: Complete start and build guide with environment variables *)",
+      "Bash(echo \"   venv\\\\\\\\Scripts\\\\\\\\activate     \\(Windows\\)\")",
+      "Bash(git commit -m 'Add: Quick commands and environment variables reference *)",
+      "Bash(git commit -m 'Add: JWT token generation guide *)",
+      "Bash(git commit -m 'Add: JWT secret key generation guide for Render *)",
+      "Bash(git commit -m 'Fix: Remove incompatible ML packages, keep only Flask web dependencies *)",
+      "Bash(git commit -m 'Fix: Add mobile-responsive hamburger menu for sidebar navigation *)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; python nexus_app.py)",
+      "PowerShell(Get-Process python | Where-Object {$_.Name -eq 'python'} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Write-Output \"Stopped old processes\")",
+      "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; python nexus_app.py 2>&1 | Select-Object -First 20)",
+      "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; cd \"C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\"; python nexus_app.py)",
+      "Bash(python -c \"from chaos_executor import ChaosExecutor; print\\('✅ chaos_executor imported successfully'\\)\")",
+      "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; Start-Process python -ArgumentList \"nexus_app.py\" -WorkingDirectory \"C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\" -WindowStyle Hidden; Write-Output \"App started in background\"; Start-Sleep -Seconds 6)",
+      "mcp__visualize__read_me",
+      "Bash(python -c \"import nexus_app; print\\('✅ App imports successfully'\\)\")",
+      "Bash(git commit -m 'Fix: Add missing data science dependencies for Chaos Simulator *)",
+      "Bash(python -m py_compile nexus_app.py chaos_executor.py)",
+      "Bash(git commit -m 'Fix: Render deployment configuration and dependencies *)",
+      "Bash(git commit -m 'Fix: Complete production deployment configuration for Render *)",
+      "Bash(git commit *)"
     ]
   }
 }
