@@ -32,6 +32,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Data Loader
 from data_loader import get_data_loader
 
+# Real Metrics
+from prometheus_client import get_storage, init_storage
+from metrics_simulator import start_metrics_collection
+
 # ==================== APP SETUP ====================
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -799,39 +803,25 @@ def handle_subscribe_incidents():
 # ==================== TELEMETRY STREAMING ====================
 
 def stream_telemetry():
-    """Background thread to stream mock telemetry data."""
-    services = ['SERVICE_A', 'SERVICE_B', 'SERVICE_C', 'API_GATEWAY', 'SQL_SERVER']
-    metrics = ['cpu_usage', 'memory_usage', 'latency', 'error_rate', 'throughput']
-
+    """Stream real telemetry data from metrics storage."""
     while True:
         try:
+            storage = get_storage()
+
+            # Get all metrics and group by status
+            all_metrics = storage.get_all_metrics()
+            summary = storage.get_summary_stats()
+
             telemetry_data = {
                 'timestamp': datetime.utcnow().isoformat(),
-                'services': {}
+                'summary': summary,
+                'metrics': all_metrics,
+                'anomalies': storage.get_anomalies()
             }
 
-            for service in services:
-                telemetry_data['services'][service] = {}
-                for metric in metrics:
-                    if metric == 'cpu_usage':
-                        value = random.uniform(20, 80)
-                    elif metric == 'memory_usage':
-                        value = random.uniform(30, 75)
-                    elif metric == 'latency':
-                        value = random.uniform(10, 200)
-                    elif metric == 'error_rate':
-                        value = random.uniform(0, 5)
-                    else:  # throughput
-                        value = random.uniform(100, 1000)
-
-                    telemetry_data['services'][service][metric] = {
-                        'value': value,
-                        'unit': '%' if metric in ['cpu_usage', 'memory_usage', 'error_rate'] else 'ms' if metric == 'latency' else 'req/s'
-                    }
-
             socketio.emit('telemetry_update', telemetry_data, room='telemetry', skip_sid=None)
-            print(f"📡 Telemetry emitted to room 'telemetry': {list(telemetry_data['services'].keys())}")
-            time.sleep(2)  # Stream every 2 seconds
+            print(f"📡 Telemetry: {summary['critical_count']} critical, {summary['warning_count']} warning, {summary['healthy_count']} healthy")
+            time.sleep(5)  # Stream every 5 seconds
 
         except Exception as e:
             print(f"❌ Telemetry streaming error: {e}")
@@ -888,6 +878,86 @@ def test_simulator_auth(user=None):
         'message': 'Authentication successful',
         'user': request.user
     })
+
+# ==================== REAL METRICS API ====================
+
+@app.route('/api/metrics/summary', methods=['GET'])
+@require_auth
+def get_metrics_summary(user=None):
+    """Get summary of all metrics."""
+    storage = get_storage()
+    return jsonify(storage.get_summary_stats())
+
+@app.route('/api/metrics/all', methods=['GET'])
+@require_auth
+def get_all_metrics(user=None):
+    """Get all current metrics."""
+    storage = get_storage()
+    return jsonify(storage.get_all_metrics())
+
+@app.route('/api/metrics/<metric_name>', methods=['GET'])
+@require_auth
+def get_metric(metric_name, user=None):
+    """Get specific metric with history."""
+    storage = get_storage()
+    minutes = request.args.get('minutes', 60, type=int)
+
+    metric = storage.get_metric(metric_name)
+    if not metric:
+        return jsonify({'error': 'Metric not found'}), 404
+
+    history = storage.get_metric_history(metric_name, minutes)
+
+    return jsonify({
+        'current': metric,
+        'history': history
+    })
+
+@app.route('/api/metrics/status/<status>', methods=['GET'])
+@require_auth
+def get_metrics_by_status(status, user=None):
+    """Get all metrics with specific status."""
+    storage = get_storage()
+    if status not in ['healthy', 'warning', 'critical']:
+        return jsonify({'error': 'Invalid status'}), 400
+
+    return jsonify(storage.get_metrics_by_status(status))
+
+@app.route('/api/metrics/anomalies/trigger', methods=['POST'])
+@require_auth
+def trigger_anomaly(user=None):
+    """Trigger an anomaly for testing."""
+    if user.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+
+    data = request.get_json()
+    anomaly_type = data.get('anomaly_type')
+    duration = data.get('duration', 60)
+
+    storage = get_storage()
+    if storage.trigger_anomaly(anomaly_type, duration):
+        print(f"✅ Triggered anomaly: {anomaly_type} for {duration}s")
+        return jsonify({
+            'status': 'triggered',
+            'anomaly': anomaly_type,
+            'duration': duration
+        })
+    else:
+        return jsonify({'error': 'Invalid anomaly type'}), 400
+
+@app.route('/api/metrics/anomalies', methods=['GET'])
+@require_auth
+def get_anomalies(user=None):
+    """Get current anomaly status."""
+    storage = get_storage()
+    return jsonify(storage.get_anomalies())
+
+@app.route('/api/metrics/export/prometheus', methods=['GET'])
+@require_auth
+def export_prometheus(user=None):
+    """Export metrics in Prometheus format."""
+    storage = get_storage()
+    return app.make_response(storage.export_prometheus_format(), 200, {'Content-Type': 'text/plain'})
 
 @app.route('/api/simulator/start', methods=['POST'])
 @require_auth
@@ -999,6 +1069,10 @@ def initialize_on_startup():
         initialize_users()
         initialize_approvals()
         start_background_threads()
+
+        # Initialize real metrics
+        start_metrics_collection()
+        init_storage()
     except Exception as e:
         print(f"⚠️  Initialization warning: {e}")
 
@@ -1034,6 +1108,11 @@ try:
     initialize_users()
     initialize_approvals()
     start_background_threads()
+
+    # Start real metrics collection
+    start_metrics_collection()
+    init_storage()
+
     print("\n✅ NEXUS AIOPS initialized successfully")
     print("📍 Access at: http://localhost:5000")
     print("   Demo: admin / admin123\n")
