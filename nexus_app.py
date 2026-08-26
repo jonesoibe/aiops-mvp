@@ -879,6 +879,16 @@ def simulator_page(user=None):
     """Chaos injection simulator page with live Python execution."""
     return render_template('nexus/simulator_advanced.html')
 
+@app.route('/api/simulator/test', methods=['POST'])
+@require_auth
+def test_simulator_auth(user=None):
+    """Test endpoint to verify authentication is working."""
+    return jsonify({
+        'status': 'ok',
+        'message': 'Authentication successful',
+        'user': request.user
+    })
+
 @app.route('/api/simulator/start', methods=['POST'])
 @require_auth
 def start_simulation(user=None):

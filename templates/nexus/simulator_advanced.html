@@ -423,7 +423,10 @@
             <!-- Action Buttons -->
             <div class="button-group">
                 <button class="btn btn-primary" id="runBtn" onclick="runSimulation()">▶️ Run Simulation</button>
-                <button class="btn btn-secondary" onclick="resetSimulation()">🔄 Reset</button>
+                <button class="btn btn-secondary" onclick="testAuth()">🧪 Test Auth</button>
+            </div>
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2);">
+                <button class="btn btn-secondary" onclick="resetSimulation()" style="flex: 1;">🔄 Reset</button>
             </div>
 
             <!-- Status -->
@@ -527,6 +530,8 @@
 
         // Check token first
         const token = localStorage.getItem('token');
+        console.log('Token from localStorage:', token ? 'Present (' + token.length + ' chars)' : 'Missing');
+
         if (!token) {
             appendConsole(`❌ Authentication Error: No token found. Please login again.`, 'error');
             document.getElementById('statusBadge').className = 'status-badge status-error';
@@ -558,14 +563,19 @@
         appendConsole('', 'info');
 
         try {
+            const authHeader = `Bearer ${token}`;
+            console.log('Making fetch request with Authorization header:', authHeader.substring(0, 20) + '...');
+
             const response = await fetch('/api/simulator/start', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': authHeader
                 },
                 body: JSON.stringify({ config })
             });
+
+            console.log('Response status:', response.status);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -682,6 +692,39 @@
             anomaliesHtml += '</tbody></table>';
             document.getElementById('anomaliesOutput').innerHTML = anomaliesHtml;
             appendConsole(`🚨 Detailed anomaly data ready (${results.anomalies.length} total)`, 'warning');
+        }
+    }
+
+    async function testAuth() {
+        console.log('Testing authentication...');
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            alert('❌ No token in localStorage! Please login again.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/simulator/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('✅ Authentication successful!\nUser: ' + data.user.username + '\nRole: ' + data.user.role);
+                console.log('Auth test passed:', data);
+            } else {
+                alert('❌ Auth failed: ' + (data.error || 'Unknown error'));
+                console.error('Auth test failed:', data);
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+            console.error('Auth test error:', error);
         }
     }
 

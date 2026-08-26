@@ -101,7 +101,10 @@
       "Bash(python -m py_compile nexus_app.py chaos_executor.py)",
       "Bash(git commit -m 'Fix: Render deployment configuration and dependencies *)",
       "Bash(git commit -m 'Fix: Complete production deployment configuration for Render *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(curl -s -X POST http://localhost:5000/api/simulator/test -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg4Mzc2ODY2fQ.c1G1VxI7nncSb3PwWvupgO-rYro-jE0mVkJhgavVTsw')",
+      "Bash(python -m json.tool)",
+      "Bash(pkill -f \"python nexus_app.py\")"
     ]
   }
 }
