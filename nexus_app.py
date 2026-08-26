@@ -927,7 +927,9 @@ def get_metrics_by_status(status, user=None):
 @require_auth
 def trigger_anomaly(user=None):
     """Trigger an anomaly for testing."""
-    if user.get('role') != 'admin':
+    # Get user from request (set by require_auth decorator)
+    user_data = request.user if hasattr(request, 'user') else {}
+    if user_data.get('role') != 'admin':
         return jsonify({'error': 'Admin only'}), 403
 
     data = request.get_json()
