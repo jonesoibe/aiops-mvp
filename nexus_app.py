@@ -357,8 +357,8 @@ def login_page():
 
 @app.route('/')
 def index():
-    """Executive Overview - Landing Page"""
-    return render_template('nexus/overview.html')
+    """Executive Overview - Real-Time Metrics Dashboard"""
+    return render_template('nexus/overview_realtime.html')
 
 @app.route('/live-operations')
 def live_operations():

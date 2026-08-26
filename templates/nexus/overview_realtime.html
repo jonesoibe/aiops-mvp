@@ -1,0 +1,564 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Overview - Nexus AIOps{% endblock %}
+{% block topbar_title %}Real-Time System Overview{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .metric-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card:hover {
+        border-color: var(--color-info);
+        box-shadow: 0 8px 16px rgba(45, 212, 255, 0.1);
+    }
+
+    .metric-card.critical {
+        border-color: var(--color-critical);
+        box-shadow: 0 0 0 1px var(--color-critical-dim);
+    }
+
+    .metric-card.warning {
+        border-color: var(--color-warning);
+        box-shadow: 0 0 0 1px var(--color-warning-dim);
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-4);
+    }
+
+    .metric-name {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-semibold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .metric-status-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+        text-transform: uppercase;
+    }
+
+    .status-healthy {
+        background: var(--color-success-dim);
+        color: var(--color-success);
+    }
+
+    .status-warning {
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+        animation: pulse-warning 2s infinite;
+    }
+
+    .status-critical {
+        background: var(--color-critical-dim);
+        color: var(--color-critical);
+        animation: pulse-critical 1s infinite;
+    }
+
+    .metric-value {
+        font-size: var(--fs-4xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+    }
+
+    .metric-unit {
+        font-size: var(--fs-lg);
+        color: var(--text-secondary);
+    }
+
+    .metric-change {
+        font-size: var(--fs-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+    }
+
+    .change-up {
+        color: var(--color-warning);
+    }
+
+    .change-down {
+        color: var(--color-success);
+    }
+
+    .metric-sparkline {
+        width: 100%;
+        height: 40px;
+        margin-top: var(--space-4);
+        margin-bottom: var(--space-2);
+    }
+
+    .metric-footer {
+        font-size: var(--fs-xs);
+        color: var(--text-tertiary);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .summary-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--space-4);
+    }
+
+    .summary-item {
+        text-align: center;
+    }
+
+    .summary-label {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+    }
+
+    .summary-value {
+        font-size: var(--fs-3xl);
+        font-weight: var(--fw-bold);
+        background: linear-gradient(135deg, var(--color-success), var(--color-info));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .anomaly-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .anomaly-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+    }
+
+    .anomaly-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--color-success);
+    }
+
+    .anomaly-indicator.active {
+        background: var(--color-critical);
+        animation: pulse-critical 1s infinite;
+    }
+
+    .anomaly-name {
+        flex: 1;
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+    }
+
+    .anomaly-status {
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+    }
+
+    @keyframes pulse-warning {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    @keyframes pulse-critical {
+        0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--color-critical); }
+        50% { opacity: 0.6; box-shadow: 0 0 4px var(--color-critical); }
+    }
+
+    .loading-skeleton {
+        background: linear-gradient(90deg, var(--bg-primary) 25%, var(--bg-tertiary) 50%, var(--bg-primary) 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: var(--radius-md);
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    .refresh-indicator {
+        font-size: var(--fs-xs);
+        color: var(--text-tertiary);
+        text-align: center;
+        margin-top: var(--space-4);
+    }
+
+    .live-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--color-success);
+        border-radius: 50%;
+        margin-right: var(--space-1);
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Summary Section -->
+    <div class="summary-section">
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-label">Healthy Percentage</div>
+                <div class="summary-value" id="healthyPercent">—</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Warning Metrics</div>
+                <div class="summary-value" id="warningCount" style="color: var(--color-warning); -webkit-text-fill-color: var(--color-warning); background: none;">—</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Critical Metrics</div>
+                <div class="summary-value" id="criticalCount" style="color: var(--color-critical); -webkit-text-fill-color: var(--color-critical); background: none;">—</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Last Update</div>
+                <div class="summary-value" style="font-size: var(--fs-lg);">
+                    <span class="live-indicator"></span>
+                    <span id="lastUpdate">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <h3 style="color: var(--text-primary); margin-bottom: var(--space-4);">🎯 Key System Metrics</h3>
+    <div class="metrics-grid">
+        <!-- CPU Usage -->
+        <div class="metric-card" id="card-cpu_usage">
+            <div class="metric-header">
+                <div class="metric-name">💻 CPU Usage</div>
+                <div class="metric-status-badge status-healthy" id="badge-cpu_usage">Healthy</div>
+            </div>
+            <div class="metric-value">
+                <span id="value-cpu_usage">—</span>
+                <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-change" id="change-cpu_usage"></div>
+            <svg class="metric-sparkline" id="sparkline-cpu_usage"></svg>
+            <div class="metric-footer">
+                <span>Range: 5% - 90%</span>
+                <span id="timestamp-cpu_usage">—</span>
+            </div>
+        </div>
+
+        <!-- Memory Usage -->
+        <div class="metric-card" id="card-memory_usage">
+            <div class="metric-header">
+                <div class="metric-name">🧠 Memory Usage</div>
+                <div class="metric-status-badge status-healthy" id="badge-memory_usage">Healthy</div>
+            </div>
+            <div class="metric-value">
+                <span id="value-memory_usage">—</span>
+                <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-change" id="change-memory_usage"></div>
+            <svg class="metric-sparkline" id="sparkline-memory_usage"></svg>
+            <div class="metric-footer">
+                <span>Range: 20% - 90%</span>
+                <span id="timestamp-memory_usage">—</span>
+            </div>
+        </div>
+
+        <!-- Disk Usage -->
+        <div class="metric-card" id="card-disk_usage">
+            <div class="metric-header">
+                <div class="metric-name">💾 Disk Usage</div>
+                <div class="metric-status-badge status-healthy" id="badge-disk_usage">Healthy</div>
+            </div>
+            <div class="metric-value">
+                <span id="value-disk_usage">—</span>
+                <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-change" id="change-disk_usage"></div>
+            <svg class="metric-sparkline" id="sparkline-disk_usage"></svg>
+            <div class="metric-footer">
+                <span>Range: 30% - 95%</span>
+                <span id="timestamp-disk_usage">—</span>
+            </div>
+        </div>
+
+        <!-- Network I/O -->
+        <div class="metric-card" id="card-network">
+            <div class="metric-header">
+                <div class="metric-name">🌐 Network I/O</div>
+                <div class="metric-status-badge status-healthy" id="badge-network">Healthy</div>
+            </div>
+            <div class="metric-value">
+                <span id="value-network">—</span>
+                <span class="metric-unit">ops/sec</span>
+            </div>
+            <div class="metric-change" id="change-network"></div>
+            <svg class="metric-sparkline" id="sparkline-network"></svg>
+            <div class="metric-footer">
+                <span>In + Out Combined</span>
+                <span id="timestamp-network">—</span>
+            </div>
+        </div>
+
+        <!-- Request Rate -->
+        <div class="metric-card" id="card-request_rate">
+            <div class="metric-header">
+                <div class="metric-name">📊 Request Rate</div>
+                <div class="metric-status-badge status-healthy" id="badge-request_rate">Healthy</div>
+            </div>
+            <div class="metric-value">
+                <span id="value-request_rate">—</span>
+                <span class="metric-unit">req/s</span>
+            </div>
+            <div class="metric-change" id="change-request_rate"></div>
+            <svg class="metric-sparkline" id="sparkline-request_rate"></svg>
+            <div class="metric-footer">
+                <span>HTTP Requests/Second</span>
+                <span id="timestamp-request_rate">—</span>
+            </div>
+        </div>
+
+        <!-- Error Rate -->
+        <div class="metric-card" id="card-error_rate">
+            <div class="metric-header">
+                <div class="metric-name">⚠️ Error Rate</div>
+                <div class="metric-status-badge status-healthy" id="badge-error_rate">Healthy</div>
+            </div>
+            <div class="metric-value">
+                <span id="value-error_rate">—</span>
+                <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-change" id="change-error_rate"></div>
+            <svg class="metric-sparkline" id="sparkline-error_rate"></svg>
+            <div class="metric-footer">
+                <span>Application Errors</span>
+                <span id="timestamp-error_rate">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anomalies Section -->
+    <h3 style="color: var(--text-primary); margin-bottom: var(--space-4);">🚨 Active Anomalies</h3>
+    <div class="anomaly-section">
+        <div id="anomalies-list"></div>
+        <div class="refresh-indicator">Updates every 5 seconds</div>
+    </div>
+</div>
+
+<script>
+    let metricHistory = {};
+    let lastMetrics = {};
+
+    // Initialize metric history
+    ['cpu_usage', 'memory_usage', 'disk_usage', 'request_rate', 'error_rate'].forEach(metric => {
+        metricHistory[metric] = [];
+    });
+
+    // WebSocket connection for real-time updates
+    socket.on('telemetry_update', function(data) {
+        if (data.metrics && data.summary) {
+            updateMetrics(data.metrics, data.summary);
+            updateAnomalies(data.anomalies);
+        }
+    });
+
+    // Subscribe to telemetry on load
+    document.addEventListener('DOMContentLoaded', function() {
+        socket.emit('subscribe_telemetry');
+        // Also fetch initial data
+        fetchMetrics();
+    });
+
+    function fetchMetrics() {
+        const token = localStorage.getItem('token');
+        fetch('/api/metrics/all', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(r => r.json())
+        .then(metrics => {
+            fetch('/api/metrics/summary', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(r => r.json())
+            .then(summary => {
+                updateMetrics(metrics, summary);
+            });
+        });
+
+        // Fetch anomalies
+        fetch('/api/metrics/anomalies', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(r => r.json())
+        .then(anomalies => {
+            updateAnomalies(anomalies);
+        });
+    }
+
+    function updateMetrics(allMetrics, summary) {
+        // Update summary
+        document.getElementById('healthyPercent').textContent = summary.healthy_percentage + '%';
+        document.getElementById('warningCount').textContent = summary.warning_count;
+        document.getElementById('criticalCount').textContent = summary.critical_count;
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+        // Update individual metric cards
+        const metricsList = [
+            { key: 'cpu_usage', display: 'cpu_usage' },
+            { key: 'memory_usage', display: 'memory_usage' },
+            { key: 'disk_usage', display: 'disk_usage' },
+            { key: 'request_rate', display: 'request_rate' },
+            { key: 'error_rate', display: 'error_rate' },
+            { key: 'network', display: null, combine: ['network_in', 'network_out'] }
+        ];
+
+        metricsList.forEach(metric => {
+            let value, unit;
+
+            if (metric.combine) {
+                // Combine network in/out
+                const inVal = allMetrics[metric.combine[0]]?.value || 0;
+                const outVal = allMetrics[metric.combine[1]]?.value || 0;
+                value = inVal + outVal;
+                unit = 'ops/sec';
+            } else {
+                const m = allMetrics[metric.display];
+                if (!m) return;
+                value = m.value;
+                unit = m.unit;
+            }
+
+            const displayKey = metric.key;
+            const lastValue = lastMetrics[displayKey];
+            const change = lastValue ? value - lastValue : 0;
+            const changePercent = lastValue ? ((change / lastValue) * 100).toFixed(1) : 0;
+
+            // Update value
+            document.getElementById(`value-${displayKey}`).textContent = value.toFixed(1);
+
+            // Update status
+            const card = document.getElementById(`card-${displayKey}`);
+            const badge = document.getElementById(`badge-${displayKey}`);
+            const m = allMetrics[metric.display] || allMetrics[metric.combine?.[0]];
+            const status = m?.status || 'healthy';
+
+            card.className = `metric-card ${status}`;
+            badge.className = `metric-status-badge status-${status}`;
+            badge.textContent = status.toUpperCase();
+
+            // Update change indicator
+            const changeEl = document.getElementById(`change-${displayKey}`);
+            const arrow = change > 0 ? '📈' : '📉';
+            const className = change > 0 ? 'change-up' : 'change-down';
+            changeEl.innerHTML = `<span class="${className}">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
+
+            // Update timestamp
+            const time = new Date().toLocaleTimeString();
+            document.getElementById(`timestamp-${displayKey}`).textContent = time;
+
+            // Store for next comparison
+            lastMetrics[displayKey] = value;
+
+            // Update sparkline
+            metricHistory[displayKey].push(value);
+            if (metricHistory[displayKey].length > 20) {
+                metricHistory[displayKey].shift();
+            }
+            drawSparkline(`sparkline-${displayKey}`, metricHistory[displayKey]);
+        });
+    }
+
+    function drawSparkline(elementId, data) {
+        const svg = document.getElementById(elementId);
+        if (!svg || data.length < 2) return;
+
+        const width = svg.clientWidth || 200;
+        const height = svg.clientHeight || 40;
+        const padding = 2;
+
+        const min = Math.min(...data);
+        const max = Math.max(...data);
+        const range = max === min ? 1 : max - min;
+
+        let path = '';
+        data.forEach((value, i) => {
+            const x = (i / (data.length - 1)) * (width - 2 * padding) + padding;
+            const y = height - padding - ((value - min) / range) * (height - 2 * padding);
+            path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+        });
+
+        svg.innerHTML = `
+            <polyline points="${path}" fill="none" stroke="var(--color-info)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+            <rect width="${width}" height="${height}" fill="none" stroke="var(--border-primary)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        `;
+    }
+
+    function updateAnomalies(anomalies) {
+        const list = document.getElementById('anomalies-list');
+        if (!anomalies || Object.keys(anomalies).length === 0) {
+            list.innerHTML = '<div class="anomaly-item"><div class="anomaly-name" style="color: var(--text-secondary);">✅ No active anomalies</div></div>';
+            return;
+        }
+
+        list.innerHTML = Object.entries(anomalies)
+            .map(([name, active]) => `
+                <div class="anomaly-item">
+                    <div class="anomaly-indicator ${active ? 'active' : ''}"></div>
+                    <div class="anomaly-name">${name.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div class="anomaly-status">${active ? '🔴 ACTIVE' : '✅ Inactive'}</div>
+                </div>
+            `)
+            .join('');
+    }
+
+    // Initial fetch
+    fetchMetrics();
+
+    // Refresh every 10 seconds (in addition to WebSocket)
+    setInterval(fetchMetrics, 10000);
+</script>
+{% endblock %}
