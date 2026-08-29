@@ -34,7 +34,7 @@ from data_loader import get_data_loader
 
 # Real Metrics
 from prometheus_client import get_storage, init_storage
-from metrics_simulator import start_metrics_collection
+from hybrid_metrics_simulator import start_hybrid_collection
 
 # ==================== APP SETUP ====================
 
@@ -864,8 +864,7 @@ from chaos_executor import ChaosExecutor
 active_simulations = {}
 
 @app.route('/simulator', methods=['GET'])
-@require_auth
-def simulator_page(user=None):
+def simulator_page():
     """Chaos injection simulator page with live Python execution."""
     return render_template('nexus/simulator_advanced.html')
 
@@ -1073,7 +1072,7 @@ def initialize_on_startup():
         start_background_threads()
 
         # Initialize real metrics
-        start_metrics_collection()
+        start_hybrid_collection()
         init_storage()
     except Exception as e:
         print(f"⚠️  Initialization warning: {e}")
