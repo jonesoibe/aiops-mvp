@@ -244,15 +244,32 @@ class ChaosExecutor:
         self._emit_output("   • Engineering features...", 'debug')
         df_features = engineer_features(df)
 
+        # Split data for proper normalization (prevents data leakage)
+        self._emit_output("   • Splitting data...", 'debug')
+        n_samples = len(df_features)
+        train_idx = int(0.6 * n_samples)
+        val_idx = int(0.8 * n_samples)
+
+        X_train = df_features.iloc[:train_idx]
+        X_val = df_features.iloc[train_idx:val_idx]
+        X_test = df_features.iloc[val_idx:]
+
         # Normalization
         self._emit_output("   • Normalizing features...", 'debug')
-        df_normalized, scaler = normalise_features(df_features)
+        import pandas as pd
+        X_train_scaled, X_val_scaled, X_test_scaled = normalise_features(X_train, X_val, X_test)
+
+        # Combine scaled data
+        df_normalized = pd.concat([
+            pd.DataFrame(X_train_scaled, columns=df_features.columns, index=X_train.index),
+            pd.DataFrame(X_val_scaled, columns=df_features.columns, index=X_val.index),
+            pd.DataFrame(X_test_scaled, columns=df_features.columns, index=X_test.index)
+        ])
 
         self._emit_output(f"✅ Preprocessed {len(df_normalized)} samples with {len(df_normalized.columns)} features", 'success')
         self._emit_data('Preprocessed_Data', df_normalized)
 
         self.results['preprocessed'] = df_normalized
-        self.results['scaler'] = scaler
 
     def _anomaly_detection(self) -> None:
         """Detect anomalies using Isolation Forest."""
