@@ -11,9 +11,10 @@ from datetime import datetime, timedelta
 import threading
 import time
 import random
+import pandas as pd
 
 # Flask & WebSocket
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 from functools import wraps
@@ -35,6 +36,9 @@ from data_loader import get_data_loader
 # Real Metrics
 from prometheus_client import get_storage, init_storage
 from hybrid_metrics_simulator import start_hybrid_collection
+
+# Export utilities
+from simulation_export import SimulationExporter
 
 # ==================== APP SETUP ====================
 
@@ -1095,6 +1099,132 @@ def get_simulation_result(sim_id, user=None):
         return jsonify({'error': f'Simulation {sim["status"]}'}), 400
 
     return jsonify(sim.get('result', {}))
+
+# ==================== SIMULATION EXPORTS ====================
+
+@app.route('/api/simulator/<sim_id>/export', methods=['POST'])
+@require_auth
+def export_simulation(sim_id, user=None):
+    """Export simulation results in PNG and CSV formats"""
+    if sim_id not in active_simulations:
+        return jsonify({'error': 'Simulation not found'}), 404
+
+    sim = active_simulations[sim_id]
+    if sim['status'] != 'completed':
+        return jsonify({'error': 'Simulation not completed'}), 400
+
+    try:
+        # Get simulation result
+        result = sim.get('result', {})
+
+        # Prepare data for export
+        export_data = {
+            'metrics': pd.DataFrame() if 'results' in result else None,
+            'classification': result.get('results', {}).get('anomalies', []),
+            'features': result.get('results', {}).get('analysis', {}),
+            'threshold_calibration': result.get('results', {}).get('analysis', {}),
+            'metrics_comparison': [result.get('results', {}).get('metrics', {})]
+        }
+
+        # Generate exports
+        exporter = SimulationExporter(f'simulation_exports/{sim_id}')
+        exports = exporter.export_all(export_data)
+        manifest = exporter.create_export_manifest(exports)
+
+        return jsonify({
+            'status': 'success',
+            'simulation_id': sim_id,
+            'exports': exports,
+            'manifest': manifest,
+            'export_count': len(exports)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/simulator/<sim_id>/export/<filename>', methods=['GET'])
+@require_auth
+def download_export(sim_id, filename, user=None):
+    """Download specific export file"""
+    try:
+        filepath = os.path.join('simulation_exports', sim_id, filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Export file not found'}), 404
+
+        # Return file
+        if filename.endswith('.csv'):
+            return send_file(filepath, mimetype='text/csv',
+                           as_attachment=True, download_name=filename)
+        elif filename.endswith('.png'):
+            return send_file(filepath, mimetype='image/png',
+                           as_attachment=True, download_name=filename)
+        else:
+            return send_file(filepath, as_attachment=True, download_name=filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/simulator/<sim_id>/export/all', methods=['GET'])
+@require_auth
+def download_all_exports(sim_id, user=None):
+    """Download all exports as zip"""
+    try:
+        import zipfile
+        from io import BytesIO
+
+        export_dir = os.path.join('simulation_exports', sim_id)
+        if not os.path.exists(export_dir):
+            return jsonify({'error': 'Export directory not found'}), 404
+
+        # Create zip file in memory
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for filename in os.listdir(export_dir):
+                filepath = os.path.join(export_dir, filename)
+                if os.path.isfile(filepath):
+                    zip_file.write(filepath, arcname=filename)
+
+        zip_buffer.seek(0)
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'simulation_{sim_id}_exports.zip'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/simulator/<sim_id>/export/list', methods=['GET'])
+@require_auth
+def list_exports(sim_id, user=None):
+    """List all available exports"""
+    try:
+        export_dir = os.path.join('simulation_exports', sim_id)
+
+        if not os.path.exists(export_dir):
+            return jsonify({'exports': [], 'count': 0})
+
+        exports = {
+            'csv_files': [],
+            'png_files': [],
+            'manifest': None
+        }
+
+        for filename in os.listdir(export_dir):
+            if filename.endswith('.csv'):
+                exports['csv_files'].append(filename)
+            elif filename.endswith('.png'):
+                exports['png_files'].append(filename)
+            elif filename == 'MANIFEST.json':
+                exports['manifest'] = filename
+
+        return jsonify({
+            'status': 'success',
+            'simulation_id': sim_id,
+            'exports': exports,
+            'total_files': len(os.listdir(export_dir))
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ==================== WEBSOCKET: SIMULATOR ====================
 
