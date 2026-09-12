@@ -130,7 +130,11 @@
       "Bash(git commit -m 'Doc: Add deployment versions guide - clarify nexus_app.py vs dashboard_lite.py differences *)",
       "Bash(git commit -m 'Fix: Add missing psutil dependency for real-time system metrics collection *)",
       "Bash(git commit -m 'Feature: Real-time alerting system - complete implementation *)",
-      "Bash(git commit -m 'Feature: Complete real-time alerting system + root cause analysis *)"
+      "Bash(git commit -m 'Feature: Complete real-time alerting system + root cause analysis *)",
+      "Bash(python -m py_compile nexus_app.py)",
+      "Bash(python -m pytest tests/test_alerting_engine.py -v)",
+      "Bash(python -m pytest tests/test_alerting_engine.py -v --tb=short)",
+      "Bash(git commit -m 'Integration: Add comprehensive alerting system to nexus_app.py *)"
     ]
   }
 }

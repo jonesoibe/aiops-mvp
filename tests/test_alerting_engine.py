@@ -41,6 +41,7 @@ class TestAlertRule(unittest.TestCase):
         rule = AlertRule(
             id="critical_rule",
             name="Critical Alert",
+            description="Error rate exceeds 5%",
             metric_name="error_rate",
             condition=">",
             threshold=5.0,
@@ -61,6 +62,7 @@ class TestAlertingEngine(unittest.TestCase):
         self.cpu_rule = AlertRule(
             id="cpu_high",
             name="High CPU",
+            description="CPU usage is high",
             metric_name="cpu_usage",
             condition=">",
             threshold=80.0,
@@ -70,6 +72,7 @@ class TestAlertingEngine(unittest.TestCase):
         self.memory_rule = AlertRule(
             id="memory_high",
             name="High Memory",
+            description="Memory usage is high",
             metric_name="memory_usage",
             condition=">",
             threshold=85.0,
@@ -120,6 +123,7 @@ class TestMetricEvaluation(unittest.TestCase):
         self.rule = AlertRule(
             id="cpu_test",
             name="CPU Test",
+            description="CPU test rule",
             metric_name="cpu_usage",
             condition=">",
             threshold=80.0,
@@ -154,6 +158,7 @@ class TestMetricEvaluation(unittest.TestCase):
         rule2 = AlertRule(
             id="memory_test",
             name="Memory Test",
+            description="Memory test rule",
             metric_name="memory_usage",
             condition=">",
             threshold=85.0,
@@ -319,6 +324,7 @@ class TestAlertStatistics(unittest.TestCase):
             rule = AlertRule(
                 id=f"rule_{i}",
                 name=f"Rule {i}",
+                description=f"Test rule {i}",
                 metric_name="test_metric",
                 condition=">",
                 threshold=80.0
