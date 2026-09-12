@@ -129,7 +129,8 @@
       "PowerShell(head -1)",
       "Bash(git commit -m 'Doc: Add deployment versions guide - clarify nexus_app.py vs dashboard_lite.py differences *)",
       "Bash(git commit -m 'Fix: Add missing psutil dependency for real-time system metrics collection *)",
-      "Bash(git commit -m 'Feature: Real-time alerting system - complete implementation *)"
+      "Bash(git commit -m 'Feature: Real-time alerting system - complete implementation *)",
+      "Bash(git commit -m 'Feature: Complete real-time alerting system + root cause analysis *)"
     ]
   }
 }

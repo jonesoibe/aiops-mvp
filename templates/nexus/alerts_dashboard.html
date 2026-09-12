@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alerts Dashboard - AIOps</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Statistics Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card.critical {
+            border-left: 4px solid #ff4757;
+        }
+
+        .stat-card.major {
+            border-left: 4px solid #ffa502;
+        }
+
+        .stat-card.active {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: #eee;
+        }
+
+        .tab-btn.active {
+            color: #0099ff;
+            border-bottom-color: #0099ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0099ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.firing {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .badge.acknowledged {
+            background: rgba(255, 165, 2, 0.2);
+            color: #ffa502;
+        }
+
+        .badge.resolved {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .badge.critical {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .badge.major {
+            background: rgba(255, 165, 2, 0.2);
+            color: #ffa502;
+        }
+
+        .badge.minor {
+            background: rgba(0, 153, 255, 0.2);
+            color: #0099ff;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #0099ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0077cc;
+        }
+
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+        }
+
+        .btn-warning {
+            background: #ffa502;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e89400;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee3f43;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #eee;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16213e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0099ff;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #eee;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(0, 153, 255, 0.3);
+            border-top-color: #0099ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>⚡ Alerts Dashboard</h1>
+            <div class="subtitle">Real-time alert management and monitoring</div>
+        </header>
+
+        <!-- Statistics -->
+        <div class="stats-container">
+            <div class="stat-card critical">
+                <div class="stat-value" id="critical-count">0</div>
+                <div class="stat-label">Critical Alerts</div>
+            </div>
+            <div class="stat-card major">
+                <div class="stat-value" id="major-count">0</div>
+                <div class="stat-label">Major Alerts</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-value" id="active-count">0</div>
+                <div class="stat-label">Active Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-rules">0</div>
+                <div class="stat-label">Alert Rules</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('alerts')">🚨 Active Alerts</button>
+            <button class="tab-btn" onclick="switchTab('rules')">⚙️ Rules</button>
+            <button class="tab-btn" onclick="switchTab('history')">📋 History</button>
+        </div>
+
+        <!-- Active Alerts Tab -->
+        <div id="alerts" class="tab-content active">
+            <div class="filters">
+                <select id="status-filter" onchange="filterAlerts()">
+                    <option value="">All Statuses</option>
+                    <option value="firing">Firing</option>
+                    <option value="acknowledged">Acknowledged</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+                <select id="severity-filter" onchange="filterAlerts()">
+                    <option value="">All Severities</option>
+                    <option value="critical">Critical</option>
+                    <option value="major">Major</option>
+                    <option value="minor">Minor</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadAlerts()">
+                    🔄 Refresh
+                </button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rule</th>
+                            <th>Service</th>
+                            <th>Value</th>
+                            <th>Threshold</th>
+                            <th>Duration</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-tbody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 30px;">
+                                <div class="spinner"></div>
+                                Loading alerts...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="alerts-empty" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">✅</div>
+                <div>No active alerts</div>
+            </div>
+        </div>
+
+        <!-- Rules Tab -->
+        <div id="rules" class="tab-content">
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-primary" onclick="openRuleModal()">+ Create Rule</button>
+                <button class="btn btn-warning" onclick="loadRules()">🔄 Refresh</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Metric</th>
+                            <th>Condition</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Notifications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rules-tbody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 30px;">
+                                <div class="spinner"></div>
+                                Loading rules...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-primary" onclick="loadHistory()">🔄 Refresh</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rule</th>
+                            <th>Service</th>
+                            <th>Fired</th>
+                            <th>Resolved</th>
+                            <th>Duration</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px;">
+                                <div class="spinner"></div>
+                                Loading history...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rule Modal -->
+    <div id="rule-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Create Alert Rule</div>
+            <form id="rule-form" onsubmit="submitRule(event)">
+                <div class="form-group">
+                    <label>Rule Name</label>
+                    <input type="text" id="rule-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Metric Name</label>
+                    <select id="rule-metric" required>
+                        <option>cpu_usage</option>
+                        <option>memory_usage</option>
+                        <option>disk_usage</option>
+                        <option>error_rate</option>
+                        <option>response_time_p95</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Condition</label>
+                    <select id="rule-condition" required>
+                        <option value=">">&gt;</option>
+                        <option value="<">&lt;</option>
+                        <option value=">=">&gt;=</option>
+                        <option value="<=">&lt;=</option>
+                        <option value="==">==</option>
+                        <option value="!=">!=</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Threshold</label>
+                    <input type="number" id="rule-threshold" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Severity</label>
+                    <select id="rule-severity" required>
+                        <option value="critical">Critical</option>
+                        <option value="major" selected>Major</option>
+                        <option value="minor">Minor</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">Create Rule</button>
+                    <button type="button" class="btn btn-danger" onclick="closeRuleModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:5000';
+        const token = localStorage.getItem('token');
+        let alertSocket = null;
+
+        // Initialize WebSocket for real-time updates
+        function initSocket() {
+            alertSocket = io(API_URL + '/alerts', {
+                auth: { token }
+            });
+
+            alertSocket.on('alert:fired', (alert) => {
+                console.log('Alert fired:', alert);
+                showNotification(`🚨 ${alert.rule_name}`);
+                loadAlerts();
+            });
+
+            alertSocket.on('alert:resolved', (alert) => {
+                console.log('Alert resolved:', alert);
+                showNotification(`✅ ${alert.rule_name} resolved`);
+                loadAlerts();
+            });
+
+            alertSocket.on('alert:acknowledged', (alert) => {
+                console.log('Alert acknowledged:', alert);
+                loadAlerts();
+            });
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'alerts') loadAlerts();
+            else if (tabName === 'rules') loadRules();
+            else if (tabName === 'history') loadHistory();
+        }
+
+        // Load active alerts
+        async function loadAlerts() {
+            const status = document.getElementById('status-filter')?.value || '';
+            const severity = document.getElementById('severity-filter')?.value || '';
+
+            const params = new URLSearchParams();
+            if (status) params.append('status', status);
+            if (severity) params.append('severity', severity);
+
+            const response = await fetch(`${API_URL}/api/alerts?${params}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            // Update stats
+            document.getElementById('critical-count').textContent =
+                data.alerts.filter(a => a.severity === 'critical').length;
+            document.getElementById('major-count').textContent =
+                data.alerts.filter(a => a.severity === 'major').length;
+            document.getElementById('active-count').textContent = data.total;
+
+            // Update table
+            const tbody = document.getElementById('alerts-tbody');
+            tbody.innerHTML = '';
+
+            if (data.alerts.length === 0) {
+                document.getElementById('alerts-empty').style.display = 'block';
+                tbody.innerHTML = '<tr><td colspan="8"></td></tr>';
+                return;
+            }
+
+            document.getElementById('alerts-empty').style.display = 'none';
+
+            data.alerts.forEach(alert => {
+                const tr = document.createElement('tr');
+                const duration = Math.floor(alert.duration_seconds / 60);
+                tr.innerHTML = `
+                    <td>${alert.rule_name}</td>
+                    <td><strong>${alert.service_id}</strong></td>
+                    <td>${alert.current_value.toFixed(2)}</td>
+                    <td>${alert.threshold.toFixed(2)}</td>
+                    <td>${duration}m</td>
+                    <td><span class="badge ${alert.severity}">${alert.severity}</span></td>
+                    <td><span class="badge ${alert.status}">${alert.status}</span></td>
+                    <td>
+                        ${alert.status === 'firing' ? `
+                            <button class="btn btn-success" onclick="acknowledgeAlert('${alert.id}')">Ack</button>
+                        ` : ''}
+                        <button class="btn btn-warning" onclick="resolveAlert('${alert.id}')">Resolve</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Load alert rules
+        async function loadRules() {
+            const response = await fetch(`${API_URL}/api/alerts/rules`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            document.getElementById('total-rules').textContent = data.total;
+
+            const tbody = document.getElementById('rules-tbody');
+            tbody.innerHTML = '';
+
+            data.rules.forEach(rule => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${rule.name}</td>
+                    <td>${rule.metric_name}</td>
+                    <td>${rule.condition} ${rule.threshold}</td>
+                    <td><span class="badge ${rule.severity}">${rule.severity}</span></td>
+                    <td>${rule.enabled ? '✓' : '✗'}</td>
+                    <td>${rule.notification_channels.join(', ')}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="editRule('${rule.id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteRule('${rule.id}')">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Load alert history
+        async function loadHistory() {
+            const response = await fetch(`${API_URL}/api/alerts?limit=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            const tbody = document.getElementById('history-tbody');
+            tbody.innerHTML = '';
+
+            const resolved = data.alerts.filter(a => a.resolved_at);
+            resolved.forEach(alert => {
+                const tr = document.createElement('tr');
+                const firedDate = new Date(alert.fired_at).toLocaleString();
+                const resolvedDate = new Date(alert.resolved_at).toLocaleString();
+                const duration = Math.floor(alert.duration_seconds / 60);
+
+                tr.innerHTML = `
+                    <td>${alert.rule_name}</td>
+                    <td>${alert.service_id}</td>
+                    <td>${firedDate}</td>
+                    <td>${resolvedDate}</td>
+                    <td>${duration}m</td>
+                    <td><span class="badge ${alert.severity}">${alert.severity}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Alert actions
+        async function acknowledgeAlert(alertId) {
+            const response = await fetch(`${API_URL}/api/alerts/${alertId}/acknowledge`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_id: 'current_user' })
+            });
+
+            if (response.ok) {
+                showNotification('Alert acknowledged');
+                loadAlerts();
+            }
+        }
+
+        async function resolveAlert(alertId) {
+            const reason = prompt('Resolution reason:');
+            if (reason) {
+                const response = await fetch(`${API_URL}/api/alerts/${alertId}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+
+                if (response.ok) {
+                    showNotification('Alert resolved');
+                    loadAlerts();
+                }
+            }
+        }
+
+        // Rule management
+        function openRuleModal() {
+            document.getElementById('rule-modal').classList.add('active');
+        }
+
+        function closeRuleModal() {
+            document.getElementById('rule-modal').classList.remove('active');
+        }
+
+        async function submitRule(e) {
+            e.preventDefault();
+
+            const rule = {
+                name: document.getElementById('rule-name').value,
+                metric_name: document.getElementById('rule-metric').value,
+                condition: document.getElementById('rule-condition').value,
+                threshold: parseFloat(document.getElementById('rule-threshold').value),
+                severity: document.getElementById('rule-severity').value,
+                notification_channels: ['slack', 'email', 'console']
+            };
+
+            const response = await fetch(`${API_URL}/api/alerts/rules`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(rule)
+            });
+
+            if (response.ok) {
+                showNotification('Rule created');
+                closeRuleModal();
+                loadRules();
+            }
+        }
+
+        async function deleteRule(ruleId) {
+            if (confirm('Delete this rule?')) {
+                await fetch(`${API_URL}/api/alerts/rules/${ruleId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                loadRules();
+            }
+        }
+
+        // Utilities
+        function filterAlerts() {
+            loadAlerts();
+        }
+
+        function showNotification(message) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('AIOps Alert', { body: message });
+            }
+            console.log('📢', message);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            loadAlerts();
+            loadRules();
+            initSocket();
+
+            // Request notification permission
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+
+            // Refresh every minute
+            setInterval(loadAlerts, 60000);
+        });
+    </script>
+</body>
+</html>
