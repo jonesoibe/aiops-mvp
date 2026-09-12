@@ -1,0 +1,484 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Audit Trail - Nexus AIOps{% endblock %}
+{% block topbar_title %}Audit Trail & User Activity Log{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .audit-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: var(--fs-3xl);
+        font-weight: var(--fw-bold);
+        color: var(--color-info);
+        margin-bottom: var(--space-2);
+    }
+
+    .stat-label {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+
+    .filters-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-6);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .filter-group label {
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        text-transform: uppercase;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 2px var(--color-info-dim);
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: var(--space-2);
+        align-items: flex-end;
+    }
+
+    .btn {
+        padding: var(--space-2) var(--space-4);
+        background: var(--color-info);
+        border: none;
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        font-weight: var(--fw-semibold);
+        transition: all var(--transition-base);
+    }
+
+    .btn:hover {
+        background: var(--color-info-bright);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+    }
+
+    .btn-secondary:hover {
+        background: var(--border-primary);
+    }
+
+    .btn-export {
+        background: var(--color-success);
+    }
+
+    .btn-export:hover {
+        background: var(--color-success-bright);
+    }
+
+    .audit-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .audit-table thead {
+        background: var(--bg-tertiary);
+        border-bottom: 2px solid var(--border-primary);
+    }
+
+    .audit-table th {
+        padding: var(--space-3);
+        text-align: left;
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        text-transform: uppercase;
+        letter-spacing: var(--ls-wide);
+    }
+
+    .audit-table td {
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--border-secondary);
+        color: var(--text-secondary);
+        font-size: var(--fs-sm);
+    }
+
+    .audit-table tbody tr:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+        text-transform: uppercase;
+    }
+
+    .status-success {
+        background: var(--color-success-dim);
+        color: var(--color-success);
+    }
+
+    .status-failure {
+        background: var(--color-critical-dim);
+        color: var(--color-critical);
+    }
+
+    .status-warning {
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+    }
+
+    .timestamp {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        color: var(--text-tertiary);
+    }
+
+    .user-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        background: var(--color-info-dim);
+        color: var(--color-info);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+    }
+
+    .action-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+    }
+
+    .details-toggle {
+        cursor: pointer;
+        color: var(--color-info);
+        text-decoration: underline;
+    }
+
+    .details-panel {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-secondary);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        margin-top: var(--space-2);
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        color: var(--text-secondary);
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .loading {
+        text-align: center;
+        padding: var(--space-6);
+        color: var(--text-tertiary);
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-2);
+        margin-top: var(--space-6);
+    }
+
+    .pagination button {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .pagination button:hover:not(:disabled) {
+        background: var(--bg-tertiary);
+        border-color: var(--color-info);
+    }
+
+    .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="audit-container">
+    <!-- Page Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+        <h2 style="margin: 0;">📋 Audit Trail & User Activity</h2>
+        <button class="btn btn-export" onclick="exportAuditLog()">📥 Export as CSV</button>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-label">Total Entries</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color: var(--color-success);" id="stat-success">—</div>
+            <div class="stat-label">Success Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color: var(--color-critical);" id="stat-failure">—</div>
+            <div class="stat-label">Failure Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color: var(--color-info);" id="stat-users">—</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filter-group">
+            <label>User ID</label>
+            <input type="text" id="filter-user" placeholder="Filter by user...">
+        </div>
+        <div class="filter-group">
+            <label>Action</label>
+            <select id="filter-action">
+                <option value="">All Actions</option>
+                <option value="LOGIN">Login</option>
+                <option value="LOGOUT">Logout</option>
+                <option value="CREATE">Create</option>
+                <option value="UPDATE">Update</option>
+                <option value="DELETE">Delete</option>
+                <option value="REMEDIATE">Remediate</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select id="filter-status">
+                <option value="">All Statuses</option>
+                <option value="success">Success</option>
+                <option value="failure">Failure</option>
+                <option value="warning">Warning</option>
+            </select>
+        </div>
+        <div class="filter-buttons">
+            <button class="btn" onclick="applyFilters()">🔍 Filter</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">✕ Clear</button>
+        </div>
+    </div>
+
+    <!-- Audit Entries Table -->
+    <div id="table-container">
+        <table class="audit-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Status</th>
+                    <th>IP Address</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="audit-table-body">
+                <tr>
+                    <td colspan="7" class="loading">Loading audit log...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let allEntries = [];
+    let currentPage = 1;
+    const itemsPerPage = 50;
+
+    // Load audit log on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAuditLog();
+        loadAuditStats();
+    });
+
+    function loadAuditLog() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Not authenticated');
+            return;
+        }
+
+        fetch('/api/audit-log?limit=1000', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(r => r.json())
+        .then(data => {
+            allEntries = data.entries || [];
+            displayAuditLog();
+        })
+        .catch(error => {
+            console.error('Error loading audit log:', error);
+            document.getElementById('audit-table-body').innerHTML =
+                '<tr><td colspan="7" style="text-align: center; color: var(--color-critical);">Error loading audit log</td></tr>';
+        });
+    }
+
+    function loadAuditStats() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        fetch('/api/audit-log/stats', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('stat-total').textContent = data.total_entries;
+            document.getElementById('stat-success').textContent = data.success_rate.toFixed(1) + '%';
+            document.getElementById('stat-failure').textContent = data.failure_rate.toFixed(1) + '%';
+            document.getElementById('stat-users').textContent = data.unique_users;
+        })
+        .catch(error => console.error('Error loading stats:', error));
+    }
+
+    function displayAuditLog() {
+        const tbody = document.getElementById('audit-table-body');
+
+        if (allEntries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-tertiary);">No audit entries found</td></tr>';
+            return;
+        }
+
+        // Pagination
+        const startIdx = (currentPage - 1) * itemsPerPage;
+        const endIdx = startIdx + itemsPerPage;
+        const pageEntries = allEntries.slice(startIdx, endIdx);
+
+        tbody.innerHTML = pageEntries.map((entry, idx) => `
+            <tr>
+                <td class="timestamp">${new Date(entry.timestamp).toLocaleString()}</td>
+                <td><span class="user-badge">${entry.user_id}</span></td>
+                <td><span class="action-badge">${entry.action}</span></td>
+                <td>${entry.resource}</td>
+                <td>
+                    <span class="status-badge status-${entry.status}">
+                        ${entry.status === 'success' ? '✅' : entry.status === 'failure' ? '❌' : '⚠️'}
+                        ${entry.status.toUpperCase()}
+                    </span>
+                </td>
+                <td>${entry.ip_address || 'N/A'}</td>
+                <td>
+                    <span class="details-toggle" onclick="toggleDetails(${idx})">View</span>
+                    <div id="details-${idx}" class="details-panel" style="display: none;">
+                        <strong>Details:</strong><br>
+                        ${JSON.stringify(entry.details, null, 2)}
+                        <br><br>
+                        <strong>User Agent:</strong><br>
+                        ${entry.user_agent || 'N/A'}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // Update pagination
+        const totalPages = Math.ceil(allEntries.length / itemsPerPage);
+        updatePagination(totalPages);
+    }
+
+    function updatePagination(totalPages) {
+        // Pagination will be implemented as needed
+    }
+
+    function toggleDetails(idx) {
+        const panel = document.getElementById(`details-${idx}`);
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function applyFilters() {
+        const userId = document.getElementById('filter-user').value;
+        const action = document.getElementById('filter-action').value;
+        const status = document.getElementById('filter-status').value;
+
+        const token = localStorage.getItem('token');
+        let url = '/api/audit-log?limit=1000';
+
+        if (userId) url += `&user_id=${encodeURIComponent(userId)}`;
+        if (action) url += `&action=${encodeURIComponent(action)}`;
+        if (status) url += `&status=${encodeURIComponent(status)}`;
+
+        fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(r => r.json())
+        .then(data => {
+            allEntries = data.entries || [];
+            currentPage = 1;
+            displayAuditLog();
+        })
+        .catch(error => console.error('Error applying filters:', error));
+    }
+
+    function clearFilters() {
+        document.getElementById('filter-user').value = '';
+        document.getElementById('filter-action').value = '';
+        document.getElementById('filter-status').value = '';
+        loadAuditLog();
+    }
+
+    function exportAuditLog() {
+        const token = localStorage.getItem('token');
+        window.location.href = '/api/audit-log/export';
+    }
+</script>
+{% endblock %}

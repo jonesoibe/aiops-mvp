@@ -1,0 +1,408 @@
+{
+  "info": {
+    "name": "AIOPS Nexus API Collection",
+    "description": "Complete API collection for Chaos Simulation and Real Metrics system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Authenticate and get JWT token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Metrics API",
+      "item": [
+        {
+          "name": "Get All Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "all"]
+            },
+            "description": "Retrieve all current metrics with real system data"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Metrics Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "summary"]
+            },
+            "description": "Get summary statistics of all metrics (healthy%, warning, critical)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Metric",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/cpu_usage?minutes=60",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "cpu_usage"],
+              "query": [
+                {
+                  "key": "minutes",
+                  "value": "60",
+                  "description": "Time window for metric history"
+                }
+              ]
+            },
+            "description": "Get specific metric with historical data"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Metrics by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/status/critical",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "status", "critical"]
+            },
+            "description": "Get all metrics with specific status (healthy/warning/critical)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Anomalies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/anomalies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "anomalies"]
+            },
+            "description": "Get current anomaly status for all injection types"
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger Anomaly",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anomaly_type\": \"memory_leak\",\n  \"duration\": 30\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/metrics/anomalies/trigger",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "anomalies", "trigger"]
+            },
+            "description": "Inject an anomaly (cpu_spike, memory_leak, network_latency, high_error_rate)"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Prometheus Format",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/export/prometheus",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "export", "prometheus"]
+            },
+            "description": "Export all metrics in Prometheus text format"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chaos Simulator",
+      "item": [
+        {
+          "name": "Start Simulation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"execution_id\": \"sim_001\",\n  \"config\": {\n    \"chaos_type\": \"memory_leak\",\n    \"duration\": 60\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/simulator/start",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "start"]
+            },
+            "description": "Start a new chaos injection simulation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Simulation Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/simulator/{{simulation_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "{{simulation_id}}", "status"]
+            },
+            "description": "Poll simulation status (running/completed/failed)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Simulation Result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/simulator/{{simulation_id}}/result",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "{{simulation_id}}", "result"]
+            },
+            "description": "Get complete simulation results after completion"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Simulation Exports",
+      "item": [
+        {
+          "name": "Generate All Exports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/simulator/{{simulation_id}}/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "{{simulation_id}}", "export"]
+            },
+            "description": "Generate all export files (8 CSV + 7 PNG) for a simulation"
+          },
+          "response": []
+        },
+        {
+          "name": "List Available Exports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/simulator/{{simulation_id}}/export/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "{{simulation_id}}", "export", "list"]
+            },
+            "description": "List all available export files for a simulation"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Single Export",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/simulator/{{simulation_id}}/export/incident_log.csv",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "{{simulation_id}}", "export", "incident_log.csv"]
+            },
+            "description": "Download a specific export file (CSV or PNG)"
+          },
+          "response": []
+        },
+        {
+          "name": "Download All Exports (ZIP)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/simulator/{{simulation_id}}/export/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "simulator", "{{simulation_id}}", "export", "all"]
+            },
+            "description": "Download all exports as a single ZIP file"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Overview Page",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Main dashboard overview page"
+          },
+          "response": []
+        },
+        {
+          "name": "Simulator Page",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/simulator",
+              "host": ["{{base_url}}"],
+              "path": ["simulator"]
+            },
+            "description": "Chaos injection simulator page"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "simulation_id",
+      "value": "demo",
+      "type": "string"
+    }
+  ]
+}

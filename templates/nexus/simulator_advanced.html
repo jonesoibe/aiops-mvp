@@ -19,6 +19,7 @@
         border: 1px solid var(--border-primary);
         border-radius: var(--radius-lg);
         overflow: hidden;
+        min-height: 0;
     }
 
     .panel-header {
@@ -173,6 +174,9 @@
         border-bottom: 1px solid var(--border-primary);
         background: var(--bg-primary);
         overflow-x: auto;
+        flex-shrink: 0;
+        z-index: 10;
+        position: relative;
     }
 
     .tab-button {
@@ -185,6 +189,7 @@
         border-bottom: 2px solid transparent;
         white-space: nowrap;
         transition: all var(--transition-base);
+        flex-shrink: 0;
     }
 
     .tab-button:hover {
@@ -198,11 +203,14 @@
 
     .tab-content {
         display: none;
-        height: 100%;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     .tab-content.active {
-        display: block;
+        display: flex;
+        flex-direction: column;
     }
 
     .output-window {
@@ -214,7 +222,8 @@
         line-height: var(--lh-relaxed);
         color: var(--text-secondary);
         overflow: auto;
-        max-height: 100%;
+        flex: 1;
+        min-height: 0;
     }
 
     .console-line {
@@ -459,28 +468,30 @@
             <button class="tab-button" onclick="switchTab(event, 'anomalies')">Anomalies</button>
         </div>
 
-        <!-- Tab Contents -->
-        <div id="console" class="tab-content active">
-            <div class="output-window" id="consoleOutput">
-                <div class="console-line console-info">🔵 Simulation engine ready. Configure and click "Run Simulation".</div>
+        <!-- Tab Contents Container -->
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
+            <div id="console" class="tab-content active">
+                <div class="output-window" id="consoleOutput">
+                    <div class="console-line console-info">🔵 Simulation engine ready. Configure and click "Run Simulation".</div>
+                </div>
             </div>
-        </div>
 
-        <div id="metrics" class="tab-content">
-            <div class="output-window">
-                <div id="metricsOutput"></div>
+            <div id="metrics" class="tab-content">
+                <div class="output-window">
+                    <div id="metricsOutput"></div>
+                </div>
             </div>
-        </div>
 
-        <div id="analysis" class="tab-content">
-            <div class="output-window">
-                <div id="analysisOutput"></div>
+            <div id="analysis" class="tab-content">
+                <div class="output-window">
+                    <div id="analysisOutput"></div>
+                </div>
             </div>
-        </div>
 
-        <div id="anomalies" class="tab-content">
-            <div class="output-window">
-                <div id="anomaliesOutput"></div>
+            <div id="anomalies" class="tab-content">
+                <div class="output-window">
+                    <div id="anomaliesOutput"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -542,11 +553,17 @@
         }
 
         const config = {
+            execution_id: 'sim_' + Date.now(),
             chaos_type: document.getElementById('chaosType').value,
-            intensity: parseFloat(document.getElementById('intensity').value),
+            intensity: parseFloat(document.getElementById('intensity').value) / 100,  // Convert to 0-1 scale
             duration: parseInt(document.getElementById('duration').value),
+            target_service: 'api-gateway',
             sample_size: document.getElementById('sampleSize').value,
-            strategy: document.getElementById('strategy').value
+            strategy: document.getElementById('strategy').value,
+            advanced: {
+                ramp_up_time: 5,
+                ramp_down_time: 5
+            }
         };
 
         const statusBadge = document.getElementById('statusBadge');
@@ -641,57 +658,244 @@
     function displayResults(results) {
         if (!results) return;
 
-        if (results.metrics) {
-            const metricsHtml = `
-                <div class="metric-card">
-                    <div class="metric-label">Detection Rate</div>
-                    <div class="metric-value">${(results.metrics.detection_rate * 100).toFixed(1)}%</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Anomalies Detected</div>
-                    <div class="metric-value">${results.metrics.anomalies_count}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">False Positive Rate</div>
-                    <div class="metric-value">${(results.metrics.false_positive_rate * 100).toFixed(2)}%</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Processing Time</div>
-                    <div class="metric-value">${results.metrics.processing_time_ms.toFixed(0)}ms</div>
-                </div>
-            `;
-            document.getElementById('metricsOutput').innerHTML = metricsHtml;
-            appendConsole(`📊 Detected ${results.metrics.anomalies_count} anomalies`, 'success');
+        // Handle both nested structure (results.results) and flat structure (results)
+        const data = results.results || results;
+
+        // Display console output
+        if (data && data.console) {
+            displayConsoleOutput(data.console);
         }
 
-        if (results.analysis) {
-            const analysisHtml = `
+        // Display metrics
+        if (data && data.metrics) {
+            displayMetricsOutput(data.metrics);
+        }
+
+        // Display analysis
+        if (data && data.analysis) {
+            displayAnalysisOutput(data.analysis);
+        }
+
+        // Display anomalies
+        if (data && data.anomalies) {
+            displayAnomaliesOutput(data.anomalies);
+        }
+    }
+
+    function displayConsoleOutput(consoleLogs) {
+        const output = document.getElementById('consoleOutput');
+        output.innerHTML = '';
+
+        if (!consoleLogs || consoleLogs.length === 0) {
+            output.innerHTML = '<div class="console-line console-warning">⚠️ No console output available</div>';
+            return;
+        }
+
+        try {
+            consoleLogs.forEach(log => {
+                const line = document.createElement('div');
+                line.className = 'console-line console-' + (log.level || 'info');
+                const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                line.innerHTML = `<span style="color: var(--text-tertiary);">[${timestamp}]</span> <span style="color: var(--text-secondary);">[${log.component || 'system'}]</span> ${log.message}`;
+                output.appendChild(line);
+            });
+            output.scrollTop = output.scrollHeight;
+        } catch (e) {
+            output.innerHTML = '<div class="console-line console-error">❌ Error rendering console output: ' + e.message + '</div>';
+        }
+    }
+
+    function displayMetricsOutput(metricsData) {
+        let html = '';
+
+        if (!metricsData || metricsData.length === 0) {
+            document.getElementById('metricsOutput').innerHTML = '<div style="color: var(--text-secondary);">No metrics data available</div>';
+            return;
+        }
+
+        try {
+        metricsData.forEach(metric => {
+            const min = parseFloat(metric.min).toFixed(2);
+            const max = parseFloat(metric.max).toFixed(2);
+            const mean = parseFloat(metric.mean).toFixed(2);
+
+            html += `
+                <div class="metric-card">
+                    <div class="metric-label">${metric.name.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3);">
+                        <div>
+                            <div class="metric-label" style="font-size: var(--fs-xs);">Min</div>
+                            <div style="color: var(--text-secondary); font-size: var(--fs-sm);">${min} ${metric.unit}</div>
+                        </div>
+                        <div>
+                            <div class="metric-label" style="font-size: var(--fs-xs);">Mean</div>
+                            <div style="color: var(--text-primary); font-size: var(--fs-lg); font-weight: var(--fw-bold);">${mean} ${metric.unit}</div>
+                        </div>
+                        <div>
+                            <div class="metric-label" style="font-size: var(--fs-xs);">Max</div>
+                            <div style="color: var(--color-warning); font-size: var(--fs-sm);">${max} ${metric.unit}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: var(--space-2); font-size: var(--fs-xs); color: var(--text-tertiary);">
+                        ${metric.description}
+                    </div>
+                    ${metric.anomaly_points && metric.anomaly_points.length > 0 ? `
+                        <div style="margin-top: var(--space-2); padding: var(--space-2); background: var(--color-warning-dim); border-radius: var(--radius-md);">
+                            <div style="font-size: var(--fs-xs); color: var(--color-warning);">⚠️ Anomalies detected at ${metric.anomaly_points.length} points</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        document.getElementById('metricsOutput').innerHTML = html;
+        } catch (e) {
+            document.getElementById('metricsOutput').innerHTML = '<div class="console-line console-error">❌ Error rendering metrics: ' + e.message + '</div>';
+        }
+    }
+
+    function displayAnalysisOutput(analysisData) {
+        if (!analysisData) {
+            document.getElementById('analysisOutput').innerHTML = '<div style="color: var(--text-secondary);">No analysis data available</div>';
+            return;
+        }
+
+        try {
+        let html = `
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="color: var(--text-primary); margin-bottom: var(--space-3);">📋 Simulation Configuration</h3>
+                <div class="output-table" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-4);">
+                    <div style="background: var(--bg-tertiary); padding: var(--space-3); border-radius: var(--radius-md);">
+                        <div style="font-size: var(--fs-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">CHAOS TYPE</div>
+                        <div style="font-size: var(--fs-sm); color: var(--text-primary); font-weight: var(--fw-semibold);">${analysisData.simulation_config.chaos_type.replace(/_/g, ' ').toUpperCase()}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: var(--space-3); border-radius: var(--radius-md);">
+                        <div style="font-size: var(--fs-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">INTENSITY</div>
+                        <div style="font-size: var(--fs-sm); color: var(--text-primary); font-weight: var(--fw-semibold);">${(analysisData.simulation_config.intensity * 100).toFixed(0)}%</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: var(--space-3); border-radius: var(--radius-md);">
+                        <div style="font-size: var(--fs-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">DURATION</div>
+                        <div style="font-size: var(--fs-sm); color: var(--text-primary); font-weight: var(--fw-semibold);">${analysisData.simulation_config.duration}s</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: var(--space-3); border-radius: var(--radius-md);">
+                        <div style="font-size: var(--fs-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">TARGET SERVICE</div>
+                        <div style="font-size: var(--fs-sm); color: var(--text-primary); font-weight: var(--fw-semibold);">${analysisData.simulation_config.target_service}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="color: var(--text-primary); margin-bottom: var(--space-3);">📊 Detection Results</h3>
                 <table class="output-table">
-                    <thead>
-                        <tr><th>Parameter</th><th>Value</th></tr>
-                    </thead>
                     <tbody>
-                        <tr><td>Feature Mean</td><td>${parseFloat(results.analysis.feature_mean).toFixed(4)}</td></tr>
-                        <tr><td>Feature Std Dev</td><td>${parseFloat(results.analysis.feature_std).toFixed(4)}</td></tr>
-                        <tr><td>Anomaly Min Score</td><td>${parseFloat(results.analysis.anomaly_min).toFixed(4)}</td></tr>
-                        <tr><td>Anomaly Max Score</td><td>${parseFloat(results.analysis.anomaly_max).toFixed(4)}</td></tr>
-                        <tr><td>Threshold</td><td>${parseFloat(results.analysis.threshold).toFixed(4)}</td></tr>
+                        <tr><td>Anomalies Detected</td><td style="text-align: right; color: var(--color-success);">${analysisData.detection_results.anomalies_detected}</td></tr>
+                        <tr><td>Detection Rate</td><td style="text-align: right; color: var(--color-success);">${(analysisData.detection_results.detection_rate * 100).toFixed(2)}%</td></tr>
+                        <tr><td>False Positive Rate</td><td style="text-align: right; color: var(--color-warning);">${(analysisData.detection_results.false_positive_rate * 100).toFixed(2)}%</td></tr>
+                        <tr><td>Mean Anomaly Score</td><td style="text-align: right; color: var(--text-primary);">${analysisData.detection_results.mean_anomaly_score.toFixed(3)}</td></tr>
                     </tbody>
                 </table>
-            `;
-            document.getElementById('analysisOutput').innerHTML = analysisHtml;
-            appendConsole(`📈 Analysis: Feature normalization & threshold calibration complete`, 'success');
+            </div>
+
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="color: var(--text-primary); margin-bottom: var(--space-3);">🎯 Model Performance</h3>
+                <table class="output-table">
+                    <tbody>
+                        <tr><td>Isolation Forest Score</td><td style="text-align: right;">${analysisData.model_performance.isolation_forest_score.toFixed(3)}</td></tr>
+                        <tr><td>Classifier Accuracy</td><td style="text-align: right;">${(analysisData.model_performance.classifier_accuracy * 100).toFixed(2)}%</td></tr>
+                        <tr><td>Precision</td><td style="text-align: right;">${(analysisData.model_performance.precision * 100).toFixed(2)}%</td></tr>
+                        <tr><td>Recall</td><td style="text-align: right;">${(analysisData.model_performance.recall * 100).toFixed(2)}%</td></tr>
+                        <tr><td>F1 Score</td><td style="text-align: right;">${analysisData.model_performance.f1_score.toFixed(3)}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="color: var(--text-primary); margin-bottom: var(--space-3);">🔍 Feature Importance</h3>
+                <table class="output-table">
+                    <thead><tr><th>Feature</th><th>Importance</th></tr></thead>
+                    <tbody>
+                        ${Object.entries(analysisData.feature_analysis).slice(0, 10).map(([feat, score]) =>
+                            `<tr><td>${feat.replace(/_/g, ' ')}</td><td style="text-align: right; color: var(--color-success);">${(score * 100).toFixed(2)}%</td></tr>`
+                        ).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            ${analysisData.recommendations && analysisData.recommendations.length > 0 ? `
+                <div>
+                    <h3 style="color: var(--text-primary); margin-bottom: var(--space-3);">💡 Recommendations</h3>
+                    ${analysisData.recommendations.map(rec => `
+                        <div style="background: var(--bg-tertiary); padding: var(--space-3); margin-bottom: var(--space-2); border-radius: var(--radius-md); border-left: 3px solid ${rec.priority === 'critical' ? 'var(--color-error)' : rec.priority === 'high' ? 'var(--color-warning)' : 'var(--color-info)'};">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <div style="font-weight: var(--fw-semibold); color: var(--text-primary);">${rec.action}</div>
+                                    <div style="font-size: var(--fs-xs); color: var(--text-secondary); margin-top: var(--space-1);">${rec.description}</div>
+                                </div>
+                                <span style="font-size: var(--fs-xs); padding: var(--space-1) var(--space-2); background: ${rec.priority === 'critical' ? 'var(--color-error-dim)' : rec.priority === 'high' ? 'var(--color-warning-dim)' : 'var(--color-info-dim)'}; color: ${rec.priority === 'critical' ? 'var(--color-error)' : rec.priority === 'high' ? 'var(--color-warning)' : 'var(--color-info)'}; border-radius: var(--radius-md); text-transform: uppercase;">${rec.priority}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+
+        document.getElementById('analysisOutput').innerHTML = html;
+        } catch (e) {
+            document.getElementById('analysisOutput').innerHTML = '<div class="console-line console-error">❌ Error rendering analysis: ' + e.message + '</div>';
+        }
+    }
+
+    function displayAnomaliesOutput(anomaliesData) {
+        if (!anomaliesData || anomaliesData.length === 0) {
+            document.getElementById('anomaliesOutput').innerHTML = '<div style="color: var(--text-secondary);">No anomalies detected</div>';
+            return;
         }
 
-        if (results.anomalies && results.anomalies.length > 0) {
-            let anomaliesHtml = `<table class="output-table"><thead><tr><th>Index</th><th>Score</th><th>Severity</th></tr></thead><tbody>`;
-            results.anomalies.slice(0, 25).forEach(anom => {
-                const severity = anom.score > 0.8 ? '🔴 Critical' : anom.score > 0.5 ? '🟠 High' : '🟡 Medium';
-                anomaliesHtml += `<tr><td>${anom.index}</td><td>${parseFloat(anom.score).toFixed(4)}</td><td>${severity}</td></tr>`;
-            });
-            anomaliesHtml += '</tbody></table>';
-            document.getElementById('anomaliesOutput').innerHTML = anomaliesHtml;
-            appendConsole(`🚨 Detailed anomaly data ready (${results.anomalies.length} total)`, 'warning');
+        try {
+        let html = `
+            <table class="output-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Score</th>
+                        <th>Metric</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${anomaliesData.map(anom => {
+                        let severityColor = 'var(--text-secondary)';
+                        let severityIcon = '⚪';
+                        if (anom.severity === 'critical') {
+                            severityColor = 'var(--color-error)';
+                            severityIcon = '🔴';
+                        } else if (anom.severity === 'high') {
+                            severityColor = 'var(--color-warning)';
+                            severityIcon = '🟠';
+                        } else if (anom.severity === 'medium') {
+                            severityColor = 'var(--color-info)';
+                            severityIcon = '🟡';
+                        }
+                        return `
+                            <tr>
+                                <td style="color: var(--text-primary);">${anom.id}</td>
+                                <td style="font-size: var(--fs-xs); color: var(--text-secondary);">${new Date(anom.timestamp).toLocaleTimeString()}</td>
+                                <td>${anom.type.replace(/_/g, ' ')}</td>
+                                <td><span style="color: ${severityColor};">${severityIcon} ${anom.severity.toUpperCase()}</span></td>
+                                <td style="text-align: right; font-weight: var(--fw-semibold);">${(anom.anomaly_score).toFixed(3)}</td>
+                                <td style="font-size: var(--fs-xs); color: var(--text-secondary);">${anom.affected_metric}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+
+        document.getElementById('anomaliesOutput').innerHTML = html;
+        } catch (e) {
+            document.getElementById('anomaliesOutput').innerHTML = '<div class="console-line console-error">❌ Error rendering anomalies: ' + e.message + '</div>';
         }
     }
 

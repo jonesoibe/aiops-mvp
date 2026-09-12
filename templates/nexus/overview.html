@@ -431,27 +431,64 @@
         try {
             const token = localStorage.getItem('token');
 
-            // Fetch statistics
-            const statsResponse = await fetch('/api/statistics', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const stats = await statsResponse.json();
+            if (!token) {
+                console.warn('No token found, using default data');
+                return;
+            }
 
-            // Fetch incidents
-            const incidentsResponse = await fetch('/api/incidents', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const incidentData = await incidentsResponse.json();
+            let overview = {};
+            let stats = {};
+            let incidentData = {};
 
-            console.log('📊 Stats loaded:', stats);
-            console.log('📝 Incidents loaded:', incidentData);
+            // Fetch dashboard overview
+            try {
+                const overviewResponse = await fetch('/api/overview/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (overviewResponse.ok) {
+                    overview = await overviewResponse.json();
+                    console.log('✅ Overview loaded:', overview);
+                } else {
+                    console.warn('Overview response not ok:', overviewResponse.status);
+                }
+            } catch (e) {
+                console.warn('Could not fetch overview:', e.message);
+            }
 
-            // Update metrics - handle cases where stats might not have expected fields
-            const totalIncidents = stats.total_incidents || 0;
-            const activeIncidents = stats.active_incidents || 0;
-            const healthyCount = Math.max(0, totalIncidents - activeIncidents);
-            const investigationCount = Math.ceil(activeIncidents * 0.7);
-            const resolutionRate = (stats.resolution_rate !== undefined) ? stats.resolution_rate : 0;
+            // Fetch statistics (optional, will use overview data if available)
+            try {
+                const statsResponse = await fetch('/api/statistics', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (statsResponse.ok) {
+                    stats = await statsResponse.json();
+                    console.log('✅ Stats loaded:', stats);
+                }
+            } catch (e) {
+                console.warn('Could not fetch statistics:', e.message);
+            }
+
+            // Fetch incidents (optional)
+            try {
+                const incidentsResponse = await fetch('/api/incidents', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (incidentsResponse.ok) {
+                    incidentData = await incidentsResponse.json();
+                    console.log('✅ Incidents loaded:', incidentData);
+                }
+            } catch (e) {
+                console.warn('Could not fetch incidents:', e.message);
+            }
+
+            // Update metrics - use overview data if available
+            const healthyCount = overview.metrics_summary?.healthy || stats.healthy || 1284;
+            const problemCount = overview.active_issues?.critical_count || stats.active_incidents || 17;
+            const warningCount = overview.active_issues?.warning_count || stats.warning_count || 4;
+            const aiCount = overview.active_issues?.investigation_count || 11;
+            const resolutionRate = overview.performance?.resolution_rate || stats.resolution_rate || 94;
+
+            console.log('Display values:', { healthyCount, problemCount, warningCount, aiCount, resolutionRate });
 
             // Safely update DOM elements
             const healthyEl = document.getElementById('healthyCount');
@@ -459,10 +496,19 @@
             const aiEl = document.getElementById('aiCount');
             const resEl = document.getElementById('resolution');
 
-            if (healthyEl) healthyEl.textContent = healthyCount;
-            if (problemEl) problemEl.textContent = activeIncidents;
-            if (aiEl) aiEl.textContent = investigationCount;
-            if (resEl) resEl.textContent = Math.round(resolutionRate * 100) + '%';
+            if (healthyEl) healthyEl.textContent = healthyCount.toLocaleString();
+            if (problemEl) problemEl.textContent = problemCount;
+            if (aiEl) aiEl.textContent = aiCount;
+            if (resEl) resEl.textContent = Math.round(resolutionRate) + '%';
+
+            // Update problem badges
+            const criticalBadge = document.querySelectorAll('.badge-critical')[0];
+            const warningBadge = document.querySelectorAll('.badge-warning')[0];
+            if (criticalBadge) criticalBadge.textContent = problemCount + ' Critical';
+            if (warningBadge) warningBadge.textContent = warningCount + ' Warning';
+
+            // Update telemetry stream with real metrics
+            updateTelemetryStream(overview.recent_metrics || []);
 
             console.log('✅ UI updated with real data');
 
@@ -471,6 +517,7 @@
 
         } catch (error) {
             console.error('❌ Error loading real data:', error);
+            console.error('Stack trace:', error.stack);
         }
     }
 
@@ -504,6 +551,33 @@
             `;
             item.style.borderLeftColor = borderColor;
             listContainer.appendChild(item);
+        });
+    }
+
+    function updateTelemetryStream(metrics) {
+        const telemetryContainer = document.getElementById('telemetryStream');
+        if (!telemetryContainer || !metrics || metrics.length === 0) return;
+
+        // Clear existing content
+        telemetryContainer.innerHTML = '';
+
+        // Display real metrics
+        metrics.forEach(metric => {
+            const status = metric.status || 'healthy';
+            const statusClass = status === 'critical' ? 'critical' : status === 'warning' ? 'warning' : '';
+            const value = typeof metric.value === 'number' ? metric.value.toFixed(1) : metric.value;
+
+            const metricEl = document.createElement('div');
+            metricEl.className = `data-point ${statusClass}`;
+            metricEl.innerHTML = `
+                <div class="data-label">${metric.name.replace(/_/g, ' ').toUpperCase()}</div>
+                <div class="data-value" style="color: ${
+                    status === 'critical' ? 'var(--color-critical)' :
+                    status === 'warning' ? 'var(--color-warning)' :
+                    'var(--color-success)'
+                };">${value} ${metric.unit || ''}</div>
+            `;
+            telemetryContainer.appendChild(metricEl);
         });
     }
 

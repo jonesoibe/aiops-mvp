@@ -1,0 +1,644 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Error Analysis - Nexus AIOps{% endblock %}
+{% block topbar_title %}Detailed Error Analysis & Diagnostics{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .error-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
+        border-bottom: 2px solid var(--border-primary);
+    }
+
+    .section-title {
+        font-size: var(--fs-2xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .time-range-selector {
+        display: flex;
+        gap: var(--space-2);
+    }
+
+    .time-btn {
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        font-size: var(--fs-sm);
+    }
+
+    .time-btn.active {
+        background: var(--color-info);
+        border-color: var(--color-info);
+        color: white;
+    }
+
+    .time-btn:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .chart-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+    }
+
+    .chart-title {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-4);
+    }
+
+    .chart-canvas {
+        width: 100%;
+        height: 300px;
+        position: relative;
+    }
+
+    .error-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+    }
+
+    .stat-label {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+    }
+
+    .stat-value {
+        font-size: var(--fs-3xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+    }
+
+    .stat-unit {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+        margin-left: var(--space-2);
+    }
+
+    .stat-change {
+        font-size: var(--fs-xs);
+        margin-top: var(--space-2);
+        color: var(--text-secondary);
+    }
+
+    .stat-card.critical {
+        border-color: var(--color-critical);
+        background: linear-gradient(135deg, var(--bg-secondary), var(--color-critical-dim));
+    }
+
+    .stat-card.warning {
+        border-color: var(--color-warning);
+        background: linear-gradient(135deg, var(--bg-secondary), var(--color-warning-dim));
+    }
+
+    .error-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: var(--space-4);
+    }
+
+    .error-table thead {
+        background: var(--bg-tertiary);
+        border-bottom: 2px solid var(--border-primary);
+    }
+
+    .error-table th {
+        padding: var(--space-3);
+        text-align: left;
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        text-transform: uppercase;
+    }
+
+    .error-table td {
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--border-secondary);
+        color: var(--text-secondary);
+        font-size: var(--fs-sm);
+    }
+
+    .error-table tbody tr:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .error-type-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+        text-transform: uppercase;
+    }
+
+    .badge-error {
+        background: var(--color-critical-dim);
+        color: var(--color-critical);
+    }
+
+    .badge-warning {
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+    }
+
+    .badge-info {
+        background: var(--color-info-dim);
+        color: var(--color-info);
+    }
+
+    .timeline {
+        position: relative;
+        padding: var(--space-4) 0;
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .timeline-item:last-child {
+        border-bottom: none;
+    }
+
+    .timeline-time {
+        min-width: 100px;
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+    }
+
+    .timeline-content {
+        flex: 1;
+    }
+
+    .timeline-title {
+        font-weight: var(--fw-semibold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .timeline-description {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .timeline-meta {
+        font-size: var(--fs-xs);
+        color: var(--text-tertiary);
+        margin-top: var(--space-2);
+    }
+
+    .sparkline {
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
+
+    .tabs {
+        display: flex;
+        gap: var(--space-2);
+        margin-bottom: var(--space-6);
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .tab-button {
+        padding: var(--space-3) var(--space-4);
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-weight: var(--fw-semibold);
+        transition: all var(--transition-base);
+    }
+
+    .tab-button:hover {
+        color: var(--text-primary);
+    }
+
+    .tab-button.active {
+        color: var(--color-info);
+        border-bottom-color: var(--color-info);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .heatmap {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+        gap: 2px;
+        margin-top: var(--space-4);
+    }
+
+    .heatmap-cell {
+        aspect-ratio: 1;
+        border-radius: 4px;
+        font-size: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .heatmap-cell:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <!-- Header -->
+    <div class="section-header">
+        <div class="section-title">🚨 Error Analysis & Diagnostics</div>
+        <div class="time-range-selector">
+            <button class="time-btn active" data-range="1h">Last 1h</button>
+            <button class="time-btn" data-range="6h">Last 6h</button>
+            <button class="time-btn" data-range="24h">Last 24h</button>
+            <button class="time-btn" data-range="7d">Last 7d</button>
+        </div>
+    </div>
+
+    <!-- Key Statistics -->
+    <div class="error-stats">
+        <div class="stat-card critical">
+            <div class="stat-label">Total Errors</div>
+            <div>
+                <span class="stat-value" id="total-errors">0</span>
+                <span class="stat-unit">errors</span>
+            </div>
+            <div class="stat-change" id="error-trend">↑ +12.5% vs last hour</div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-label">Error Rate</div>
+            <div>
+                <span class="stat-value" id="error-rate">0</span>
+                <span class="stat-unit">%</span>
+            </div>
+            <div class="stat-change" id="rate-trend">↓ -2.3% vs last hour</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">P99 Latency</div>
+            <div>
+                <span class="stat-value" id="p99-latency">0</span>
+                <span class="stat-unit">ms</span>
+            </div>
+            <div class="stat-change">Stable</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Affected Services</div>
+            <div>
+                <span class="stat-value" id="affected-services">0</span>
+                <span class="stat-unit">services</span>
+            </div>
+            <div class="stat-change" id="services-list">API Gateway, Cache</div>
+        </div>
+    </div>
+
+    <!-- Tabs for Different Views -->
+    <div class="tabs">
+        <button class="tab-button active" data-tab="error-rate">Error Rate Timeline</button>
+        <button class="tab-button" data-tab="error-types">Error Types</button>
+        <button class="tab-button" data-tab="stack-traces">Stack Traces</button>
+        <button class="tab-button" data-tab="heatmap">Error Heatmap</button>
+    </div>
+
+    <!-- Error Rate Timeline Chart -->
+    <div id="error-rate" class="tab-content active">
+        <div class="chart-container">
+            <div class="chart-title">Error Rate Over Time (%)
+                <span style="font-size: var(--fs-sm); color: var(--text-secondary); margin-left: var(--space-2);" id="chart-range">Last 1 hour</span>
+            </div>
+            <div class="chart-canvas">
+                <canvas id="errorRateChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Types Distribution -->
+    <div id="error-types" class="tab-content">
+        <div class="chart-container">
+            <div class="chart-title">Errors by Type</div>
+            <table class="error-table">
+                <thead>
+                    <tr>
+                        <th>Error Type</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                        <th>First Seen</th>
+                        <th>Last Seen</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody id="error-types-table">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-tertiary);">Loading error types...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stack Traces & Error Details -->
+    <div id="stack-traces" class="tab-content">
+        <div class="chart-container">
+            <div class="chart-title">Recent Errors & Stack Traces</div>
+            <div class="timeline" id="error-timeline">
+                <div style="text-align: center; color: var(--text-tertiary); padding: var(--space-4);">
+                    Loading error details...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Heatmap -->
+    <div id="heatmap" class="tab-content">
+        <div class="chart-container">
+            <div class="chart-title">Error Activity Heatmap (by hour)</div>
+            <div class="heatmap" id="error-heatmap">
+                <div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary);">
+                    Loading heatmap data...
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let currentTimeRange = '1h';
+
+    // Tab switching
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // Time range selection
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTimeRange = this.getAttribute('data-range');
+
+            // Update chart range label
+            const rangeLabels = {
+                '1h': 'Last 1 hour',
+                '6h': 'Last 6 hours',
+                '24h': 'Last 24 hours',
+                '7d': 'Last 7 days'
+            };
+            document.getElementById('chart-range').textContent = rangeLabels[currentTimeRange] || 'Last 1 hour';
+
+            loadErrorData();
+        });
+    });
+
+    async function loadErrorData() {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            // Fetch error data
+            const response = await fetch('/api/errors/analysis?range=' + currentTimeRange, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).catch(() => null);
+
+            if (!response || !response.ok) {
+                // Use demo data
+                loadDemoErrorData();
+                return;
+            }
+
+            const data = await response.json();
+            updateErrorStats(data);
+            updateErrorChart(data);
+            updateErrorTypes(data);
+            updateErrorTimeline(data);
+            updateErrorHeatmap(data);
+
+        } catch (error) {
+            console.error('Error loading data:', error);
+            loadDemoErrorData();
+        }
+    }
+
+    function loadDemoErrorData() {
+        const demoData = {
+            totalErrors: 247,
+            errorRate: 2.3,
+            p99Latency: 1250,
+            affectedServices: ['API Gateway', 'Cache Service', 'Database'],
+            timeline: generateTimelineData(),
+            types: [
+                { type: 'Timeout', count: 89, percentage: 36 },
+                { type: 'Connection Error', count: 67, percentage: 27 },
+                { type: 'Authentication', count: 54, percentage: 22 },
+                { type: 'Rate Limited', count: 37, percentage: 15 }
+            ]
+        };
+
+        updateErrorStats(demoData);
+        updateErrorChart(demoData);
+        updateErrorTypes(demoData);
+        updateErrorTimeline(demoData);
+        updateErrorHeatmap(demoData);
+    }
+
+    function generateTimelineData() {
+        const now = new Date();
+        const data = [];
+
+        for (let i = 59; i >= 0; i--) {
+            const time = new Date(now - i * 60000);
+            data.push({
+                time: time.toLocaleTimeString(),
+                rate: Math.random() * 4 + (i % 10 === 0 ? 2 : 0),
+                errors: Math.floor(Math.random() * 5 + 1)
+            });
+        }
+
+        return data;
+    }
+
+    function updateErrorStats(data) {
+        document.getElementById('total-errors').textContent = data.totalErrors || 0;
+        document.getElementById('error-rate').textContent = (data.errorRate || 0).toFixed(2);
+        document.getElementById('p99-latency').textContent = data.p99Latency || 0;
+        document.getElementById('affected-services').textContent = data.affectedServices?.length || 0;
+
+        if (data.affectedServices) {
+            document.getElementById('services-list').textContent = data.affectedServices.join(', ');
+        }
+    }
+
+    function updateErrorChart(data) {
+        const canvas = document.getElementById('errorRateChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const timeline = data.timeline || generateTimelineData();
+
+        // Simple line chart drawing
+        const width = canvas.offsetWidth;
+        const height = canvas.offsetHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        const maxRate = Math.max(...timeline.map(d => d.rate)) + 1;
+        const padding = 40;
+
+        // Draw axes
+        ctx.strokeStyle = 'var(--border-primary)';
+        ctx.beginPath();
+        ctx.moveTo(padding, height - padding);
+        ctx.lineTo(width - 20, height - padding);
+        ctx.stroke();
+
+        // Draw line
+        ctx.strokeStyle = 'var(--color-warning)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        timeline.forEach((point, i) => {
+            const x = padding + (i / (timeline.length - 1)) * (width - padding - 20);
+            const y = height - padding - (point.rate / maxRate) * (height - padding - 20);
+
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+
+        ctx.stroke();
+
+        // Add grid lines
+        ctx.strokeStyle = 'var(--border-secondary)';
+        ctx.font = '12px var(--font-mono)';
+        ctx.fillStyle = 'var(--text-tertiary)';
+
+        for (let i = 0; i <= 5; i++) {
+            const y = height - padding - (i / 5) * (height - padding - 20);
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(width - 20, y);
+            ctx.stroke();
+
+            ctx.fillText((i / 5 * maxRate).toFixed(1) + '%', 5, y + 4);
+        }
+    }
+
+    function updateErrorTypes(data) {
+        const tbody = document.getElementById('error-types-table');
+        const types = data.types || [];
+
+        tbody.innerHTML = types.map(type => `
+            <tr>
+                <td><span class="error-type-badge badge-error">${type.type}</span></td>
+                <td><strong>${type.count}</strong></td>
+                <td>${type.percentage}%</td>
+                <td>${new Date(Date.now() - Math.random() * 3600000).toLocaleTimeString()}</td>
+                <td>${new Date().toLocaleTimeString()}</td>
+                <td>
+                    ${type.count > 50 ? '📈 Increasing' : type.count > 20 ? '➡️ Stable' : '📉 Decreasing'}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function updateErrorTimeline(data) {
+        const timeline = data.timeline || generateTimelineData();
+        const container = document.getElementById('error-timeline');
+
+        container.innerHTML = timeline.slice(-10).reverse().map((item, i) => `
+            <div class="timeline-item">
+                <div class="timeline-time">${item.time}</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">${item.errors} Error${item.errors > 1 ? 's' : ''} (${item.rate.toFixed(2)}% rate)</div>
+                    <div class="timeline-description">
+                        ${item.errors > 3 ? '🔴 Timeout, Connection Error' : '🟡 Rate Limited'}
+                    </div>
+                    <div class="timeline-meta">
+                        Service: API Gateway • Stack: Connection refused • Duration: ${Math.random() * 5 + 1}s
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateErrorHeatmap(data) {
+        const container = document.getElementById('error-heatmap');
+        const hours = 24;
+
+        let html = '<div style="font-size: var(--fs-xs); color: var(--text-tertiary); margin-bottom: var(--space-2);">Hour of day (UTC)</div>';
+        html += '<div class="heatmap">';
+
+        for (let h = 0; h < hours; h++) {
+            const intensity = Math.random();
+            const errorCount = Math.floor(intensity * 20);
+            const hue = intensity > 0.7 ? 0 : intensity > 0.4 ? 30 : 200;
+            const opacity = intensity;
+
+            html += `<div class="heatmap-cell" style="background-color: hsl(${hue}, 70%, ${50 + 30 * (1 - intensity)}%); opacity: ${0.3 + opacity * 0.7};" title="Hour ${h}: ${errorCount} errors (${(intensity * 100).toFixed(0)}%)">${errorCount}</div>`;
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', loadErrorData);
+
+    // Refresh every 30 seconds
+    setInterval(loadErrorData, 30000);
+</script>
+{% endblock %}

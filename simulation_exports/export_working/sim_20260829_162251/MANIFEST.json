@@ -1,0 +1,41 @@
+{
+  "timestamp": "20260829_162251",
+  "export_directory": "simulation_exports/export_working\\sim_20260829_162251",
+  "exports": {
+    "chaos_simulation_csv": "simulation_exports/export_working\\sim_20260829_162251\\chaos_simulation.csv",
+    "classification_results_csv": "simulation_exports/export_working\\sim_20260829_162251\\classification_results.csv",
+    "incident_log_csv": "simulation_exports/export_working\\sim_20260829_162251\\incident_log.csv",
+    "response_log_csv": "simulation_exports/export_working\\sim_20260829_162251\\response_log.csv",
+    "remediation_results_csv": "simulation_exports/export_working\\sim_20260829_162251\\remediation_results.csv",
+    "threshold_calibration_csv": "simulation_exports/export_working\\sim_20260829_162251\\threshold_calibration.csv",
+    "metrics_comparison_csv": "simulation_exports/export_working\\sim_20260829_162251\\metrics_comparison.csv",
+    "dos_simulation_analysis_csv": "simulation_exports/export_working\\sim_20260829_162251\\dos_simulation_analysis.csv",
+    "confusion_matrix_mvp_png": "simulation_exports/export_working\\sim_20260829_162251\\confusion_matrix_mvp.png",
+    "confusion_matrix_supervised_png": "simulation_exports/export_working\\sim_20260829_162251\\confusion_matrix_mvp.png",
+    "feature_importance_png": "simulation_exports/export_working\\sim_20260829_162251\\feature_importance.png",
+    "feature_importance_mvp_png": "simulation_exports/export_working\\sim_20260829_162251\\feature_importance_mvp.png",
+    "dos_simulation_analysis_png": "simulation_exports/export_working\\sim_20260829_162251\\dos_simulation_analysis.png",
+    "threshold_calibration_png": "simulation_exports/export_working\\sim_20260829_162251\\threshold_calibration.png",
+    "metrics_comparison_png": "simulation_exports/export_working\\sim_20260829_162251\\metrics_comparison.png"
+  },
+  "file_count": 15,
+  "csv_exports": [
+    "chaos_simulation_csv",
+    "classification_results_csv",
+    "incident_log_csv",
+    "response_log_csv",
+    "remediation_results_csv",
+    "threshold_calibration_csv",
+    "metrics_comparison_csv",
+    "dos_simulation_analysis_csv"
+  ],
+  "png_exports": [
+    "confusion_matrix_mvp_png",
+    "confusion_matrix_supervised_png",
+    "feature_importance_png",
+    "feature_importance_mvp_png",
+    "dos_simulation_analysis_png",
+    "threshold_calibration_png",
+    "metrics_comparison_png"
+  ]
+}
