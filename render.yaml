@@ -18,3 +18,8 @@ services:
         value: "utf-8"
       - key: PORT
         value: "5000"
+    # Deployment notes:
+    # - Uses nexus_app.py (full-featured AIOps platform)
+    # - Not dashboard_lite.py (lightweight version)
+    # - Includes: Error Analysis, Audit Trail, Topology, Real Metrics
+    # - Requires: pandas, scikit-learn, numpy, matplotlib
