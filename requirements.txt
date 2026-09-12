@@ -23,6 +23,7 @@ python-dotenv>=1.0.0
 
 # Utilities
 requests>=2.31.0
+psutil>=5.9.0  # System metrics collection (CPU, memory, disk, network)
 
 # Data Science & ML (for Chaos Simulator & ML Pipeline)
 numpy>=1.24.0
