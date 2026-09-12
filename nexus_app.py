@@ -2077,7 +2077,7 @@ try:
     start_background_threads()
 
     # Start real metrics collection
-    start_metrics_collection()
+    start_hybrid_collection()
     init_storage()
 
     # Initialize alerting system
