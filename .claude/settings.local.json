@@ -127,7 +127,9 @@
       "PowerShell(grep -n \"@app.route\\('/api/audit-log\" \"C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\\\\nexus_app.py\")",
       "PowerShell(grep -n \"if __name__\" \"C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\\\\nexus_app.py\")",
       "PowerShell(head -1)",
-      "Bash(git commit -m 'Doc: Add deployment versions guide - clarify nexus_app.py vs dashboard_lite.py differences *)"
+      "Bash(git commit -m 'Doc: Add deployment versions guide - clarify nexus_app.py vs dashboard_lite.py differences *)",
+      "Bash(git commit -m 'Fix: Add missing psutil dependency for real-time system metrics collection *)",
+      "Bash(git commit -m 'Feature: Real-time alerting system - complete implementation *)"
     ]
   }
 }
