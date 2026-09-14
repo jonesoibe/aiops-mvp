@@ -140,6 +140,23 @@ root_cause_analyzer = RootCauseAnalyzer()
 logger = __import__('logging').getLogger(__name__)
 
 
+def _serialize_alert_rule(rule):
+    """Convert AlertRule to JSON-serializable dict"""
+    return {
+        'id': rule.id,
+        'name': rule.name,
+        'description': rule.description,
+        'metric_name': rule.metric_name,
+        'condition': rule.condition,
+        'threshold': rule.threshold,
+        'threshold_high': rule.threshold_high,
+        'duration': rule.duration,
+        'severity': rule.severity.value,  # Convert enum to string
+        'enabled': rule.enabled,
+        'notification_channels': rule.notification_channels
+    }
+
+
 def _initialize_default_alert_rules():
     """Create default alert rules on startup"""
     rules = [
@@ -1791,7 +1808,7 @@ def get_alert_rules(user=None):
     """Get all alert rules"""
     rules = alerting_engine.get_rules()
     return jsonify({
-        'rules': [asdict(r) for r in rules],
+        'rules': [_serialize_alert_rule(r) for r in rules],
         'total': len(rules),
         'enabled': len(alerting_engine.get_rules(enabled_only=True))
     })
