@@ -2318,6 +2318,12 @@ def alerts_dashboard():
     return render_template('nexus/alerts_dashboard.html')
 
 
+@app.route('/slos')
+def slo_dashboard():
+    """Render SLO dashboard (no auth required - frontend handles API auth)"""
+    return render_template('nexus/slo_dashboard.html')
+
+
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)

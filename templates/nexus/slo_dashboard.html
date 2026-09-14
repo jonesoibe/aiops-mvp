@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLO Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --dark: #2d3748;
+            --light: #f8f9fa;
+            --border: #e2e8f0;
+            --text: #1a202c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header-meta {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.healthy .stat-value { color: var(--success); }
+        .stat-card.warning .stat-value { color: var(--warning); }
+        .stat-card.violated .stat-value { color: var(--danger); }
+
+        .stat-subtitle {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .slo-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .slo-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .slo-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .slo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .slo-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .slo-service {
+            font-size: 12px;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.healthy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.violated {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .slo-metrics {
+            margin-bottom: 15px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #666;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.warning {
+            background: var(--warning);
+        }
+
+        .progress-fill.danger {
+            background: var(--danger);
+        }
+
+        .error-budget {
+            background: #f0f4f8;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .error-budget-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .error-budget-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--light);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .compliance-chart {
+            margin-top: 20px;
+            height: 300px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .history-table th {
+            background: var(--light);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .trend-up {
+            color: var(--danger);
+        }
+
+        .trend-down {
+            color: var(--success);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .slo-list {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 SLO Dashboard</h1>
+            <div class="header-meta">
+                <span>Service Level Objectives Monitoring</span>
+                <span id="last-updated">Last updated: --:--</span>
+                <button class="btn" onclick="refreshData()">🔄 Refresh</button>
+            </div>
+        </header>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card healthy">
+                <h3>✅ Healthy SLOs</h3>
+                <div class="stat-value" id="healthy-count">0</div>
+                <div class="stat-subtitle">Meeting targets</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>⚠️ Warning SLOs</h3>
+                <div class="stat-value" id="warning-count">0</div>
+                <div class="stat-subtitle">Approaching threshold</div>
+            </div>
+            <div class="stat-card violated">
+                <h3>❌ Violated SLOs</h3>
+                <div class="stat-value" id="violated-count">0</div>
+                <div class="stat-subtitle">Below targets</div>
+            </div>
+            <div class="stat-card">
+                <h3>📋 Total SLOs</h3>
+                <div class="stat-value" id="total-count">0</div>
+                <div class="stat-subtitle">Active objectives</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="tab" onclick="switchTab('compliance')">📈 Compliance</button>
+            <button class="tab" onclick="switchTab('budgets')">💰 Error Budgets</button>
+            <button class="tab" onclick="switchTab('history')">📜 History</button>
+            <button class="tab" onclick="switchTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterByStatus('all')">All</button>
+                <button class="filter-btn" onclick="filterByStatus('healthy')">Healthy</button>
+                <button class="filter-btn" onclick="filterByStatus('warning')">Warning</button>
+                <button class="filter-btn" onclick="filterByStatus('violated')">Violated</button>
+            </div>
+            <div class="slo-list" id="slo-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading SLOs...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Tab -->
+        <div id="compliance" class="tab-content">
+            <div class="compliance-chart">
+                <p>📈 Compliance charts coming soon...</p>
+            </div>
+        </div>
+
+        <!-- Error Budgets Tab -->
+        <div id="budgets" class="tab-content">
+            <div class="slo-list" id="budget-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading error budgets...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <table class="history-table" id="history-table">
+                <thead>
+                    <tr>
+                        <th>SLO Name</th>
+                        <th>Service</th>
+                        <th>Compliance %</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">Loading history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div style="max-width: 600px;">
+                <h2 style="font-size: 18px; margin-bottom: 20px;">Create New SLO</h2>
+                <form id="create-slo-form" onsubmit="createSLO(event)">
+                    <div class="form-group">
+                        <label>Service ID</label>
+                        <input type="text" name="service_id" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Service Name</label>
+                        <input type="text" name="service_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Percentage</label>
+                        <input type="number" name="target_percentage" min="0" max="100" step="0.01" required placeholder="99.9">
+                    </div>
+                    <div class="form-group">
+                        <label>Tracking Period</label>
+                        <select name="tracking_period" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="cursor: pointer;">Create SLO</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        const TOKEN = localStorage.getItem('token') || 'test_token';
+        let currentFilter = 'all';
+
+        // API Calls
+        async function fetchSLOs() {
+            try {
+                const response = await fetch(`${API_URL}/slos`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching SLOs:', error);
+                return { slos: [] };
+            }
+        }
+
+        async function fetchSLOCompliance(sloId) {
+            try {
+                const response = await fetch(`${API_URL}/slos/${sloId}/compliance`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching compliance:', error);
+                return {};
+            }
+        }
+
+        async function fetchSLOStats() {
+            try {
+                const response = await fetch(`${API_URL}/slos/stats`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                return { total_slos: 0, status_counts: { healthy: 0, warning: 0, violated: 0 } };
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'budgets') loadErrorBudgets();
+            if (tabName === 'history') loadHistory();
+        }
+
+        // Filter functions
+        function filterByStatus(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            loadSLOs();
+        }
+
+        // Load and render SLOs
+        async function loadSLOs() {
+            const data = await fetchSLOs();
+            const sloList = document.getElementById('slo-list');
+
+            if (!data.slos || data.slos.length === 0) {
+                sloList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No SLOs found</p></div>';
+                return;
+            }
+
+            let html = '';
+            for (const slo of data.slos) {
+                const compliance = await fetchSLOCompliance(slo.id);
+
+                if (currentFilter !== 'all' && compliance.status !== currentFilter) continue;
+
+                const progressPercent = Math.min(compliance.average_compliance || 0, 100);
+                const statusClass = compliance.status || 'no_data';
+                const progressClass = compliance.status === 'healthy' ? 'success' :
+                                    compliance.status === 'warning' ? 'warning' : 'danger';
+
+                html += `
+                    <div class="slo-card">
+                        <div class="slo-header">
+                            <div>
+                                <div class="slo-title">${slo.service_name}</div>
+                                <div class="slo-service">${slo.description}</div>
+                            </div>
+                            <span class="status-badge ${statusClass}">${compliance.status || 'NO DATA'}</span>
+                        </div>
+
+                        <div class="slo-metrics">
+                            <div class="metric-row">
+                                <span class="metric-label">Target</span>
+                                <span class="metric-value">${slo.target_percentage}%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Current</span>
+                                <span class="metric-value">${(compliance.average_compliance || 0).toFixed(2)}%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Min / Max</span>
+                                <span class="metric-value">${(compliance.min_compliance || 0).toFixed(2)}% / ${(compliance.max_compliance || 0).toFixed(2)}%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill ${progressClass}" style="width: ${progressPercent}%"></div>
+                        </div>
+
+                        <div class="error-budget">
+                            <div class="error-budget-label">Error Budget Remaining</div>
+                            <div class="error-budget-value">${(compliance.error_budget_remaining || 0).toFixed(1)}%</div>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-primary" onclick="viewDetails('${slo.id}')">View Details</button>
+                            <button class="btn" onclick="editSLO('${slo.id}')">Edit</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            sloList.innerHTML = html;
+        }
+
+        // Load error budgets
+        async function loadErrorBudgets() {
+            const data = await fetchSLOs();
+            const budgetList = document.getElementById('budget-list');
+
+            if (!data.slos || data.slos.length === 0) {
+                budgetList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><p>No SLOs found</p></div>';
+                return;
+            }
+
+            let html = '';
+            for (const slo of data.slos) {
+                const compliance = await fetchSLOCompliance(slo.id);
+                const consumed = 100 - (compliance.error_budget_remaining || 100);
+                const statusClass = consumed > 75 ? 'danger' : consumed > 50 ? 'warning' : 'success';
+
+                html += `
+                    <div class="slo-card">
+                        <div class="slo-title">${slo.service_name}</div>
+                        <div class="slo-service">${slo.description}</div>
+
+                        <div style="margin-top: 20px;">
+                            <div class="metric-row">
+                                <span class="metric-label">Consumed</span>
+                                <span class="metric-value">${consumed.toFixed(1)}%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Remaining</span>
+                                <span class="metric-value">${(compliance.error_budget_remaining || 0).toFixed(1)}%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-bar" style="margin-top: 15px;">
+                            <div class="progress-fill ${statusClass}" style="width: ${consumed}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            budgetList.innerHTML = html;
+        }
+
+        // Load history
+        async function loadHistory() {
+            const data = await fetchSLOs();
+            const historyBody = document.getElementById('history-body');
+
+            if (!data.slos || data.slos.length === 0) {
+                historyBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">No history available</td></tr>';
+                return;
+            }
+
+            let html = '';
+            for (const slo of data.slos) {
+                const compliance = await fetchSLOCompliance(slo.id);
+                html += `
+                    <tr>
+                        <td>${slo.service_name}</td>
+                        <td>${slo.service_id}</td>
+                        <td><strong>${(compliance.average_compliance || 0).toFixed(2)}%</strong></td>
+                        <td><span class="status-badge ${compliance.status || 'no_data'}">${compliance.status || 'NO DATA'}</span></td>
+                        <td>${new Date(compliance.last_updated).toLocaleString()}</td>
+                    </tr>
+                `;
+            }
+
+            historyBody.innerHTML = html;
+        }
+
+        // Stats and utility functions
+        async function updateStats() {
+            const stats = await fetchSLOStats();
+            document.getElementById('healthy-count').textContent = stats.status_counts?.healthy || 0;
+            document.getElementById('warning-count').textContent = stats.status_counts?.warning || 0;
+            document.getElementById('violated-count').textContent = stats.status_counts?.violated || 0;
+            document.getElementById('total-count').textContent = stats.total_slos || 0;
+            document.getElementById('last-updated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function refreshData() {
+            updateStats();
+            loadSLOs();
+        }
+
+        function viewDetails(sloId) {
+            alert(`View details for SLO: ${sloId}`);
+        }
+
+        function editSLO(sloId) {
+            alert(`Edit SLO: ${sloId}`);
+        }
+
+        async function createSLO(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch(`${API_URL}/slos`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...data,
+                        target_percentage: parseFloat(data.target_percentage),
+                        metrics: [{
+                            name: 'availability',
+                            metric_type: 'availability',
+                            threshold: parseFloat(data.target_percentage),
+                            comparison: '>'
+                        }]
+                    })
+                });
+
+                if (response.ok) {
+                    alert('SLO created successfully!');
+                    event.target.reset();
+                    refreshData();
+                } else {
+                    alert('Error creating SLO');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStats();
+            loadSLOs();
+            setInterval(refreshData, 60000); // Refresh every minute
+        });
+    </script>
+</body>
+</html>
