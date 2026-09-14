@@ -134,7 +134,13 @@
       "Bash(python -m py_compile nexus_app.py)",
       "Bash(python -m pytest tests/test_alerting_engine.py -v)",
       "Bash(python -m pytest tests/test_alerting_engine.py -v --tb=short)",
-      "Bash(git commit -m 'Integration: Add comprehensive alerting system to nexus_app.py *)"
+      "Bash(git commit -m 'Integration: Add comprehensive alerting system to nexus_app.py *)",
+      "Bash(python -c \"import nexus_app; print\\('✅ Application imports successful'\\)\")",
+      "Bash(git commit -m 'Fix: Use correct function name start_hybrid_collection instead of start_metrics_collection *)",
+      "Bash(git commit -m 'Doc: Add comprehensive alerting system integration documentation *)",
+      "Bash(git commit -m 'Doc: Add quick-start guide for alerts system *)",
+      "Bash(git commit -m 'Doc: Add integration session summary *)",
+      "Bash(git commit -m 'Fix: Authentication flow for alerts dashboard and API endpoints *)"
     ]
   }
 }

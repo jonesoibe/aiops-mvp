@@ -287,50 +287,61 @@ def generate_token(user_id, username, role, expires_in_days=7):
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
 def require_auth(f):
-    """Decorator for API authentication."""
+    """Decorator for API authentication (supports both session and Bearer tokens)."""
     @wraps(f)
     def decorated(*args, **kwargs):
+        # First check for session-based authentication (from browser login)
+        if 'user_id' in request.session:
+            request.user = {
+                'user_id': request.session.get('user_id'),
+                'username': request.session.get('username'),
+                'role': request.session.get('role', 'user')
+            }
+            return f(*args, **kwargs)
+
+        # Fall back to Bearer token authentication (for API calls)
         auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Missing authorization header'}), 401
-
-        try:
-            token = auth_header[7:]
-
-            # Try to decode with main secret key
+        if auth_header.startswith('Bearer '):
             try:
-                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-                request.user = payload
-                return f(*args, **kwargs)
-            except jwt.InvalidTokenError:
-                # For demo/development: accept any bearer token with basic validation
-                # Extract user info from token if possible
+                token = auth_header[7:]
+
+                # Try to decode with main secret key
                 try:
-                    # Try to decode without verification for demo
-                    import json
-                    import base64
-                    parts = token.split('.')
-                    if len(parts) == 3:
-                        payload_b64 = parts[1]
-                        # Add padding if needed
-                        padding = 4 - len(payload_b64) % 4
-                        if padding != 4:
-                            payload_b64 += '=' * padding
-                        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
-                        request.user = payload
-                        print(f"✅ Accepted demo token for user: {payload.get('username')}")
-                        return f(*args, **kwargs)
-                except:
-                    pass
+                    payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+                    request.user = payload
+                    return f(*args, **kwargs)
+                except jwt.InvalidTokenError:
+                    # For demo/development: accept any bearer token with basic validation
+                    # Extract user info from token if possible
+                    try:
+                        # Try to decode without verification for demo
+                        import json
+                        import base64
+                        parts = token.split('.')
+                        if len(parts) == 3:
+                            payload_b64 = parts[1]
+                            # Add padding if needed
+                            padding = 4 - len(payload_b64) % 4
+                            if padding != 4:
+                                payload_b64 += '=' * padding
+                            payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+                            request.user = payload
+                            logger.info(f"✅ Accepted demo token for user: {payload.get('username')}")
+                            return f(*args, **kwargs)
+                    except:
+                        pass
 
-                # Last resort: create minimal user object
-                request.user = {'user_id': 'demo', 'username': 'demo', 'role': 'admin'}
-                print("✅ Using fallback demo user")
-                return f(*args, **kwargs)
+                    # Last resort: create minimal user object
+                    request.user = {'user_id': 'demo', 'username': 'demo', 'role': 'admin'}
+                    logger.info("✅ Using fallback demo user")
+                    return f(*args, **kwargs)
 
-        except Exception as e:
-            print(f"❌ Auth error: {e}")
-            return jsonify({'error': 'Authorization failed'}), 401
+            except Exception as e:
+                logger.error(f"❌ Auth error: {e}")
+                return jsonify({'error': 'Authorization failed'}), 401
+        else:
+            # No session and no Bearer token
+            return jsonify({'error': 'Missing authorization header or valid session'}), 401
 
     return decorated
 
@@ -2048,9 +2059,8 @@ def get_active_alerts_ws():
 # ==================== ALERTS DASHBOARD ROUTE ====================
 
 @app.route('/alerts')
-@require_auth
-def alerts_dashboard(user=None):
-    """Render alerts dashboard"""
+def alerts_dashboard():
+    """Render alerts dashboard (no auth required - frontend handles API auth)"""
     return render_template('nexus/alerts_dashboard.html')
 
 
