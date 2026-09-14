@@ -140,7 +140,11 @@
       "Bash(git commit -m 'Doc: Add comprehensive alerting system integration documentation *)",
       "Bash(git commit -m 'Doc: Add quick-start guide for alerts system *)",
       "Bash(git commit -m 'Doc: Add integration session summary *)",
-      "Bash(git commit -m 'Fix: Authentication flow for alerts dashboard and API endpoints *)"
+      "Bash(git commit -m 'Fix: Authentication flow for alerts dashboard and API endpoints *)",
+      "Bash(git commit -m 'Fix: Correct authentication decorator - remove broken session checking *)",
+      "Bash(git commit -m 'Fix: JSON serialization of AlertRule objects with enums *)",
+      "Bash(python -m pytest tests/test_slo_engine.py -v)",
+      "Bash(git commit -m 'Feature: Add comprehensive SLA/SLO tracking system *)"
     ]
   }
 }

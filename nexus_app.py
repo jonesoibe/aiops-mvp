@@ -59,6 +59,15 @@ from src.notification_channels import (
 )
 from src.root_cause_analyzer import RootCauseAnalyzer
 
+# SLO Tracking
+from src.slo_engine import (
+    SLOEngine, ServiceLevelObjective, SLOMetric, SLOMetricType,
+    SLOStatus, TimePeriod
+)
+from src.slo_compliance import (
+    MetricsCollector, ErrorBudgetTracker, SLOComplianceCalculator
+)
+
 # ==================== APP SETUP ====================
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -137,6 +146,12 @@ alerting_engine.notifier = notification_manager
 # Initialize root cause analyzer
 root_cause_analyzer = RootCauseAnalyzer()
 
+# Initialize SLO tracking system
+slo_engine = SLOEngine()
+metrics_collector = MetricsCollector(window_size=3600)
+error_budget_tracker = ErrorBudgetTracker()
+slo_compliance_calculator = SLOComplianceCalculator()
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -155,6 +170,89 @@ def _serialize_alert_rule(rule):
         'enabled': rule.enabled,
         'notification_channels': rule.notification_channels
     }
+
+
+def _serialize_slo(slo):
+    """Convert ServiceLevelObjective to JSON-serializable dict"""
+    return slo.to_dict()
+
+
+def _initialize_default_slos():
+    """Create default SLOs on startup"""
+    now = datetime.utcnow()
+
+    slos = [
+        ServiceLevelObjective(
+            id="slo_api_availability",
+            service_id="api-gateway",
+            service_name="API Gateway",
+            description="API Gateway availability SLO - 99.9%",
+            metrics=[
+                SLOMetric(
+                    name="availability",
+                    metric_type=SLOMetricType.AVAILABILITY,
+                    threshold=99.9,
+                    comparison=">",
+                    window=3600
+                )
+            ],
+            target_percentage=99.9,
+            tracking_period=TimePeriod.MONTHLY,
+            period_start=now,
+            period_end=now + timedelta(days=30),
+            enabled=True,
+            error_budget_threshold=0.3,
+            notes="Critical service - maintain high availability"
+        ),
+        ServiceLevelObjective(
+            id="slo_api_latency",
+            service_id="api-gateway",
+            service_name="API Gateway",
+            description="API Gateway latency SLO - P95 < 500ms",
+            metrics=[
+                SLOMetric(
+                    name="p95_latency",
+                    metric_type=SLOMetricType.LATENCY,
+                    threshold=500.0,
+                    comparison="<",
+                    window=60
+                )
+            ],
+            target_percentage=99.0,
+            tracking_period=TimePeriod.WEEKLY,
+            period_start=now,
+            period_end=now + timedelta(days=7),
+            enabled=True,
+            error_budget_threshold=0.25
+        ),
+        ServiceLevelObjective(
+            id="slo_database_availability",
+            service_id="database",
+            service_name="Primary Database",
+            description="Database availability SLO - 99.95%",
+            metrics=[
+                SLOMetric(
+                    name="availability",
+                    metric_type=SLOMetricType.AVAILABILITY,
+                    threshold=99.95,
+                    comparison=">",
+                    window=3600
+                )
+            ],
+            target_percentage=99.95,
+            tracking_period=TimePeriod.MONTHLY,
+            period_start=now,
+            period_end=now + timedelta(days=30),
+            enabled=True,
+            notes="Database is critical infrastructure"
+        ),
+    ]
+
+    for slo in slos:
+        slo_engine.add_slo(slo)
+        error_budget_tracker.initialize_budget(slo.id, 2592000, slo.target_percentage)  # 30 days
+
+    logger.info(f"✅ Initialized {len(slos)} default SLOs")
 
 
 def _initialize_default_alert_rules():
@@ -2038,6 +2136,156 @@ def get_alert_templates(user=None):
     return jsonify({'templates': templates})
 
 
+# ==================== SLO/SLA ENDPOINTS ====================
+
+@app.route('/api/slos', methods=['GET'])
+@require_auth
+def get_slos(user=None):
+    """Get all SLOs"""
+    service_filter = request.args.get('service_id')
+    enabled_only = request.args.get('enabled_only', 'false').lower() == 'true'
+
+    slos = slo_engine.get_slos(service_id=service_filter, enabled_only=enabled_only)
+    return jsonify({
+        'slos': [_serialize_slo(s) for s in slos],
+        'total': len(slos)
+    })
+
+
+@app.route('/api/slos', methods=['POST'])
+@require_auth
+def create_slo(user=None):
+    """Create new SLO"""
+    data = request.get_json()
+
+    try:
+        now = datetime.utcnow()
+        period_days = int(data.get('period_days', 30))
+
+        metrics = [
+            SLOMetric(
+                name=m['name'],
+                metric_type=SLOMetricType(m['metric_type']),
+                threshold=float(m['threshold']),
+                comparison=m['comparison'],
+                window=int(m.get('window', 3600)),
+                weight=float(m.get('weight', 1.0))
+            )
+            for m in data.get('metrics', [])
+        ]
+
+        slo = ServiceLevelObjective(
+            id=data.get('id') or f"slo_{int(now.timestamp())}",
+            service_id=data['service_id'],
+            service_name=data['service_name'],
+            description=data.get('description', ''),
+            metrics=metrics,
+            target_percentage=float(data['target_percentage']),
+            tracking_period=TimePeriod(data.get('tracking_period', 'monthly')),
+            period_start=now,
+            period_end=now + timedelta(days=period_days),
+            enabled=data.get('enabled', True),
+            error_budget_threshold=float(data.get('error_budget_threshold', 0.3)),
+            notes=data.get('notes', '')
+        )
+
+        slo_engine.add_slo(slo)
+        error_budget_tracker.initialize_budget(slo.id, period_days * 86400, slo.target_percentage)
+
+        return jsonify(_serialize_slo(slo)), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/slos/<slo_id>', methods=['PUT'])
+@require_auth
+def update_slo(slo_id, user=None):
+    """Update an SLO"""
+    try:
+        data = request.get_json()
+        slo_engine.update_slo(slo_id, **data)
+        slo = slo_engine.get_slo(slo_id)
+        return jsonify(_serialize_slo(slo))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/slos/<slo_id>', methods=['DELETE'])
+@require_auth
+def delete_slo(slo_id, user=None):
+    """Delete an SLO"""
+    slo_engine.delete_slo(slo_id)
+    return jsonify({'status': 'deleted', 'slo_id': slo_id})
+
+
+@app.route('/api/slos/<slo_id>/compliance', methods=['GET'])
+@require_auth
+def get_slo_compliance(slo_id, user=None):
+    """Get SLO compliance summary"""
+    summary = slo_engine.get_compliance_summary(slo_id)
+    if not summary:
+        return jsonify({'error': 'SLO not found'}), 404
+    return jsonify(summary)
+
+
+@app.route('/api/slos/<slo_id>/compliance/history', methods=['GET'])
+@require_auth
+def get_slo_compliance_history(slo_id, user=None):
+    """Get SLO compliance history"""
+    hours = int(request.args.get('hours', 24))
+    history = slo_engine.get_compliance_history(slo_id, hours=hours)
+    return jsonify({
+        'slo_id': slo_id,
+        'records': [r.to_dict() for r in history],
+        'total': len(history)
+    })
+
+
+@app.route('/api/slos/<slo_id>/error-budget', methods=['GET'])
+@require_auth
+def get_slo_error_budget(slo_id, user=None):
+    """Get SLO error budget status"""
+    budget = error_budget_tracker.get_budget_status(slo_id)
+    if not budget:
+        return jsonify({'error': 'SLO not found'}), 404
+    return jsonify(budget)
+
+
+@app.route('/api/slos/stats', methods=['GET'])
+@require_auth
+def get_slo_stats(user=None):
+    """Get overall SLO statistics"""
+    stats = slo_engine.get_statistics()
+    return jsonify(stats)
+
+
+@app.route('/api/slos/<slo_id>/record-metrics', methods=['POST'])
+@require_auth
+def record_slo_metrics(slo_id, user=None):
+    """Record metrics for SLO evaluation"""
+    data = request.get_json()
+
+    try:
+        slo = slo_engine.get_slo(slo_id)
+        if not slo:
+            return jsonify({'error': 'SLO not found'}), 404
+
+        metric_values = data.get('metric_values', {})
+        errors_count = int(data.get('errors_count', 0))
+        total_requests = int(data.get('total_requests', 0))
+
+        record = slo_engine.calculate_compliance(
+            slo_id,
+            errors_count,
+            total_requests,
+            metric_values
+        )
+
+        return jsonify(record.to_dict())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
 # ==================== WEBSOCKET HANDLERS ====================
 
 @socketio.on('connect', namespace='/alerts')
@@ -2099,6 +2347,9 @@ try:
     # Initialize alerting system
     _initialize_default_alert_rules()
 
+    # Initialize SLO tracking
+    _initialize_default_slos()
+
     print("\n✅ NEXUS AIOPS initialized successfully")
     print("📍 Access at: http://localhost:5000")
     print("   Demo: admin / admin123\n")
@@ -2121,6 +2372,7 @@ if __name__ == '__main__':
         _populate_demo_audit_data()
         start_background_threads()
         _initialize_default_alert_rules()
+        _initialize_default_slos()
     except Exception as e:
         print(f"⚠️  Initialization warning: {e}")
 
