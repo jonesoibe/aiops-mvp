@@ -163,24 +163,24 @@
   --border-secondary: #e2e8f0;
   --border-subtle: #edf2f7;
 
-  /* Semantic Colors stay same in light mode */
-  --color-success: #22863a;   /* Darker green for light mode */
-  --color-info: #0366d6;      /* Darker blue for light mode */
-  --color-warning: #ffc900;   /* Darker amber for light mode */
-  --color-critical: #d73a49;  /* Darker magenta for light mode */
-  --color-error: #cb2431;     /* Darker red for light mode */
+  /* Semantic Colors optimized for light mode - darker/more saturated for visibility */
+  --color-success: #107c10;   /* Darker green for better visibility on white */
+  --color-info: #0078d4;      /* Darker blue for better visibility on white */
+  --color-warning: #d18800;   /* Darker amber (not bright yellow) for readability */
+  --color-critical: #a4373a;  /* Darker red-pink for visibility */
+  --color-error: #a4373a;     /* Darker red for visibility */
 
-  /* Semantic Variants for light mode */
-  --color-success-dim: rgba(34, 134, 58, 0.1);
-  --color-info-dim: rgba(3, 102, 214, 0.1);
-  --color-warning-dim: rgba(255, 201, 0, 0.1);
-  --color-critical-dim: rgba(215, 58, 73, 0.1);
-  --color-error-dim: rgba(203, 36, 49, 0.1);
+  /* Dimmed Variants for light mode - better subtle background colors */
+  --color-success-dim: rgba(16, 124, 16, 0.12);
+  --color-info-dim: rgba(0, 120, 212, 0.12);
+  --color-warning-dim: rgba(209, 136, 0, 0.12);
+  --color-critical-dim: rgba(164, 55, 58, 0.12);
+  --color-error-dim: rgba(164, 55, 58, 0.12);
 
   /* Light Mode Accents */
-  --accent-primary: #22863a;
-  --accent-secondary: #0366d6;
-  --accent-tertiary: #ffc900;
+  --accent-primary: #107c10;
+  --accent-secondary: #0078d4;
+  --accent-tertiary: #d18800;
 
   /* Light Mode Shadows */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);

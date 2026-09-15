@@ -154,7 +154,8 @@
       "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\\\\fix_alerts.ps1\")",
       "Bash(gh pr *)",
       "Bash(python -m pytest tests/test_slo_reporting.py -v --tb=short)",
-      "Bash(python -m pytest tests/test_slo_reporting.py -v)"
+      "Bash(python -m pytest tests/test_slo_reporting.py -v)",
+      "Bash(grep -E \"\\\\.\\(html|py\\)$\")"
     ]
   }
 }
