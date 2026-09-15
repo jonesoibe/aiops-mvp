@@ -158,6 +158,53 @@
             cursor: pointer;
         }
 
+        .theme-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-primary);
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
+            font-size: var(--fs-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-base);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--color-info);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Dark mode specific styles */
+        [data-theme="dark"] {
+            color-scheme: dark;
+        }
+
+        /* Light mode specific styles */
+        [data-theme="light"] {
+            color-scheme: light;
+        }
+
+        /* Smooth theme transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Disable transition for theme toggle to avoid flashing */
+        .theme-toggle-btn {
+            transition: all var(--transition-base);
+        }
+
         .main-content {
             grid-column: 2;
             grid-row: 2;
@@ -367,6 +414,9 @@
         </button>
         <div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div>
         <div class="user-menu">
+            <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+                🌙
+            </button>
             <div style="text-align: right; font-size: var(--fs-sm);">
                 <div id="userName" style="color: var(--text-primary); font-weight: var(--fw-medium);">User</div>
                 <div id="userRole" style="color: var(--text-secondary);">Role</div>
@@ -385,6 +435,9 @@
 
     <!-- Socket.IO -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Theme Manager (must load before other scripts) -->
+    <script src="{{ url_for('static', filename='theme-manager.js') }}"></script>
 
     <!-- Common Scripts -->
     <script>
