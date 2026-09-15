@@ -141,6 +141,65 @@
 }
 
 /* ============================================================================
+   LIGHT MODE THEME OVERRIDES
+   ============================================================================ */
+
+[data-theme="light"] {
+  /* Light Mode Backgrounds */
+  --bg-primary: #ffffff;      /* Main workspace */
+  --bg-secondary: #f8f9fa;    /* Cards, panels */
+  --bg-tertiary: #eff2f5;     /* Elevated surfaces */
+  --bg-hover: #e8eef2;        /* Interactive hover */
+  --bg-active: #dce3e8;       /* Selected state */
+
+  /* Light Mode Text */
+  --text-primary: #1a202c;    /* Primary text */
+  --text-secondary: #4a5568;  /* Secondary text */
+  --text-tertiary: #718096;   /* Tertiary text */
+  --text-inverse: #ffffff;    /* Inverse for badges */
+
+  /* Light Mode Borders */
+  --border-primary: #cbd5e0;
+  --border-secondary: #e2e8f0;
+  --border-subtle: #edf2f7;
+
+  /* Semantic Colors stay same in light mode */
+  --color-success: #22863a;   /* Darker green for light mode */
+  --color-info: #0366d6;      /* Darker blue for light mode */
+  --color-warning: #ffc900;   /* Darker amber for light mode */
+  --color-critical: #d73a49;  /* Darker magenta for light mode */
+  --color-error: #cb2431;     /* Darker red for light mode */
+
+  /* Semantic Variants for light mode */
+  --color-success-dim: rgba(34, 134, 58, 0.1);
+  --color-info-dim: rgba(3, 102, 214, 0.1);
+  --color-warning-dim: rgba(255, 201, 0, 0.1);
+  --color-critical-dim: rgba(215, 58, 73, 0.1);
+  --color-error-dim: rgba(203, 36, 49, 0.1);
+
+  /* Light Mode Accents */
+  --accent-primary: #22863a;
+  --accent-secondary: #0366d6;
+  --accent-tertiary: #ffc900;
+
+  /* Light Mode Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.18);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.25);
+
+  /* Light Mode Glows */
+  --glow-success: 0 0 20px rgba(34, 134, 58, 0.15);
+  --glow-info: 0 0 20px rgba(3, 102, 214, 0.15);
+  --glow-warning: 0 0 20px rgba(255, 201, 0, 0.15);
+  --glow-critical: 0 0 20px rgba(215, 58, 73, 0.15);
+
+  /* Smooth transitions for light mode switch */
+  color-scheme: light;
+}
+
+/* ============================================================================
    BASE STYLES
    ============================================================================ */
 
