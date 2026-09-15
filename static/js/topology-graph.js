@@ -193,7 +193,7 @@ class TopologyGraph {
      * Render connection links
      */
     renderLinks() {
-        const links = this.linkGroup.selectAll('line')
+        const links = this.linkGroup.selectAll('line.connection')
             .data(this.links, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
 
         links.exit().remove();
@@ -201,19 +201,68 @@ class TopologyGraph {
         links.enter()
             .append('line')
             .attr('class', d => {
-                let className = 'topology-link';
+                let className = 'topology-link connection';
                 if (d.errorRate > 5) className += ' error';
                 else if (d.errorRate > 1) className += ' warning';
+                if (d.isBottleneck) className += ' bottleneck';
                 return className;
             })
             .attr('stroke-width', d => Math.max(2, d.throughput / 100))
             .merge(links)
             .attr('class', d => {
-                let className = 'topology-link';
+                let className = 'topology-link connection';
                 if (d.errorRate > 5) className += ' error';
                 else if (d.errorRate > 1) className += ' warning';
+                if (d.isBottleneck) className += ' bottleneck';
                 return className;
             });
+
+        // Add traffic flow markers (animated circles)
+        this.addTrafficFlow();
+    }
+
+    /**
+     * Add animated traffic flow visualization
+     */
+    addTrafficFlow() {
+        // Remove existing traffic elements
+        this.linkGroup.selectAll('circle.traffic-flow').remove();
+
+        // Add flow circles for high-traffic links
+        this.links.forEach((link, i) => {
+            if (link.throughput > 100) { // Only animate high-traffic links
+                const flowCircles = this.linkGroup.selectAll(`circle.traffic-flow-${i}`)
+                    .data([0, 1, 2])
+                    .enter()
+                    .append('circle')
+                    .attr('class', `traffic-flow traffic-flow-${i}`)
+                    .attr('r', 3)
+                    .attr('fill', d => {
+                        if (link.errorRate > 5) return 'var(--color-error)';
+                        if (link.latency > 500) return 'var(--color-warning)';
+                        return 'var(--color-info)';
+                    })
+                    .style('opacity', d => 1 - (d * 0.3))
+                    .attr('data-link-index', i);
+
+                // Animate flow
+                flowCircles
+                    .transition()
+                    .duration(2000 + (i * 500))
+                    .ease(d3.easeLinear)
+                    .on('start', function repeat() {
+                        d3.select(this)
+                            .attr('x1', () => link.source.x)
+                            .attr('y1', () => link.source.y)
+                            .transition()
+                            .duration(2000)
+                            .ease(d3.easeLinear)
+                            .attr('x2', () => link.target.x)
+                            .attr('y2', () => link.target.y)
+                            .on('end', repeat);
+                    });
+            }
+        });
     }
 
     /**
@@ -495,6 +544,24 @@ class TopologyGraph {
                         </div>
                     </div>
                 ` : ''}
+
+                <div class="actions-section">
+                    <h4>Actions</h4>
+                    <div class="action-buttons">
+                        <button class="action-btn metrics" onclick="topologyGraph.drillDown(topologyGraph.selectedNode, 'metrics')">
+                            📊 Metrics
+                        </button>
+                        <button class="action-btn logs" onclick="topologyGraph.drillDown(topologyGraph.selectedNode, 'logs')">
+                            📝 Logs
+                        </button>
+                        <button class="action-btn traces" onclick="topologyGraph.drillDown(topologyGraph.selectedNode, 'traces')">
+                            🔍 Traces
+                        </button>
+                        <button class="action-btn incidents" onclick="topologyGraph.drillDown(topologyGraph.selectedNode, 'incidents')">
+                            🚨 Incidents
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -703,6 +770,72 @@ class TopologyGraph {
         this.simulation.force('center',
             d3.forceCenter(this.options.width / 2, this.options.height / 2));
         this.simulation.alpha(0.3).restart();
+    }
+
+    /**
+     * Detect bottlenecks (critical paths with high latency chains)
+     */
+    detectBottlenecks() {
+        // Reset bottleneck flags
+        this.links.forEach(link => link.isBottleneck = false);
+
+        // Find critical paths (chains with cumulative high latency)
+        this.nodes.forEach(node => {
+            if (node.latency > 200 || node.errorRate > 2) {
+                // Mark outbound connections from problematic nodes
+                this.links.forEach(link => {
+                    if (link.source.id === node.id && (link.latency > 150 || link.errorRate > 1)) {
+                        link.isBottleneck = true;
+                    }
+                });
+            }
+        });
+
+        // Find converging points (many services -> one service = bottleneck)
+        this.nodes.forEach(node => {
+            const inbound = this.links.filter(l => l.target.id === node.id);
+            if (inbound.length > 2) {
+                const avgInboundLatency = inbound.reduce((sum, l) => sum + l.latency, 0) / inbound.length;
+                const avgInboundErrors = inbound.reduce((sum, l) => sum + l.errorRate, 0) / inbound.length;
+
+                if (avgInboundLatency > 200 || avgInboundErrors > 2) {
+                    inbound.forEach(link => link.isBottleneck = true);
+                    node.isBottleneck = true;
+                }
+            }
+        });
+
+        // Update link visualization
+        this.linkGroup.selectAll('line.connection')
+            .attr('class', d => {
+                let className = 'topology-link connection';
+                if (d.errorRate > 5) className += ' error';
+                else if (d.errorRate > 1) className += ' warning';
+                if (d.isBottleneck) className += ' bottleneck';
+                return className;
+            });
+
+        return this.links.filter(l => l.isBottleneck).length > 0;
+    }
+
+    /**
+     * Navigate to service details (drill-down)
+     */
+    drillDown(node, view = 'metrics') {
+        const serviceId = node.id;
+        const serviceName = node.name;
+
+        // Map of available drill-down views
+        const views = {
+            'metrics': `/metrics?service=${serviceId}`,
+            'logs': `/logs?service=${serviceId}&filter=service_id:${serviceId}`,
+            'traces': `/traces?service=${serviceId}`,
+            'dependencies': `/topology?highlight=${serviceId}`,
+            'incidents': `/problems?service=${serviceId}`
+        };
+
+        const url = views[view] || views['metrics'];
+        window.location.href = url;
     }
 
     /**

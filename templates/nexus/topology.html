@@ -577,6 +577,12 @@
         });
 
         console.log('🔗 Topology graph initialized');
+
+        // Run bottleneck detection
+        setTimeout(() => {
+            const hasBottlenecks = topologyGraph.detectBottlenecks();
+            console.log(`🚨 Bottleneck detection: ${hasBottlenecks ? 'Critical paths found!' : 'No bottlenecks detected'}`);
+        }, 2000);
     });
 
     // Handle window resize
