@@ -171,6 +171,32 @@
         .toggle-btn:hover {
             color: var(--color-success);
         }
+
+        .auth-links {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .auth-link {
+            color: var(--color-info);
+            text-decoration: none;
+            font-size: var(--fs-sm);
+            transition: all var(--transition-base);
+            font-weight: var(--fw-medium);
+        }
+
+        .auth-link:hover {
+            color: var(--color-success);
+            text-decoration: underline;
+        }
+
+        .auth-link-separator {
+            color: var(--text-tertiary);
+        }
     </style>
 </head>
 <body>
@@ -214,6 +240,13 @@
                 <div class="credentials-item"><strong>Admin:</strong> admin / admin123</div>
                 <div class="credentials-item"><strong>Operator:</strong> operator / operator123</div>
                 <div class="credentials-item"><strong>Viewer:</strong> viewer / viewer123</div>
+            </div>
+
+            <!-- Authentication Links -->
+            <div class="auth-links">
+                <a href="/forgot-password" class="auth-link">🔐 Forgot Password</a>
+                <span class="auth-link-separator">•</span>
+                <a href="/signup" class="auth-link">✨ Sign Up</a>
             </div>
         </div>
     </div>
