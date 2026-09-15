@@ -2310,6 +2310,135 @@ def get_active_alerts_ws():
     return [a.to_dict() for a in alerts]
 
 
+# ==================== SLO REPORTING ENDPOINTS ====================
+
+from src.slo_reporting import SLOReportingEngine, export_report_json, export_report_csv
+
+# Initialize reporting engine
+_reporting_engine = None
+
+def _get_reporting_engine():
+    global _reporting_engine
+    if _reporting_engine is None:
+        _reporting_engine = SLOReportingEngine(slo_engine, slo_compliance_calculator)
+    return _reporting_engine
+
+
+@app.route('/api/slos/reports/monthly/<int:month>/<int:year>', methods=['GET'])
+@require_auth
+def get_monthly_report(month, year, user=None):
+    """Get monthly SLO compliance report"""
+    try:
+        if not (1 <= month <= 12) or year < 2000:
+            return {'error': 'Invalid month or year'}, 400
+
+        reporting = _get_reporting_engine()
+        report = reporting.generate_monthly_report(month, year)
+
+        return {'report': report}, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/slos/reports/breach-analysis', methods=['GET'])
+@require_auth
+def get_breach_analysis(user=None):
+    """Get breach analysis report"""
+    try:
+        days = request.args.get('days', 30, type=int)
+
+        if days < 1 or days > 365:
+            return {'error': 'Days must be between 1 and 365'}, 400
+
+        reporting = _get_reporting_engine()
+        analysis = reporting.generate_breach_analysis(days)
+
+        return {'analysis': analysis}, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/slos/reports/trends/<slo_id>', methods=['GET'])
+@require_auth
+def get_trend_analysis(slo_id, user=None):
+    """Get trend analysis for SLO"""
+    try:
+        reporting = _get_reporting_engine()
+        trends = reporting.generate_trend_analysis(slo_id)
+
+        return {'trends': trends}, 200
+    except ValueError as e:
+        return {'error': str(e)}, 404
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/slos/reports/executive-summary/<int:month>/<int:year>', methods=['GET'])
+@require_auth
+def get_executive_summary(month, year, user=None):
+    """Get executive summary for month"""
+    try:
+        if not (1 <= month <= 12) or year < 2000:
+            return {'error': 'Invalid month or year'}, 400
+
+        reporting = _get_reporting_engine()
+        summary = reporting.generate_executive_summary(month, year)
+
+        return {'summary': summary.to_dict()}, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/slos/reports/health-scores', methods=['GET'])
+@require_auth
+def get_health_scores(user=None):
+    """Get health scores for all services"""
+    try:
+        reporting = _get_reporting_engine()
+        scores = reporting.calculate_health_scores()
+
+        return {'scores': [s.to_dict() for s in scores]}, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@app.route('/api/slos/reports/export/<report_type>', methods=['GET'])
+@require_auth
+def export_report(report_type, user=None):
+    """Export report in specified format"""
+    try:
+        fmt = request.args.get('format', 'json').lower()
+        month = request.args.get('month', type=int)
+        year = request.args.get('year', type=int)
+
+        if fmt not in ['json', 'csv', 'pdf']:
+            return {'error': 'Invalid format. Supported: json, csv, pdf'}, 400
+
+        reporting = _get_reporting_engine()
+
+        if report_type == 'monthly' and month and year:
+            report = reporting.generate_monthly_report(month, year)
+        elif report_type == 'breach':
+            days = request.args.get('days', 30, type=int)
+            report = reporting.generate_breach_analysis(days)
+        else:
+            return {'error': f'Unknown report type: {report_type}'}, 400
+
+        if fmt == 'json':
+            return {'data': export_report_json(report)}, 200
+        elif fmt == 'csv':
+            csv_data = export_report_csv(report, report_type)
+            response = make_response(csv_data)
+            response.headers['Content-Type'] = 'text/csv'
+            response.headers['Content-Disposition'] = f'attachment; filename=slo_report_{report_type}.csv'
+            return response
+        else:  # PDF
+            # PDF export would require additional library
+            return {'error': 'PDF export coming soon'}, 501
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
 # ==================== ALERTS DASHBOARD ROUTE ====================
 
 @app.route('/alerts')
