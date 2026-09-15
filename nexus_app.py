@@ -1478,6 +1478,55 @@ def get_error_analysis(user=None):
         ]
     })
 
+@app.route('/api/services', methods=['GET'])
+@require_auth
+def get_services(user=None):
+    """Get all services (alias for /api/topology/services)"""
+    topology = get_topology_simulator()
+    services = topology.get_services()
+    dependencies = topology.get_dependencies()
+
+    # Build dependency map: service_id -> list of dependent service IDs
+    dep_map = {}
+    for dep in dependencies:
+        if dep['source_id'] not in dep_map:
+            dep_map[dep['source_id']] = []
+        dep_map[dep['source_id']].append(dep['target_id'])
+
+    # Enrich services with dependency information
+    for service in services:
+        service['dependencies'] = dep_map.get(service['id'], [])
+        # Map health values to lowercase for compatibility
+        service['status'] = service.get('health', 'unknown').lower()
+
+    return jsonify({
+        'services': services,
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
+
+@app.route('/api/services/metrics', methods=['GET'])
+@require_auth
+def get_services_metrics(user=None):
+    """Get metrics for all services"""
+    topology = get_topology_simulator()
+    services = topology.get_services()
+
+    metrics = []
+    for service in services:
+        metrics.append({
+            'service_id': service['id'],
+            'status': service.get('health', 'unknown').lower(),
+            'latency_ms': service['latency_ms'],
+            'error_rate': service['error_rate'],
+            'throughput_rps': service['throughput_rps'],
+            'timestamp': datetime.utcnow().isoformat()
+        })
+
+    return jsonify({
+        'services': metrics,
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
+
 @app.route('/api/topology/services', methods=['GET'])
 @require_auth
 def get_topology_services(user=None):

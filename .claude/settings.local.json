@@ -155,7 +155,18 @@
       "Bash(gh pr *)",
       "Bash(python -m pytest tests/test_slo_reporting.py -v --tb=short)",
       "Bash(python -m pytest tests/test_slo_reporting.py -v)",
-      "Bash(grep -E \"\\\\.\\(html|py\\)$\")"
+      "Bash(grep -E \"\\\\.\\(html|py\\)$\")",
+      "Bash(timeout 10 python3 nexus_app.py)",
+      "Bash(curl -s -H \"Authorization: Bearer test_token\" http://localhost:5000/api/services)",
+      "Bash(cat /tmp/flask.log 2>&1 | head -30)",
+      "Bash(python3 test_topology_data.py)",
+      "PowerShell(pip install pandas --quiet)",
+      "PowerShell(python3 -m pip list)",
+      "PowerShell(grep pandas)",
+      "PowerShell(python3 -m pip install pandas --no-cache-dir 2>&1)",
+      "PowerShell(tail -3)",
+      "PowerShell(python3 -m pip install pandas 2>&1)",
+      "Bash(git commit -m 'feat: Complete topology visualization with D3.js - bottleneck detection, traffic flow animation, real-time metrics *)"
     ]
   }
 }
