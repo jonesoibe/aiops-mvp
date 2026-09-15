@@ -38,6 +38,7 @@ class AuthenticationManager:
         """Initialize the authentication manager."""
         self.verification_codes = {}  # email -> {code, expiry, attempts}
         self.temp_users = {}  # email -> user_data
+        self.reset_tokens = {}  # token -> {email, expiry}
 
     @staticmethod
     def validate_email(email: str) -> Tuple[bool, str]:
@@ -257,18 +258,55 @@ class AuthenticationManager:
         if email in self.temp_users:
             del self.temp_users[email]
 
-    @staticmethod
-    def generate_reset_token(user_id: str) -> str:
+    def generate_reset_token(self, email: str) -> str:
         """
         Generate a password reset token.
 
         Args:
-            user_id: User ID
+            email: User email
 
         Returns:
             Reset token
         """
-        return secrets.token_urlsafe(32)
+        token = secrets.token_urlsafe(32)
+        expiry = datetime.utcnow() + timedelta(hours=1)
+        self.reset_tokens[token] = {
+            'email': email,
+            'expiry': expiry
+        }
+        return token
+
+    def verify_reset_token(self, token: str) -> Tuple[bool, Optional[str]]:
+        """
+        Verify a password reset token.
+
+        Args:
+            token: Reset token
+
+        Returns:
+            Tuple of (is_valid, email)
+        """
+        if token not in self.reset_tokens:
+            return False, None
+
+        rt = self.reset_tokens[token]
+
+        # Check expiry
+        if datetime.utcnow() > rt['expiry']:
+            del self.reset_tokens[token]
+            return False, None
+
+        return True, rt['email']
+
+    def use_reset_token(self, token: str) -> None:
+        """
+        Invalidate a reset token after use.
+
+        Args:
+            token: Reset token
+        """
+        if token in self.reset_tokens:
+            del self.reset_tokens[token]
 
     @staticmethod
     def hash_password(password: str) -> str:

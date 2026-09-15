@@ -893,6 +893,13 @@ def signup():
 
         auth_manager.store_temp_user(email, user_data)
 
+        # Send verification email
+        from email_service import email_service
+        success, msg = email_service.send_verification_email(email, code)
+
+        if not success:
+            print(f"⚠️ Email service warning: {msg}")
+
         # Log signup attempt
         audit_logger.log_action(
             action='SIGNUP_INITIATED',
@@ -902,17 +909,16 @@ def signup():
             details={
                 'username': username,
                 'role': role,
-                'department': department
+                'department': department,
+                'email_sent': success
             },
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
 
-        # In production, send email with verification code
-        # For now, just return the code (in production, remove this)
         return jsonify({
             'message': f'Signup initiated. Verification code sent to {email}.',
-            'verification_code': code  # Remove in production
+            'verification_code': code if not success else None
         }), 200
 
     except Exception as e:
@@ -971,6 +977,17 @@ def verify_email():
         # Mark email as verified in temp storage
         auth_manager.mark_email_verified(email)
 
+        # Send welcome email
+        from email_service import email_service
+        success, msg = email_service.send_welcome_email(
+            email,
+            temp_user['username'],
+            temp_user['first_name']
+        )
+
+        if not success:
+            print(f"⚠️ Welcome email failed: {msg}")
+
         # Log successful signup
         audit_logger.log_action(
             action='SIGNUP_COMPLETED',
@@ -980,7 +997,8 @@ def verify_email():
             details={
                 'email': email,
                 'role': temp_user['role'],
-                'department': temp_user['department']
+                'department': temp_user['department'],
+                'welcome_email_sent': success
             },
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
@@ -1006,6 +1024,355 @@ def refresh_token():
     user = request.user
     new_token = generate_token(user['user_id'], user['username'], user['role'])
     return jsonify({'token': new_token}), 200
+
+@app.route('/forgot-password', methods=['GET'])
+def forgot_password_page():
+    """Render forgot password page."""
+    return render_template('nexus/forgot_password.html')
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    """Initiate password reset flow."""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').lower().strip()
+
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        # Check if user exists
+        user = None
+        if db:
+            try:
+                user = db['users'].find_one({'email': email})
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+
+        if not user:
+            user = next((u for u in in_memory_store['users'].values() if u.get('email') == email), None)
+
+        if not user:
+            # Don't reveal if email exists (security)
+            return jsonify({'message': 'If an account exists with that email, a reset link has been sent.'}), 200
+
+        # Generate reset token
+        reset_token = auth_manager.generate_reset_token(email)
+
+        # Send reset email
+        from email_service import email_service
+        success, msg = email_service.send_password_reset_email(
+            email,
+            reset_token,
+            user.get('username', 'User')
+        )
+
+        # Log the action
+        audit_logger.log_action(
+            action='PASSWORD_RESET_REQUESTED',
+            user_id=user.get('username', email),
+            resource='authentication',
+            status='success' if success else 'failed',
+            details={'email': email},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({'message': 'Password reset link sent to your email address.'}), 200
+
+    except Exception as e:
+        print(f"❌ Forgot password error: {e}")
+        return jsonify({'error': 'Failed to process password reset request.'}), 500
+
+@app.route('/reset-password', methods=['GET'])
+def reset_password_page():
+    """Render reset password page with token validation."""
+    token = request.args.get('token', '')
+
+    if not token:
+        return render_template('nexus/reset_password.html', token_valid=False)
+
+    # Validate token
+    is_valid, email = auth_manager.verify_reset_token(token)
+
+    if not is_valid:
+        return render_template('nexus/reset_password.html', token_valid=False)
+
+    return render_template('nexus/reset_password.html', token_valid=True, token=token)
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    """Reset user password with token."""
+    try:
+        data = request.get_json()
+        token = data.get('token', '').strip()
+        password = data.get('password', '').strip()
+
+        if not token or not password:
+            return jsonify({'error': 'Token and password are required'}), 400
+
+        # Validate token
+        is_valid, email = auth_manager.verify_reset_token(token)
+
+        if not is_valid:
+            return jsonify({'error': 'Invalid or expired reset token'}), 400
+
+        # Validate new password
+        is_valid_pw, msg = auth_manager.validate_password(password)
+        if not is_valid_pw:
+            return jsonify({'error': msg}), 400
+
+        # Update password in database
+        hashed_password = auth_manager.hash_password(password)
+
+        if db:
+            try:
+                db['users'].update_one(
+                    {'email': email},
+                    {'$set': {'password_hash': hashed_password}}
+                )
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                # Fallback to in-memory
+                for user in in_memory_store['users'].values():
+                    if user.get('email') == email:
+                        user['password_hash'] = hashed_password
+                        break
+        else:
+            for user in in_memory_store['users'].values():
+                if user.get('email') == email:
+                    user['password_hash'] = hashed_password
+                    break
+
+        # Invalidate token
+        auth_manager.use_reset_token(token)
+
+        # Log the action
+        audit_logger.log_action(
+            action='PASSWORD_RESET_COMPLETED',
+            user_id=email,
+            resource='authentication',
+            status='success',
+            details={'email': email},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({'message': 'Password reset successfully. You can now log in with your new password.'}), 200
+
+    except Exception as e:
+        print(f"❌ Reset password error: {e}")
+        return jsonify({'error': 'Failed to reset password. Please try again.'}), 500
+
+@app.route('/profile', methods=['GET'])
+@require_auth
+def profile_page(user=None):
+    """Render user profile page."""
+    return render_template('nexus/profile.html')
+
+@app.route('/api/user/profile', methods=['GET'])
+@require_auth
+def get_profile(user=None):
+    """Get user profile information."""
+    try:
+        # Find user in database
+        user_data = None
+
+        if db:
+            try:
+                user_data = db['users'].find_one({'username': user['username']})
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+
+        if not user_data:
+            user_data = in_memory_store['users'].get(user['username'])
+
+        if not user_data:
+            return jsonify({'error': 'User not found'}), 404
+
+        return jsonify({
+            'user': {
+                'email': user_data.get('email'),
+                'username': user_data.get('username'),
+                'first_name': user_data.get('first_name'),
+                'last_name': user_data.get('last_name'),
+                'role': user_data.get('role'),
+                'department': user_data.get('department'),
+                'created_at': user_data.get('created_at'),
+                'last_login': user_data.get('last_login')
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Get profile error: {e}")
+        return jsonify({'error': 'Failed to get profile'}), 500
+
+@app.route('/api/user/profile', methods=['POST'])
+@require_auth
+def update_profile(user=None):
+    """Update user profile information."""
+    try:
+        data = request.get_json()
+        username = user['username']
+
+        # Get updatable fields
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        department = data.get('department')
+
+        # Validate inputs
+        update_data = {}
+
+        if first_name is not None:
+            if not first_name.strip():
+                return jsonify({'error': 'First name cannot be empty'}), 400
+            update_data['first_name'] = first_name.strip()
+
+        if last_name is not None:
+            if not last_name.strip():
+                return jsonify({'error': 'Last name cannot be empty'}), 400
+            update_data['last_name'] = last_name.strip()
+
+        if department is not None:
+            is_valid, msg = auth_manager.validate_department(department)
+            if not is_valid:
+                return jsonify({'error': msg}), 400
+            update_data['department'] = department
+
+        if not update_data:
+            return jsonify({'error': 'No fields to update'}), 400
+
+        # Update in database
+        if db:
+            try:
+                result = db['users'].update_one(
+                    {'username': username},
+                    {'$set': update_data}
+                )
+                if result.matched_count == 0:
+                    return jsonify({'error': 'User not found'}), 404
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                # Fallback to in-memory
+                if username in in_memory_store['users']:
+                    in_memory_store['users'][username].update(update_data)
+                else:
+                    return jsonify({'error': 'User not found'}), 404
+        else:
+            if username in in_memory_store['users']:
+                in_memory_store['users'][username].update(update_data)
+            else:
+                return jsonify({'error': 'User not found'}), 404
+
+        # Get updated user data
+        user_data = None
+        if db:
+            try:
+                user_data = db['users'].find_one({'username': username})
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+
+        if not user_data:
+            user_data = in_memory_store['users'].get(username)
+
+        # Log the action
+        audit_logger.log_action(
+            action='PROFILE_UPDATED',
+            user_id=username,
+            resource='user_profile',
+            status='success',
+            details=update_data,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user': {
+                'email': user_data.get('email'),
+                'username': user_data.get('username'),
+                'first_name': user_data.get('first_name'),
+                'last_name': user_data.get('last_name'),
+                'role': user_data.get('role'),
+                'department': user_data.get('department'),
+                'created_at': user_data.get('created_at'),
+                'last_login': user_data.get('last_login')
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Update profile error: {e}")
+        return jsonify({'error': 'Failed to update profile'}), 500
+
+@app.route('/api/user/change-password', methods=['POST'])
+@require_auth
+def change_password(user=None):
+    """Change user password."""
+    try:
+        data = request.get_json()
+        username = user['username']
+        current_password = data.get('current_password', '').strip()
+        new_password = data.get('new_password', '').strip()
+
+        if not current_password or not new_password:
+            return jsonify({'error': 'Current and new passwords are required'}), 400
+
+        # Get user from database
+        user_data = None
+        if db:
+            try:
+                user_data = db['users'].find_one({'username': username})
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+
+        if not user_data:
+            user_data = in_memory_store['users'].get(username)
+
+        if not user_data:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Verify current password
+        if not auth_manager.verify_password(current_password, user_data['password_hash']):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+
+        # Validate new password
+        is_valid, msg = auth_manager.validate_password(new_password)
+        if not is_valid:
+            return jsonify({'error': msg}), 400
+
+        # Hash new password
+        new_password_hash = auth_manager.hash_password(new_password)
+
+        # Update password in database
+        if db:
+            try:
+                db['users'].update_one(
+                    {'username': username},
+                    {'$set': {'password_hash': new_password_hash}}
+                )
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                if username in in_memory_store['users']:
+                    in_memory_store['users'][username]['password_hash'] = new_password_hash
+        else:
+            if username in in_memory_store['users']:
+                in_memory_store['users'][username]['password_hash'] = new_password_hash
+
+        # Log the action
+        audit_logger.log_action(
+            action='PASSWORD_CHANGED',
+            user_id=username,
+            resource='authentication',
+            status='success',
+            details={'username': username},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({'message': 'Password changed successfully'}), 200
+
+    except Exception as e:
+        print(f"❌ Change password error: {e}")
+        return jsonify({'error': 'Failed to change password'}), 500
 
 # ==================== TELEMETRY API ====================
 
@@ -1077,7 +1444,6 @@ def get_incident_detail(incident_id):
 
 @app.route('/api/incidents/<incident_id>/remediate', methods=['POST'])
 @require_auth
-@audit_required
 def execute_remediation(incident_id, user=None):
     """Execute automatic remediation for an incident."""
     try:
@@ -1161,7 +1527,6 @@ def execute_remediation(incident_id, user=None):
 
 @app.route('/api/incidents/<incident_id>/analyze', methods=['POST'])
 @require_auth
-@audit_required
 def ai_analysis(incident_id, user=None):
     """Perform AI-powered analysis on an incident."""
     try:

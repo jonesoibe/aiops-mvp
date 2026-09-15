@@ -1,0 +1,560 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}User Profile - Nexus AIOps{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: var(--space-6);
+    }
+
+    .profile-header {
+        margin-bottom: var(--space-8);
+    }
+
+    .profile-title {
+        font-size: var(--fs-2xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .profile-subtitle {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .profile-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+    }
+
+    .profile-section {
+        margin-bottom: var(--space-6);
+    }
+
+    .section-title {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-3);
+        border-bottom: 2px solid var(--border-primary);
+    }
+
+    .profile-field {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+        align-items: center;
+    }
+
+    .field-label {
+        font-weight: var(--fw-bold);
+        color: var(--text-secondary);
+        font-size: var(--fs-sm);
+    }
+
+    .field-value {
+        color: var(--text-primary);
+        padding: var(--space-2);
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-primary);
+    }
+
+    .field-value.editable {
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .field-value.editable:hover {
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 2px rgba(45, 212, 255, 0.1);
+    }
+
+    .field-input {
+        width: 100%;
+        padding: var(--space-2);
+        border: 1px solid var(--color-info);
+        border-radius: var(--radius-md);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        font-family: inherit;
+    }
+
+    .field-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(45, 212, 255, 0.1);
+    }
+
+    .field-select {
+        width: 100%;
+        padding: var(--space-2);
+        border: 1px solid var(--color-info);
+        border-radius: var(--radius-md);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        font-family: inherit;
+    }
+
+    .field-select:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(45, 212, 255, 0.1);
+    }
+
+    .button-group {
+        display: flex;
+        gap: var(--space-3);
+        margin-top: var(--space-3);
+    }
+
+    .btn-primary {
+        padding: var(--space-2) var(--space-4);
+        background: var(--color-info);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-primary:hover {
+        background: #2a9fd8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(45, 212, 255, 0.3);
+    }
+
+    .btn-secondary {
+        padding: var(--space-2) var(--space-4);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-secondary);
+        border-color: var(--color-info);
+    }
+
+    .btn-danger {
+        padding: var(--space-2) var(--space-4);
+        background: var(--color-error);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-danger:hover {
+        background: #f04040;
+        transform: translateY(-2px);
+    }
+
+    .error-message {
+        padding: var(--space-3);
+        background: rgba(255, 87, 87, 0.1);
+        border-left: 3px solid var(--color-error);
+        color: var(--color-error);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        margin-bottom: var(--space-4);
+        display: none;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    .success-message {
+        padding: var(--space-3);
+        background: rgba(107, 255, 184, 0.1);
+        border-left: 3px solid var(--color-success);
+        color: var(--color-success);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        margin-bottom: var(--space-4);
+        display: none;
+    }
+
+    .success-message.show {
+        display: block;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--color-info);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        margin-bottom: var(--space-4);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .profile-field {
+            grid-template-columns: 1fr;
+            gap: var(--space-2);
+        }
+
+        .field-label {
+            font-size: var(--fs-xs);
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1 class="profile-title">User Profile</h1>
+        <p class="profile-subtitle">Manage your account information</p>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+    <div id="successMessage" class="success-message"></div>
+
+    <!-- Personal Information Section -->
+    <div class="profile-card">
+        <div class="section-title">Personal Information</div>
+
+        <div class="profile-avatar" id="avatar">👤</div>
+
+        <div class="profile-section">
+            <div class="profile-field">
+                <div class="field-label">Email</div>
+                <div class="field-value" id="emailValue"></div>
+            </div>
+
+            <div class="profile-field">
+                <div class="field-label">Username</div>
+                <div class="field-value" id="usernameValue"></div>
+            </div>
+
+            <div class="profile-field">
+                <div class="field-label">First Name</div>
+                <div class="field-value editable" id="firstNameValue" onclick="editField('first_name')"></div>
+                <div id="firstNameEdit" style="display: none;">
+                    <input type="text" class="field-input" id="firstNameInput">
+                    <div class="button-group">
+                        <button class="btn-primary btn-sm" onclick="saveField('first_name')">Save</button>
+                        <button class="btn-secondary btn-sm" onclick="cancelEdit('first_name')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="field-label">Last Name</div>
+                <div class="field-value editable" id="lastNameValue" onclick="editField('last_name')"></div>
+                <div id="lastNameEdit" style="display: none;">
+                    <input type="text" class="field-input" id="lastNameInput">
+                    <div class="button-group">
+                        <button class="btn-primary btn-sm" onclick="saveField('last_name')">Save</button>
+                        <button class="btn-secondary btn-sm" onclick="cancelEdit('last_name')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Information Section -->
+    <div class="profile-card">
+        <div class="section-title">Account Information</div>
+
+        <div class="profile-section">
+            <div class="profile-field">
+                <div class="field-label">Role</div>
+                <div class="field-value" id="roleValue"></div>
+            </div>
+
+            <div class="profile-field">
+                <div class="field-label">Department</div>
+                <div class="field-value editable" id="departmentValue" onclick="editField('department')"></div>
+                <div id="departmentEdit" style="display: none;">
+                    <select class="field-select" id="departmentInput">
+                        <option value="">Select Department</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Operations">Operations</option>
+                        <option value="DevOps">DevOps</option>
+                        <option value="Quality Assurance">Quality Assurance</option>
+                        <option value="Security">Security</option>
+                        <option value="Data Engineering">Data Engineering</option>
+                        <option value="Management">Management</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <div class="button-group">
+                        <button class="btn-primary btn-sm" onclick="saveField('department')">Save</button>
+                        <button class="btn-secondary btn-sm" onclick="cancelEdit('department')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="field-label">Account Created</div>
+                <div class="field-value" id="createdValue"></div>
+            </div>
+
+            <div class="profile-field">
+                <div class="field-label">Last Login</div>
+                <div class="field-value" id="lastLoginValue"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Section -->
+    <div class="profile-card">
+        <div class="section-title">Security</div>
+
+        <div class="profile-section">
+            <div class="profile-field">
+                <div class="field-label">Password</div>
+                <div style="display: flex; gap: var(--space-3);">
+                    <button class="btn-primary" onclick="changePassword()">Change Password</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="passwordChangeForm" style="display: none; margin-top: var(--space-4); padding: var(--space-4); background: var(--bg-primary); border-radius: var(--radius-md);">
+            <div class="profile-field">
+                <div class="field-label">Current Password</div>
+                <input type="password" class="field-input" id="currentPassword" placeholder="Enter current password">
+            </div>
+            <div class="profile-field">
+                <div class="field-label">New Password</div>
+                <input type="password" class="field-input" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="profile-field">
+                <div class="field-label">Confirm Password</div>
+                <input type="password" class="field-input" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="savePassword()">Update Password</button>
+                <button class="btn-secondary" onclick="cancelPasswordChange()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Section -->
+    <div class="profile-card">
+        <button class="btn-danger" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<script>
+    let profileData = null;
+    let editingField = null;
+
+    // Load profile data on page load
+    async function loadProfile() {
+        try {
+            const response = await fetch('/api/user/profile');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to load profile');
+            }
+
+            profileData = data.user;
+            displayProfile();
+
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    function displayProfile() {
+        if (!profileData) return;
+
+        document.getElementById('emailValue').textContent = profileData.email;
+        document.getElementById('usernameValue').textContent = profileData.username;
+        document.getElementById('firstNameValue').textContent = profileData.first_name;
+        document.getElementById('lastNameValue').textContent = profileData.last_name;
+        document.getElementById('roleValue').textContent = profileData.role.charAt(0).toUpperCase() + profileData.role.slice(1);
+        document.getElementById('departmentValue').textContent = profileData.department;
+
+        const createdDate = new Date(profileData.created_at).toLocaleDateString();
+        document.getElementById('createdValue').textContent = createdDate;
+
+        const lastLoginDate = profileData.last_login
+            ? new Date(profileData.last_login).toLocaleDateString()
+            : 'Never';
+        document.getElementById('lastLoginValue').textContent = lastLoginDate;
+
+        // Set avatar initial
+        const initials = (profileData.first_name[0] + profileData.last_name[0]).toUpperCase();
+        document.getElementById('avatar').textContent = initials;
+    }
+
+    function editField(fieldName) {
+        const valueDiv = document.getElementById(fieldName + 'Value');
+        const editDiv = document.getElementById(fieldName + 'Edit');
+
+        if (editDiv.style.display === 'none') {
+            editingField = fieldName;
+            valueDiv.style.display = 'none';
+            editDiv.style.display = 'block';
+
+            const inputId = fieldName + 'Input';
+            const input = document.getElementById(inputId);
+            if (fieldName === 'first_name') {
+                input.value = profileData.first_name;
+            } else if (fieldName === 'last_name') {
+                input.value = profileData.last_name;
+            } else if (fieldName === 'department') {
+                input.value = profileData.department;
+            }
+            input.focus();
+        }
+    }
+
+    function cancelEdit(fieldName) {
+        document.getElementById(fieldName + 'Value').style.display = 'block';
+        document.getElementById(fieldName + 'Edit').style.display = 'none';
+        editingField = null;
+    }
+
+    async function saveField(fieldName) {
+        try {
+            const input = document.getElementById(fieldName + 'Input');
+            const value = input.value;
+
+            if (!value || value.trim() === '') {
+                showError('Field cannot be empty');
+                return;
+            }
+
+            const payload = {};
+            payload[fieldName] = value;
+
+            const response = await fetch('/api/user/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update profile');
+            }
+
+            profileData = data.user;
+            displayProfile();
+            cancelEdit(fieldName);
+            showSuccess(`${fieldName.replace('_', ' ').toUpperCase()} updated successfully`);
+
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    function changePassword() {
+        document.getElementById('passwordChangeForm').style.display = 'block';
+    }
+
+    function cancelPasswordChange() {
+        document.getElementById('passwordChangeForm').style.display = 'none';
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    }
+
+    async function savePassword() {
+        try {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showError('All password fields are required');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showError('New passwords do not match');
+                return;
+            }
+
+            const response = await fetch('/api/user/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to change password');
+            }
+
+            cancelPasswordChange();
+            showSuccess('Password changed successfully');
+
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    function logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            window.location.href = '/logout';
+        }
+    }
+
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.classList.add('show');
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        successDiv.textContent = message;
+        successDiv.classList.add('show');
+        setTimeout(() => {
+            successDiv.classList.remove('show');
+        }, 3000);
+    }
+
+    // Load profile on page load
+    loadProfile();
+</script>
+{% endblock %}
