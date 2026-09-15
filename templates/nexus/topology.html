@@ -5,6 +5,8 @@
 {% block topbar_title %}🔗 Smart Service Topology - Real-Time Dependency Graph{% endblock %}
 
 {% block extra_styles %}
+<!-- D3.js and Topology Graph CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/topology-graph.css') }}">
 <style>
     .topology-container {
         display: grid;
@@ -289,15 +291,8 @@
 {% block content %}
 <div class="topology-container">
     <!-- MAIN CANVAS -->
-    <div class="topology-canvas">
-        <div class="canvas-placeholder">
-            <div class="canvas-icon">🌐</div>
-            <div class="canvas-text">Service Topology Graph</div>
-            <div class="canvas-subtext">Interactive service dependency visualization</div>
-            <div style="margin-top: var(--space-6); font-size: var(--fs-sm); color: var(--text-tertiary);">
-                Click a service on the right to view details and interactions
-            </div>
-        </div>
+    <div class="topology-canvas" id="topology-graph-container">
+        <!-- D3.js topology graph will be rendered here -->
     </div>
 
     <!-- TOPOLOGY SIDEBAR -->
@@ -558,5 +553,61 @@
         const data = event.detail;
         // Could update node statuses in real-time
     });
+</script>
+
+<!-- D3.js v7 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+<!-- Topology Graph Component -->
+<script src="{{ url_for('static', filename='js/topology-graph.js') }}"></script>
+
+<script>
+    // Initialize topology graph
+    let topologyGraph = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create topology graph instance
+        topologyGraph = new TopologyGraph('topology-graph-container', {
+            width: document.getElementById('topology-graph-container').offsetWidth,
+            height: document.getElementById('topology-graph-container').offsetHeight,
+            nodeRadius: 45,
+            linkDistance: 120,
+            chargeStrength: -600,
+            metricsUpdateInterval: 3000
+        });
+
+        console.log('🔗 Topology graph initialized');
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (topologyGraph) {
+            topologyGraph.resize();
+        }
+    });
+
+    // Listen for real-time updates
+    window.addEventListener('service_update', function(event) {
+        const data = event.detail;
+        if (topologyGraph) {
+            topologyGraph.updateNodeMetrics(data);
+        }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (topologyGraph) {
+            topologyGraph.destroy();
+        }
+    });
+
+    // Export for console debugging
+    window.topologyDebug = {
+        getGraph: () => topologyGraph,
+        getNodes: () => topologyGraph ? topologyGraph.nodes : null,
+        getLinks: () => topologyGraph ? topologyGraph.links : null,
+        selectNode: (id) => topologyGraph && topologyGraph.selectNode(topologyGraph.nodes.find(n => n.id === id)),
+        getServiceMetrics: (id) => topologyGraph ? topologyGraph.services[id] : null
+    };
 </script>
 {% endblock %}

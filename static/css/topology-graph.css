@@ -1,0 +1,547 @@
+/* ============================================================================
+   TOPOLOGY GRAPH STYLES
+   Interactive D3.js force-directed graph visualization
+   ============================================================================ */
+
+/* Container */
+.topology-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+/* SVG */
+.topology-svg {
+    flex: 1;
+    background: var(--bg-primary);
+}
+
+.topology-background {
+    fill: var(--bg-primary);
+    cursor: grab;
+}
+
+.topology-background:active {
+    cursor: grabbing;
+}
+
+/* Links (connections) */
+.topology-link {
+    stroke: var(--border-primary);
+    stroke-width: 2;
+    opacity: 0.6;
+    transition: stroke 0.3s ease, opacity 0.3s ease;
+}
+
+.topology-link:hover {
+    opacity: 1;
+    stroke: var(--color-info);
+    stroke-width: 3;
+}
+
+.topology-link.warning {
+    stroke: var(--color-warning);
+    stroke-dasharray: 5,5;
+    opacity: 0.8;
+}
+
+.topology-link.error {
+    stroke: var(--color-error);
+    stroke-width: 3;
+    opacity: 1;
+    filter: drop-shadow(0 0 5px var(--color-error));
+}
+
+.topology-link.highlighted {
+    stroke: var(--color-info);
+    stroke-width: 3;
+    opacity: 1;
+}
+
+/* Nodes */
+.topology-group .node {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.topology-group .node circle.node-circle {
+    fill: var(--bg-secondary);
+    stroke: var(--border-primary);
+    stroke-width: 2;
+    transition: stroke 0.3s ease, filter 0.3s ease;
+}
+
+.topology-group .node:hover circle.node-circle {
+    stroke: var(--color-info);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 8px rgba(45, 212, 255, 0.4));
+}
+
+.topology-group .node.selected circle.node-circle {
+    stroke: var(--color-info);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 10px rgba(45, 212, 255, 0.6));
+}
+
+/* Node status indicators */
+.topology-group .node circle.node-status {
+    transition: fill 0.3s ease, filter 0.3s ease;
+}
+
+.topology-group .node.healthy .node-status {
+    fill: var(--color-success);
+}
+
+.topology-group .node.degraded .node-status {
+    fill: var(--color-warning);
+}
+
+.topology-group .node.critical .node-status {
+    fill: var(--color-error);
+}
+
+.topology-group .node.offline .node-status {
+    fill: var(--text-tertiary);
+}
+
+/* Pulse animation for unhealthy services */
+.topology-group .node-status.pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Node icons */
+.topology-group .node text.node-icon {
+    pointer-events: none;
+    fill: var(--text-primary);
+    font-weight: bold;
+}
+
+/* Node labels */
+.topology-group text.node-label {
+    font-size: 12px;
+    fill: var(--text-primary);
+    pointer-events: none;
+    text-anchor: middle;
+    font-weight: 500;
+    transition: fill 0.3s ease;
+}
+
+.topology-group .node.selected ~ text.node-label,
+.topology-group .node:hover ~ text.node-label {
+    fill: var(--color-info);
+    font-weight: 600;
+}
+
+/* Connected nodes highlighting */
+.topology-group .node.connected circle.node-circle {
+    stroke: var(--color-info);
+    stroke-width: 2;
+    opacity: 0.8;
+}
+
+/* Tooltip */
+.topology-tooltip {
+    position: fixed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    font-size: var(--fs-sm);
+    color: var(--text-primary);
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+    display: none;
+    min-width: 200px;
+}
+
+.topology-tooltip strong {
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: var(--space-2);
+}
+
+.topology-tooltip .status-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.topology-tooltip .status-badge.healthy {
+    background: rgba(107, 255, 184, 0.2);
+    color: var(--color-success);
+}
+
+.topology-tooltip .status-badge.degraded {
+    background: rgba(255, 194, 71, 0.2);
+    color: var(--color-warning);
+}
+
+.topology-tooltip .status-badge.critical {
+    background: rgba(255, 87, 87, 0.2);
+    color: var(--color-error);
+}
+
+/* Details Panel */
+.topology-details-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    max-height: 80vh;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(330px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Details Header */
+.topology-details-panel .details-header {
+    position: sticky;
+    top: 0;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topology-details-panel h3 {
+    margin: 0;
+    font-size: var(--fs-lg);
+    color: var(--text-primary);
+}
+
+.topology-details-panel .close-btn {
+    background: none;
+    border: none;
+    font-size: var(--fs-lg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.topology-details-panel .close-btn:hover {
+    color: var(--text-primary);
+}
+
+/* Details Content */
+.topology-details-panel .details-content {
+    padding: var(--space-4);
+}
+
+/* Metric Rows */
+.topology-details-panel .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: var(--fs-sm);
+}
+
+.topology-details-panel .metric-row:last-child {
+    border-bottom: none;
+}
+
+.topology-details-panel .metric-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.topology-details-panel .metric-row span:last-child {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Status Badge */
+.topology-details-panel .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--ls-wide);
+}
+
+.topology-details-panel .status-badge.healthy {
+    background: rgba(107, 255, 184, 0.2);
+    color: var(--color-success);
+}
+
+.topology-details-panel .status-badge.degraded {
+    background: rgba(255, 194, 71, 0.2);
+    color: var(--color-warning);
+}
+
+.topology-details-panel .status-badge.critical {
+    background: rgba(255, 87, 87, 0.2);
+    color: var(--color-error);
+}
+
+/* Sections */
+.topology-details-panel .metrics-section,
+.topology-details-panel .resources-section,
+.topology-details-panel .dependencies-section {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-primary);
+}
+
+.topology-details-panel h4 {
+    margin: 0 0 var(--space-3) 0;
+    font-size: var(--fs-base);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Error Rate */
+.topology-details-panel .error-rate {
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.topology-details-panel .error-rate.warning {
+    background: rgba(255, 194, 71, 0.2);
+    color: var(--color-warning);
+}
+
+.topology-details-panel .error-rate.critical {
+    background: rgba(255, 87, 87, 0.2);
+    color: var(--color-error);
+}
+
+/* Progress Bar */
+.topology-details-panel .progress-bar {
+    position: relative;
+    height: 24px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-top: var(--space-2);
+}
+
+.topology-details-panel .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-info), var(--color-success));
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: var(--space-2);
+}
+
+.topology-details-panel .progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Dependencies List */
+.topology-details-panel .dependency-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.topology-details-panel .dependency-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.topology-details-panel .dependency-item:hover {
+    background: var(--bg-hover);
+    color: var(--color-info);
+}
+
+.topology-details-panel .status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.topology-details-panel .status-indicator.healthy {
+    background: var(--color-success);
+}
+
+.topology-details-panel .status-indicator.degraded {
+    background: var(--color-warning);
+}
+
+.topology-details-panel .status-indicator.critical {
+    background: var(--color-error);
+}
+
+/* Controls */
+.topology-controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: var(--space-2);
+    z-index: 100;
+}
+
+.topology-controls button {
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.topology-controls button:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-info);
+}
+
+.topology-controls button.active {
+    background: var(--color-info);
+    border-color: var(--color-info);
+    color: var(--text-inverse);
+}
+
+/* Legend */
+.topology-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    z-index: 100;
+    font-size: var(--fs-sm);
+}
+
+.topology-legend h4 {
+    margin: 0 0 var(--space-3) 0;
+    font-size: var(--fs-base);
+    color: var(--text-primary);
+}
+
+.topology-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    color: var(--text-secondary);
+}
+
+.topology-legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.topology-legend-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.topology-legend-icon.healthy {
+    background: var(--color-success);
+}
+
+.topology-legend-icon.degraded {
+    background: var(--color-warning);
+}
+
+.topology-legend-icon.critical {
+    background: var(--color-error);
+}
+
+/* Error Message */
+.topology-error {
+    padding: var(--space-4);
+    margin: var(--space-4);
+    background: rgba(255, 87, 87, 0.1);
+    border-left: 3px solid var(--color-error);
+    color: var(--color-error);
+    border-radius: var(--radius-md);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .topology-details-panel {
+        width: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .topology-container {
+        min-height: 400px;
+    }
+
+    .topology-details-panel {
+        position: fixed;
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-height: 50vh;
+    }
+
+    .topology-controls {
+        top: 10px;
+        left: 10px;
+        flex-wrap: wrap;
+    }
+
+    .topology-legend {
+        bottom: 10px;
+        left: 10px;
+        padding: var(--space-3);
+    }
+}
