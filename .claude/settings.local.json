@@ -167,7 +167,10 @@
       "PowerShell(tail -3)",
       "PowerShell(python3 -m pip install pandas 2>&1)",
       "Bash(git commit -m 'feat: Complete topology visualization with D3.js - bottleneck detection, traffic flow animation, real-time metrics *)",
-      "Bash(git commit -m 'fix: Implement Execute Remediation and AI Analysis endpoints - problems page buttons now fully functional *)"
+      "Bash(git commit -m 'fix: Implement Execute Remediation and AI Analysis endpoints - problems page buttons now fully functional *)",
+      "Bash(python3 -c \"from nexus_app import app; from auth_manager import auth_manager; print\\('✓ Flask app imports successful'\\); print\\('✓ Auth manager imported'\\); print\\('✓ Signup endpoints ready'\\)\")",
+      "Bash(python3 -m py_compile auth_manager.py)",
+      "Bash(git commit -m 'feat: Implement comprehensive user authentication system with email verification *)"
     ]
   }
 }

@@ -1,0 +1,546 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Sign Up - Nexus AIOps{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+        padding: var(--space-4);
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 450px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: var(--space-6);
+    }
+
+    .auth-logo {
+        font-size: 3em;
+        margin-bottom: var(--space-3);
+    }
+
+    .auth-title {
+        font-size: var(--fs-xl);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .auth-subtitle {
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .form-group {
+        margin-bottom: var(--space-4);
+    }
+
+    .form-label {
+        display: block;
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .form-input,
+    .form-select {
+        width: 100%;
+        padding: var(--space-3);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: var(--fs-sm);
+        font-family: inherit;
+        transition: all var(--transition-base);
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 3px rgba(45, 212, 255, 0.1);
+    }
+
+    .form-input::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+    }
+
+    .form-row.full {
+        grid-template-columns: 1fr;
+    }
+
+    .password-strength {
+        margin-top: var(--space-2);
+        padding: var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-xs);
+        display: none;
+    }
+
+    .password-strength.show {
+        display: block;
+    }
+
+    .password-strength.weak {
+        background: rgba(255, 87, 87, 0.1);
+        color: var(--color-error);
+    }
+
+    .password-strength.medium {
+        background: rgba(255, 194, 71, 0.1);
+        color: var(--color-warning);
+    }
+
+    .password-strength.strong {
+        background: rgba(107, 255, 184, 0.1);
+        color: var(--color-success);
+    }
+
+    .strength-bar {
+        height: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 2px;
+        margin-bottom: var(--space-1);
+        overflow: hidden;
+    }
+
+    .strength-bar-fill {
+        height: 100%;
+        background: var(--color-error);
+        width: 0%;
+        transition: width 0.3s ease, background 0.3s ease;
+    }
+
+    .strength-bar-fill.medium {
+        background: var(--color-warning);
+        width: 66%;
+    }
+
+    .strength-bar-fill.strong {
+        background: var(--color-success);
+        width: 100%;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: var(--space-3);
+        background: var(--color-info);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        font-weight: var(--fw-bold);
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+
+    .btn-primary:hover {
+        background: #2a9fd8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(45, 212, 255, 0.3);
+    }
+
+    .btn-primary:disabled {
+        background: var(--text-tertiary);
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.6;
+    }
+
+    .auth-link {
+        text-align: center;
+        margin-top: var(--space-4);
+        font-size: var(--fs-sm);
+        color: var(--text-secondary);
+    }
+
+    .auth-link a {
+        color: var(--color-info);
+        text-decoration: none;
+        font-weight: var(--fw-bold);
+    }
+
+    .auth-link a:hover {
+        text-decoration: underline;
+    }
+
+    .error-message {
+        padding: var(--space-3);
+        background: rgba(255, 87, 87, 0.1);
+        border-left: 3px solid var(--color-error);
+        color: var(--color-error);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        margin-bottom: var(--space-4);
+        display: none;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    .success-message {
+        padding: var(--space-3);
+        background: rgba(107, 255, 184, 0.1);
+        border-left: 3px solid var(--color-success);
+        color: var(--color-success);
+        border-radius: var(--radius-md);
+        font-size: var(--fs-sm);
+        margin-bottom: var(--space-4);
+        display: none;
+    }
+
+    .success-message.show {
+        display: block;
+    }
+
+    .verification-section {
+        display: none;
+    }
+
+    .verification-section.show {
+        display: block;
+    }
+
+    .verification-code-input {
+        text-align: center;
+        font-size: var(--fs-lg);
+        letter-spacing: 8px;
+        font-family: 'Courier New', monospace;
+        font-weight: var(--fw-bold);
+    }
+
+    @media (max-width: 640px) {
+        .auth-card {
+            padding: var(--space-4);
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">⚡</div>
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Join Nexus AIOps Platform</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Signup Form -->
+        <form id="signupForm">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    class="form-input"
+                    placeholder="your@email.com"
+                    required
+                >
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input
+                        type="text"
+                        id="firstName"
+                        class="form-input"
+                        placeholder="John"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input
+                        type="text"
+                        id="lastName"
+                        class="form-input"
+                        placeholder="Doe"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        class="form-input"
+                        placeholder="john_doe"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <select id="role" class="form-select" required>
+                        <option value="">Select Role</option>
+                        <option value="user">User</option>
+                        <option value="tester">Tester</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Department</label>
+                <select id="department" class="form-select" required>
+                    <option value="">Select Department</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Operations">Operations</option>
+                    <option value="DevOps">DevOps</option>
+                    <option value="Quality Assurance">Quality Assurance</option>
+                    <option value="Security">Security</option>
+                    <option value="Data Engineering">Data Engineering</option>
+                    <option value="Management">Management</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    class="form-input"
+                    placeholder="Enter a strong password"
+                    required
+                >
+                <div id="passwordStrength" class="password-strength">
+                    <div class="strength-bar">
+                        <div id="strengthBarFill" class="strength-bar-fill"></div>
+                    </div>
+                    <span id="strengthText">Weak password</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    class="form-input"
+                    placeholder="Confirm your password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn-primary" id="signupBtn">Create Account</button>
+        </form>
+
+        <!-- Email Verification -->
+        <div id="verificationSection" class="verification-section">
+            <h3 style="margin-bottom: var(--space-3); color: var(--text-primary);">Verify Email</h3>
+            <p style="margin-bottom: var(--space-3); color: var(--text-secondary); font-size: var(--fs-sm);">
+                We've sent a 6-digit code to your email. Enter it below:
+            </p>
+            <form id="verificationForm">
+                <div class="form-group">
+                    <input
+                        type="text"
+                        id="verificationCode"
+                        class="form-input verification-code-input"
+                        placeholder="000000"
+                        maxlength="6"
+                        inputmode="numeric"
+                        required
+                    >
+                </div>
+                <button type="submit" class="btn-primary" id="verifyBtn">Verify Email</button>
+                <p style="text-align: center; margin-top: var(--space-3); font-size: var(--fs-xs); color: var(--text-secondary);">
+                    Didn't receive the code? <a href="#" onclick="resendCode(event)" style="color: var(--color-info);">Resend</a>
+                </p>
+            </form>
+        </div>
+
+        <div class="auth-link">
+            Already have an account? <a href="/login">Sign In</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    let signupData = null;
+
+    // Password strength indicator
+    document.getElementById('password').addEventListener('input', function() {
+        const password = this.value;
+        const strengthDiv = document.getElementById('passwordStrength');
+        const strengthText = document.getElementById('strengthText');
+        const strengthBarFill = document.getElementById('strengthBarFill');
+
+        if (!password) {
+            strengthDiv.classList.remove('show');
+            return;
+        }
+
+        strengthDiv.classList.add('show');
+
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (password.length >= 12) strength++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) strength++;
+
+        strengthBarFill.classList.remove('medium', 'strong');
+
+        if (strength < 3) {
+            strengthText.textContent = '⚠️ Weak password';
+            strengthBarFill.style.width = '33%';
+        } else if (strength < 4) {
+            strengthText.textContent = '✓ Medium password';
+            strengthBarFill.classList.add('medium');
+        } else {
+            strengthText.textContent = '✓✓ Strong password';
+            strengthBarFill.classList.add('strong');
+        }
+    });
+
+    // Form submission
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.classList.remove('show');
+
+        try {
+            // Validate passwords match
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            signupData = {
+                email: document.getElementById('email').value,
+                username: document.getElementById('username').value,
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                password: password,
+                role: document.getElementById('role').value,
+                department: document.getElementById('department').value
+            };
+
+            // Send signup request
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(signupData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Signup failed');
+            }
+
+            // Show verification form
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('verificationSection').classList.add('show');
+            showSuccess(data.message || 'Verification code sent to your email');
+
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    // Email verification
+    document.getElementById('verificationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.classList.remove('show');
+
+        try {
+            const code = document.getElementById('verificationCode').value;
+
+            const response = await fetch('/api/auth/verify-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: signupData.email,
+                    code: code
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Verification failed');
+            }
+
+            showSuccess('Email verified! Redirecting to login...');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.classList.add('show');
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        successDiv.textContent = message;
+        successDiv.classList.add('show');
+    }
+
+    function resendCode(e) {
+        e.preventDefault();
+        // TODO: Implement resend code functionality
+        alert('Resend code functionality coming soon');
+    }
+
+    // Auto-focus next input when verification code is full
+    document.getElementById('verificationCode').addEventListener('input', function() {
+        if (this.value.length === 6) {
+            // Auto-submit could be added here
+        }
+    });
+</script>
+{% endblock %}

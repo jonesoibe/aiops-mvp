@@ -50,6 +50,9 @@ from audit_logger import audit_logger, audit_required, log_security_event
 # Service Topology
 from service_topology_simulator import get_topology_simulator
 
+# Authentication Manager
+from auth_manager import auth_manager, AuthenticationManager
+
 # Alerting System
 from src.alerting_engine import (
     AlertingEngine, AlertRule, AlertSeverity, AlertStatus, Alert
@@ -804,6 +807,197 @@ def login():
     log_security_event('FAILED_LOGIN', f'Failed login attempt for user: {username}', username)
 
     return jsonify({'error': 'Invalid credentials'}), 401
+
+@app.route('/signup')
+def signup_page():
+    """Sign up page."""
+    return render_template('nexus/signup.html')
+
+@app.route('/api/auth/signup', methods=['POST'])
+def signup():
+    """User registration endpoint."""
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ['email', 'username', 'password', 'first_name', 'last_name', 'role', 'department']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        email = data.get('email').lower().strip()
+        username = data.get('username').strip()
+        password = data.get('password')
+        first_name = data.get('first_name').strip()
+        last_name = data.get('last_name').strip()
+        role = data.get('role').lower().strip()
+        department = data.get('department').strip()
+
+        # Validate email format
+        is_valid, message = AuthenticationManager.validate_email(email)
+        if not is_valid:
+            return jsonify({'error': message}), 400
+
+        # Validate password strength
+        is_valid, message = AuthenticationManager.validate_password(password)
+        if not is_valid:
+            return jsonify({'error': message}), 400
+
+        # Validate username
+        is_valid, message = AuthenticationManager.validate_username(username)
+        if not is_valid:
+            return jsonify({'error': message}), 400
+
+        # Validate role
+        is_valid, message = AuthenticationManager.validate_role(role)
+        if not is_valid:
+            return jsonify({'error': message}), 400
+
+        # Validate department
+        is_valid, message = AuthenticationManager.validate_department(department)
+        if not is_valid:
+            return jsonify({'error': message}), 400
+
+        # Check if user already exists
+        existing_user = None
+        if db:
+            existing_user = db['users'].find_one({'$or': [{'email': email}, {'username': username}]})
+        else:
+            existing_user = in_memory_store['users'].get(username)
+            if not existing_user:
+                # Check if email exists in CSV data
+                for user_data in in_memory_store['users'].values():
+                    if user_data.get('email') == email:
+                        existing_user = user_data
+                        break
+
+        if existing_user:
+            return jsonify({'error': 'Email or username already registered'}), 409
+
+        # Generate verification code
+        code = auth_manager.generate_verification_code(email)
+
+        # Store temporary user data
+        user_data = {
+            'email': email,
+            'username': username,
+            'first_name': first_name,
+            'last_name': last_name,
+            'password': password,
+            'password_hash': hash_password(password),
+            'role': role,
+            'department': department,
+            'created_at': datetime.utcnow().isoformat(),
+            'verified': False
+        }
+
+        auth_manager.store_temp_user(email, user_data)
+
+        # Log signup attempt
+        audit_logger.log_action(
+            action='SIGNUP_INITIATED',
+            user_id=email,
+            resource='authentication',
+            status='success',
+            details={
+                'username': username,
+                'role': role,
+                'department': department
+            },
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        # In production, send email with verification code
+        # For now, just return the code (in production, remove this)
+        return jsonify({
+            'message': f'Signup initiated. Verification code sent to {email}.',
+            'verification_code': code  # Remove in production
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Signup error: {e}")
+        return jsonify({'error': 'Signup failed. Please try again.'}), 500
+
+@app.route('/api/auth/verify-email', methods=['POST'])
+def verify_email():
+    """Email verification endpoint."""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').lower().strip()
+        code = data.get('code', '').strip()
+
+        if not email or not code:
+            return jsonify({'error': 'Missing email or verification code'}), 400
+
+        # Verify the code
+        is_valid, message = auth_manager.verify_email_code(email, code)
+
+        if not is_valid:
+            return jsonify({'error': message}), 400
+
+        # Get the temporary user data
+        temp_user = auth_manager.get_temp_user(email)
+
+        if not temp_user:
+            return jsonify({'error': 'User data not found. Please sign up again.'}), 404
+
+        # Create the actual user account
+        final_user = {
+            'email': temp_user['email'],
+            'username': temp_user['username'],
+            'first_name': temp_user['first_name'],
+            'last_name': temp_user['last_name'],
+            'password_hash': temp_user['password_hash'],
+            'role': temp_user['role'],
+            'department': temp_user['department'],
+            'created_at': datetime.utcnow().isoformat(),
+            'verified_at': datetime.utcnow().isoformat(),
+            'verified': True,
+            'last_login': None
+        }
+
+        # Save to database
+        if db:
+            try:
+                db['users'].insert_one(final_user)
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                # Fallback to in-memory storage
+                in_memory_store['users'][temp_user['username']] = final_user
+        else:
+            in_memory_store['users'][temp_user['username']] = final_user
+
+        # Mark email as verified in temp storage
+        auth_manager.mark_email_verified(email)
+
+        # Log successful signup
+        audit_logger.log_action(
+            action='SIGNUP_COMPLETED',
+            user_id=temp_user['username'],
+            resource='authentication',
+            status='success',
+            details={
+                'email': email,
+                'role': temp_user['role'],
+                'department': temp_user['department']
+            },
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({
+            'message': 'Email verified successfully. You can now log in.',
+            'user': {
+                'username': temp_user['username'],
+                'email': email,
+                'role': temp_user['role']
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Email verification error: {e}")
+        return jsonify({'error': 'Email verification failed. Please try again.'}), 500
 
 @app.route('/api/auth/refresh', methods=['POST'])
 @require_auth
