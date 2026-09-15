@@ -397,10 +397,224 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn-action" onclick="showNotification('Executing AIOps remediation for ${incident.incident_id}...')">✓ Execute Remediation</button>
-                <button class="btn-action secondary" onclick="showNotification('Opening AI Operations for detailed analysis...')">🤖 AI Analysis</button>
+                <button class="btn-action" onclick="executeRemediation('${incident.incident_id}')">✓ Execute Remediation</button>
+                <button class="btn-action secondary" onclick="triggerAIAnalysis('${incident.incident_id}')">🤖 AI Analysis</button>
             </div>
         `;
+    }
+
+    // Execute remediation for an incident
+    async function executeRemediation(incidentId) {
+        try {
+            const token = localStorage.getItem('token');
+            const confirmAction = confirm(`Are you sure you want to execute automatic remediation for incident ${incidentId}?`);
+
+            if (!confirmAction) {
+                console.log('Remediation cancelled by user');
+                return;
+            }
+
+            const response = await fetch(`/api/incidents/${incidentId}/remediate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Show success message
+                const detailPanel = document.getElementById('detailPanel');
+                const successMsg = document.createElement('div');
+                successMsg.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: var(--color-success);
+                    color: white;
+                    padding: 16px 24px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    max-width: 400px;
+                    animation: slideIn 0.3s ease;
+                `;
+                successMsg.innerHTML = `
+                    <div style="font-weight: 600;">Remediation Executed</div>
+                    <div style="font-size: 0.9em; margin-top: 4px;">
+                        ${data.actions_taken && data.actions_taken.length > 0 ?
+                            `${data.actions_taken.length} action(s) taken` :
+                            'Remediation process initiated'
+                        }
+                    </div>
+                `;
+                document.body.appendChild(successMsg);
+
+                setTimeout(() => {
+                    successMsg.style.opacity = '0';
+                    successMsg.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => successMsg.remove(), 300);
+                }, 5000);
+
+                // Reload incidents to show updated status
+                setTimeout(() => loadIncidents(), 1000);
+
+                console.log('✅ Remediation executed:', data);
+            } else {
+                alert(`Error executing remediation: ${data.error || 'Unknown error'}`);
+                console.error('❌ Error:', data);
+            }
+        } catch (error) {
+            console.error('❌ Error executing remediation:', error);
+            alert(`Failed to execute remediation: ${error.message}`);
+        }
+    }
+
+    // Trigger AI analysis for an incident
+    async function triggerAIAnalysis(incidentId) {
+        try {
+            const token = localStorage.getItem('token');
+
+            // Show loading state
+            const detailPanel = document.getElementById('detailPanel');
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'aiAnalysisLoading';
+            loadingMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--color-info);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+            `;
+            loadingMsg.innerHTML = `
+                <div style="font-weight: 600;">🔍 Analyzing incident...</div>
+                <div style="font-size: 0.9em; margin-top: 4px;">AI analysis in progress</div>
+            `;
+            document.body.appendChild(loadingMsg);
+
+            const response = await fetch(`/api/incidents/${incidentId}/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            // Remove loading message
+            const loadingElement = document.getElementById('aiAnalysisLoading');
+            if (loadingElement) loadingElement.remove();
+
+            if (response.ok) {
+                // Display AI analysis results
+                const analysisPanel = document.createElement('div');
+                analysisPanel.style.cssText = `
+                    position: fixed;
+                    top: 60px;
+                    right: 20px;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border-primary);
+                    border-radius: 8px;
+                    padding: 20px;
+                    max-width: 500px;
+                    max-height: 70vh;
+                    overflow-y: auto;
+                    z-index: 10000;
+                    box-shadow: var(--shadow-lg);
+                `;
+
+                // Build HTML for analysis results
+                let analysisHTML = `
+                    <div style="font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🤖 AI Analysis Results</span>
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; cursor: pointer; font-size: 20px; padding: 0; color: var(--text-secondary);">✕</button>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 4px;">Confidence Score</div>
+                        <div style="font-weight: 600; font-size: 1.2em; color: var(--color-success);">${data.confidence_score || 0}%</div>
+                    </div>
+
+                    <div style="margin-bottom: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 6px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.9em;">Root Causes</div>
+                `;
+
+                if (data.root_causes && data.root_causes.length > 0) {
+                    data.root_causes.forEach((cause, idx) => {
+                        const probability = Math.round(cause.probability * 100);
+                        analysisHTML += `
+                            <div style="margin-bottom: 8px; font-size: 0.85em;">
+                                <div>${idx + 1}. ${cause.cause}</div>
+                                <div style="color: var(--text-secondary); margin-top: 2px;">Probability: ${probability}%</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    analysisHTML += '<div style="color: var(--text-secondary);">No root causes identified</div>';
+                }
+
+                analysisHTML += `
+                    </div>
+
+                    <div style="margin-bottom: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 6px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.9em;">Recommended Actions</div>
+                `;
+
+                if (data.recommended_actions && data.recommended_actions.length > 0) {
+                    data.recommended_actions.forEach((action, idx) => {
+                        const priorityColor = action.priority === 'high' ? 'var(--color-critical)' : 'var(--color-warning)';
+                        analysisHTML += `
+                            <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-primary); border-radius: 4px; font-size: 0.85em;">
+                                <div>${idx + 1}. ${action.action}</div>
+                                <div style="color: ${priorityColor}; margin-top: 2px; font-weight: 500;">Priority: ${action.priority}</div>
+                                <div style="color: var(--text-secondary); margin-top: 2px;">ETA: ${action.estimated_resolution_time}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    analysisHTML += '<div style="color: var(--text-secondary);">No actions recommended</div>';
+                }
+
+                analysisHTML += `
+                    </div>
+
+                    <div style="padding: 12px; background: var(--bg-tertiary); border-radius: 6px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.9em;">Patterns Detected</div>
+                `;
+
+                if (data.patterns_detected) {
+                    Object.entries(data.patterns_detected).forEach(([key, value]) => {
+                        analysisHTML += `
+                            <div style="margin-bottom: 6px; font-size: 0.85em;">
+                                <strong>${key.replace(/_/g, ' ')}:</strong> ${value}
+                            </div>
+                        `;
+                    });
+                } else {
+                    analysisHTML += '<div style="color: var(--text-secondary);">No patterns detected</div>';
+                }
+
+                analysisHTML += '</div>';
+
+                analysisPanel.innerHTML = analysisHTML;
+                document.body.appendChild(analysisPanel);
+
+                console.log('✅ AI Analysis completed:', data);
+            } else {
+                alert(`Error performing analysis: ${data.error || 'Unknown error'}`);
+                console.error('❌ Error:', data);
+            }
+        } catch (error) {
+            console.error('❌ Error performing AI analysis:', error);
+            alert(`Failed to perform AI analysis: ${error.message}`);
+        }
     }
 
     // Load on page load
