@@ -397,8 +397,8 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn-action" onclick="alert('Executing AIOps remediation for ${incident.incident_id}...')">✓ Execute Remediation</button>
-                <button class="btn-action secondary" onclick="alert('Opening AI Operations for detailed analysis...')">🤖 AI Analysis</button>
+                <button class="btn-action" onclick="showNotification('Executing AIOps remediation for ${incident.incident_id}...')">✓ Execute Remediation</button>
+                <button class="btn-action secondary" onclick="showNotification('Opening AI Operations for detailed analysis...')">🤖 AI Analysis</button>
             </div>
         `;
     }

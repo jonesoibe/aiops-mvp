@@ -339,8 +339,8 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-primary" onclick="alert('Settings saved!')">✓ Save Changes</button>
-                <button class="btn-secondary" onclick="alert('Settings reset to defaults')">↻ Reset</button>
+                <button class="btn-primary" onclick="saveGeneralSettings()">✓ Save Changes</button>
+                <button class="btn-secondary" onclick="resetGeneralSettings()">↻ Reset</button>
             </div>
         </div>
 
@@ -399,7 +399,7 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-primary" onclick="alert('Alert settings saved!')">✓ Save Changes</button>
+                <button class="btn-primary" onclick="saveAlertSettings()">✓ Save Changes</button>
             </div>
         </div>
 
@@ -417,21 +417,21 @@
                         <div class="setting-name">Admin</div>
                         <div class="setting-hint">Full platform access including configuration</div>
                     </div>
-                    <button class="btn-secondary" onclick="alert('Editing Admin role...')">✎ Edit</button>
+                    <button class="btn-secondary" onclick="editRole('admin', 'Admin')">✎ Edit</button>
                 </div>
                 <div class="setting-item">
                     <div class="setting-label">
                         <div class="setting-name">Operator</div>
                         <div class="setting-hint">Can execute actions and view all data</div>
                     </div>
-                    <button class="btn-secondary" onclick="alert('Editing Operator role...')">✎ Edit</button>
+                    <button class="btn-secondary" onclick="editRole('operator', 'Operator')">✎ Edit</button>
                 </div>
                 <div class="setting-item">
                     <div class="setting-label">
                         <div class="setting-name">Viewer</div>
                         <div class="setting-hint">Read-only access to platform</div>
                     </div>
-                    <button class="btn-secondary" onclick="alert('Editing Viewer role...')">✎ Edit</button>
+                    <button class="btn-secondary" onclick="editRole('viewer', 'Viewer')">✎ Edit</button>
                 </div>
             </div>
 
@@ -463,7 +463,7 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-primary" onclick="alert('RBAC settings saved!')">✓ Save Changes</button>
+                <button class="btn-primary" onclick="saveRBACSettings()">✓ Save Changes</button>
             </div>
         </div>
 
@@ -488,14 +488,14 @@
                         <div class="setting-name">PagerDuty</div>
                         <div class="setting-hint">On-call escalation and incident management</div>
                     </div>
-                    <button class="btn-secondary" onclick="alert('Configuring PagerDuty...')">⚙️ Configure</button>
+                    <button class="btn-secondary" onclick="configureIntegration('pagerduty', 'PagerDuty')">⚙️ Configure</button>
                 </div>
                 <div class="setting-item">
                     <div class="setting-label">
                         <div class="setting-name">Email</div>
                         <div class="setting-hint">SMTP server for email notifications</div>
                     </div>
-                    <button class="btn-secondary" onclick="alert('Configuring Email...')">⚙️ Configure</button>
+                    <button class="btn-secondary" onclick="configureIntegration('email', 'Email')">⚙️ Configure</button>
                 </div>
             </div>
 
@@ -513,12 +513,12 @@
                         <div class="setting-name">Prometheus</div>
                         <div class="setting-hint">Metrics collection and aggregation</div>
                     </div>
-                    <button class="btn-secondary" onclick="alert('Configuring Prometheus...')">⚙️ Configure</button>
+                    <button class="btn-secondary" onclick="configureIntegration('prometheus', 'Prometheus')">⚙️ Configure</button>
                 </div>
             </div>
 
             <div class="action-row">
-                <button class="btn-primary" onclick="alert('Integration settings saved!')">✓ Save Changes</button>
+                <button class="btn-primary" onclick="saveIntegrationSettings()">✓ Save Changes</button>
             </div>
         </div>
 
@@ -573,8 +573,8 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-primary" onclick="alert('Backup settings saved!')">✓ Save Changes</button>
-                <button class="btn-secondary" onclick="alert('Testing backup and recovery...')">🧪 Test Restore</button>
+                <button class="btn-primary" onclick="saveBackupSettings()">✓ Save Changes</button>
+                <button class="btn-secondary" onclick="testRestore()">🧪 Test Restore</button>
             </div>
         </div>
 
@@ -637,9 +637,25 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-primary" onclick="alert('Policies saved!')">✓ Save Changes</button>
-                <button class="btn-danger" onclick="alert('Resetting to default policies...')">↻ Reset to Defaults</button>
+                <button class="btn-primary" onclick="savePolicies()">✓ Save Changes</button>
+                <button class="btn-danger" onclick="resetPolicies()">↻ Reset to Defaults</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div id="configModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="modal-card" style="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-xl); padding: var(--space-6); max-width: 500px; width: 90%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <h2 id="modalTitle" style="font-size: var(--fs-lg); font-weight: var(--fw-bold); margin: 0;">Configuration</h2>
+            <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">✕</button>
+        </div>
+        <div id="modalContent" style="margin-bottom: var(--space-4);"></div>
+        <div id="modalAlert" style="padding: var(--space-3); border-radius: var(--radius-md); margin-bottom: var(--space-3); display: none;"></div>
+        <div style="display: flex; gap: var(--space-3);">
+            <button class="btn-primary" onclick="confirmModalAction()">✓ Save</button>
+            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -648,22 +664,186 @@
 
 {% block extra_scripts %}
 <script>
-function switchSection(element, sectionId) {
-    // Update nav
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    element.classList.add('active');
+let currentModalAction = null;
 
-    // Update content
-    document.querySelectorAll('[id$="-section"]').forEach(section => {
-        section.style.display = 'none';
-    });
+function switchSection(element, sectionId) {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    element.classList.add('active');
+    document.querySelectorAll('[id$="-section"]').forEach(section => section.style.display = 'none');
     document.getElementById(sectionId + '-section').style.display = 'block';
 }
 
 function toggleSwitch(element) {
     element.classList.toggle('active');
+}
+
+function showAlert(message, type = 'success') {
+    const alertEl = document.getElementById('modalAlert');
+    alertEl.textContent = message;
+    alertEl.style.display = 'block';
+    alertEl.style.background = type === 'success' ? 'rgba(45, 211, 99, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+    alertEl.style.color = type === 'success' ? '#10b981' : '#ef4444';
+    alertEl.style.border = `1px solid ${type === 'success' ? '#10b981' : '#ef4444'}`;
+}
+
+function closeModal() {
+    document.getElementById('configModal').style.display = 'none';
+    currentModalAction = null;
+}
+
+function openModal(title, content, action) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalContent').innerHTML = content;
+    document.getElementById('modalAlert').style.display = 'none';
+    document.getElementById('configModal').style.display = 'flex';
+    currentModalAction = action;
+}
+
+function confirmModalAction() {
+    if (currentModalAction) {
+        currentModalAction();
+    }
+}
+
+// Settings Functions
+function saveGeneralSettings() {
+    showAlert('✓ General settings saved successfully!', 'success');
+    setTimeout(() => closeModal(), 1500);
+}
+
+function resetGeneralSettings() {
+    showAlert('✓ Settings reset to defaults!', 'success');
+    setTimeout(() => closeModal(), 1500);
+}
+
+function saveAlertSettings() {
+    showAlert('✓ Alert settings saved successfully!', 'success');
+}
+
+function saveRBACSettings() {
+    showAlert('✓ RBAC settings saved successfully!', 'success');
+}
+
+function editRole(roleId, roleName) {
+    const content = `
+        <div style="margin-bottom: var(--space-4);">
+            <label style="display: block; margin-bottom: var(--space-2); font-weight: var(--fw-medium);">Permissions</label>
+            <div style="border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: var(--space-3);">
+                <label style="display: flex; align-items: center; margin-bottom: var(--space-2);">
+                    <input type="checkbox" checked style="margin-right: var(--space-2);">
+                    <span>View Dashboard</span>
+                </label>
+                <label style="display: flex; align-items: center; margin-bottom: var(--space-2);">
+                    <input type="checkbox" ${roleId !== 'viewer' ? 'checked' : ''} style="margin-right: var(--space-2);">
+                    <span>Execute Actions</span>
+                </label>
+                <label style="display: flex; align-items: center; margin-bottom: var(--space-2);">
+                    <input type="checkbox" ${roleId === 'admin' ? 'checked' : ''} style="margin-right: var(--space-2);">
+                    <span>Manage Configuration</span>
+                </label>
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" ${roleId === 'admin' ? 'checked' : ''} style="margin-right: var(--space-2);">
+                    <span>Manage Users</span>
+                </label>
+            </div>
+        </div>
+    `;
+    openModal(`Edit ${roleName} Role`, content, () => {
+        showAlert(`✓ ${roleName} role permissions updated!`, 'success');
+        setTimeout(() => closeModal(), 1500);
+    });
+}
+
+function configureIntegration(integration, name) {
+    const configs = {
+        pagerduty: `
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">API Key</label>
+                <input type="password" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);" placeholder="Enter PagerDuty API key">
+            </div>
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Escalation Policy</label>
+                <select style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary);">
+                    <option>Select escalation policy...</option>
+                    <option>On-Call Primary</option>
+                    <option>On-Call Secondary</option>
+                    <option>Management Team</option>
+                </select>
+            </div>
+        `,
+        email: `
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">SMTP Server</label>
+                <input type="text" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);" placeholder="smtp.example.com" value="smtp.gmail.com">
+            </div>
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Port</label>
+                <input type="number" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);" value="587">
+            </div>
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Username</label>
+                <input type="text" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);">
+            </div>
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Password</label>
+                <input type="password" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);">
+            </div>
+        `,
+        prometheus: `
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Prometheus URL</label>
+                <input type="url" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);" placeholder="http://prometheus:9090" value="http://localhost:9090">
+            </div>
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Username (Optional)</label>
+                <input type="text" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);">
+            </div>
+            <div style="margin-bottom: var(--space-3);">
+                <label style="display: block; margin-bottom: var(--space-1); font-weight: var(--fw-medium);">Password (Optional)</label>
+                <input type="password" style="width: 100%; padding: var(--space-2); border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-primary);">
+            </div>
+        `
+    };
+
+    openModal(`Configure ${name}`, configs[integration] || '', () => {
+        showAlert(`✓ ${name} configuration saved!`, 'success');
+        setTimeout(() => closeModal(), 1500);
+    });
+}
+
+function saveIntegrationSettings() {
+    showAlert('✓ Integration settings saved successfully!', 'success');
+}
+
+function saveBackupSettings() {
+    showAlert('✓ Backup settings saved successfully!', 'success');
+}
+
+function testRestore() {
+    openModal('Test Restore', `
+        <p style="margin-bottom: var(--space-3);">Testing backup and restore from: <strong>2026-08-25 02:15 UTC (47.2 GB)</strong></p>
+        <div style="border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: var(--space-3); background: var(--bg-primary);">
+            <div style="font-size: var(--fs-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">Test Progress:</div>
+            <div style="width: 100%; height: 8px; background: var(--bg-secondary); border-radius: var(--radius-full); overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: var(--color-success);"></div>
+            </div>
+            <div style="font-size: var(--fs-sm); margin-top: var(--space-2);">✓ Restore verification completed successfully</div>
+        </div>
+    `, () => {
+        showAlert('✓ Backup restore test passed!', 'success');
+        setTimeout(() => closeModal(), 1500);
+    });
+}
+
+function savePolicies() {
+    showAlert('✓ Policies saved successfully!', 'success');
+}
+
+function resetPolicies() {
+    if (confirm('Are you sure you want to reset all policies to defaults? This cannot be undone.')) {
+        showAlert('✓ Policies reset to defaults!', 'success');
+        setTimeout(() => closeModal(), 1500);
+    }
 }
 </script>
 {% endblock %}

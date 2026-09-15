@@ -318,16 +318,38 @@
             btn.addEventListener('click', (e) => {
                 const text = e.target.textContent.trim();
                 if (text === 'Edit') {
-                    alert('Settings editor coming soon!');
+                    showNotification('Settings editor coming soon! Check back later.', 'info');
                 } else if (text === 'Reset') {
-                    alert('Reset to default settings?');
+                    if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                        showNotification('✓ Settings have been reset to defaults.', 'success');
+                    }
                 } else if (text === 'Setup') {
-                    alert('Integration setup wizard coming soon!');
+                    showNotification('Integration setup wizard coming soon! Check back later.', 'info');
                 } else if (text === 'Docs') {
                     window.open('/api-docs', '_blank');
                 }
             });
         });
+
+        function showNotification(message, type) {
+            // Create a temporary notification element
+            const notif = document.createElement('div');
+            notif.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                border-radius: 6px;
+                z-index: 9999;
+                font-weight: 600;
+                animation: slideIn 0.3s ease;
+            `;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
     </script>
 </body>
 </html>

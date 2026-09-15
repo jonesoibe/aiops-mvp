@@ -147,7 +147,11 @@
       "Bash(git commit -m 'Feature: Add comprehensive SLA/SLO tracking system *)",
       "Bash(git commit -m 'Doc: Add comprehensive SLO tracking documentation *)",
       "Bash(git commit -m 'Doc: Add SLO implementation summary *)",
-      "Bash(git commit -m 'Feature: Add comprehensive SLO Dashboard UI *)"
+      "Bash(git commit -m 'Feature: Add comprehensive SLO Dashboard UI *)",
+      "Bash(git commit -m 'Doc: Add Phase 2 enhancement roadmap *)",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue\\).OwningProcess 2>$null | Select-Object Name, Id)",
+      "PowerShell(Stop-Process -Id 15116 -Force)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\\\\fix_alerts.ps1\")"
     ]
   }
 }

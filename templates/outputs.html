@@ -532,11 +532,11 @@ print(f'Detected {(anomalies == -1).sum()} anomalies')
         }
 
         function downloadAll() {
-            alert('Downloading all files... (ZIP export coming soon)');
+            showNotification('Downloading all files... (ZIP export coming soon)');
         }
 
         function regenerateOutputs() {
-            alert('Regenerating outputs... This may take a few minutes.\nPlease wait or check the console for progress.');
+            showNotification('Regenerating outputs... This may take a few minutes.\nPlease wait or check the console for progress.');
             // Would trigger actual regeneration via API
         }
 
@@ -569,5 +569,14 @@ print(f'Detected {(anomalies == -1).sum()} anomalies')
             }
         });
     </script>
+<script>
+function showNotification(msg, type = "success") {
+    const n = document.createElement("div");
+    n.style.cssText = "position:fixed;top:20px;right:20px;padding:15px 25px;background:" + (type === "error" ? "#ef4444" : "#22c55e") + ";color:white;border-radius:6px;z-index:9999;font-weight:600;";
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3000);
+}
+</script>
 </body>
 </html>

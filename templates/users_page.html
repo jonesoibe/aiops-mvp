@@ -322,6 +322,23 @@
             color: #fca5a5;
         }
 
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #cbd5e1;
+            float: right;
+        }
+
+        .close-btn:hover {
+            color: #e2e8f0;
+        }
+
+        .edit-modal-form {
+            clear: both;
+        }
+
         @media (max-width: 768px) {
             .table {
                 font-size: 0.9em;
@@ -422,16 +439,63 @@
         </div>
     </div>
 
+    <!-- EDIT USER MODAL -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            <div class="modal-title" id="editModalTitle">Edit User</div>
+
+            <div class="message" id="editMessage"></div>
+
+            <form id="editUserForm" class="edit-modal-form">
+                <input type="hidden" id="editUserId">
+
+                <div class="form-group">
+                    <label for="editUsername">Username</label>
+                    <input type="text" id="editUsername" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEmail">Email</label>
+                    <input type="email" id="editEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editRole">Role</label>
+                    <select id="editRole" required>
+                        <option value="admin">Admin</option>
+                        <option value="operator">Operator</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editStatus">Status</label>
+                    <select id="editStatus" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Check if user is admin
         document.addEventListener('DOMContentLoaded', function() {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (user.role !== 'admin') {
-                alert('Access denied. Admin role required.');
-                window.location.href = '/';
+                showAccessDeniedModal();
+                return;
             }
 
             loadUsers();
+            setupEditFormListener();
         });
 
         async function loadUsers() {
@@ -516,7 +580,87 @@
         }
 
         function editUser(userId) {
-            alert('Edit user: ' + userId + ' (Feature coming soon)');
+            // Find user data from the table
+            const token = localStorage.getItem('token');
+            fetch(`/api/users/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => response.ok ? response.json() : Promise.reject('Failed to load user'))
+            .then(data => {
+                const user = data.user;
+                document.getElementById('editUserId').value = userId;
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editRole').value = user.role;
+                document.getElementById('editStatus').value = user.active ? 'active' : 'inactive';
+                document.getElementById('editMessage').style.display = 'none';
+                document.getElementById('editModal').classList.add('show');
+            })
+            .catch(error => {
+                showEditMessage('Error loading user: ' + error, 'error');
+            });
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            document.getElementById('editUserForm').reset();
+        }
+
+        function showEditMessage(text, type) {
+            const msg = document.getElementById('editMessage');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.style.display = 'block';
+        }
+
+        function setupEditFormListener() {
+            document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const userId = document.getElementById('editUserId').value;
+                const userData = {
+                    username: document.getElementById('editUsername').value,
+                    email: document.getElementById('editEmail').value,
+                    role: document.getElementById('editRole').value,
+                    active: document.getElementById('editStatus').value === 'active'
+                };
+
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`/api/users/${userId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    if (response.ok) {
+                        showEditMessage('✓ User updated successfully!', 'success');
+                        setTimeout(() => {
+                            closeEditModal();
+                            loadUsers();
+                        }, 1500);
+                    } else {
+                        const data = await response.json();
+                        showEditMessage(data.error || 'Error updating user', 'error');
+                    }
+                } catch (error) {
+                    showEditMessage('Connection error: ' + error.message, 'error');
+                }
+            });
+        }
+
+        function showAccessDeniedModal() {
+            const modal = document.getElementById('editModal');
+            document.getElementById('editModalTitle').textContent = '🔐 Access Denied';
+            document.getElementById('editUserForm').innerHTML = `
+                <p style="color: #fca5a5; margin-bottom: 20px;">You do not have permission to access this page. Only administrators can manage users.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="btn" onclick="window.location.href = '/'">Return to Home</button>
+                </div>
+            `;
+            modal.classList.add('show');
         }
 
         async function deleteUser(userId) {
