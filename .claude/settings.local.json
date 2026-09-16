@@ -197,7 +197,8 @@
       "Bash(which gh *)",
       "Bash(git commit -m 'security: Prevent admin role self-assignment during signup *)",
       "Bash(git commit -m 'docs: Add MongoDB configuration guide and update .env template *)",
-      "Bash(git commit -m 'config: Configure MongoDB Atlas connection *)"
+      "Bash(git commit -m 'config: Configure MongoDB Atlas connection *)",
+      "Bash(git commit -m 'fix: Increase MongoDB Atlas connection timeouts *)"
     ]
   }
 }

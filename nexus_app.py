@@ -112,9 +112,18 @@ def connect_mongodb():
     """Connect to MongoDB and initialize collections"""
     global mongodb_client, db
     try:
-        mongodb_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        # Increased timeout for MongoDB Atlas (network latency)
+        mongodb_client = MongoClient(
+            MONGODB_URI,
+            serverSelectionTimeoutMS=15000,  # 15 seconds for Atlas
+            connectTimeoutMS=15000,
+            socketTimeoutMS=15000,
+            retryWrites=True
+        )
         # Test connection
+        print("  🔄 Connecting to MongoDB...")
         mongodb_client.admin.command('ping')
+        print("  ✅ MongoDB connection established")
         db = mongodb_client[DATABASE_NAME]
 
         # Initialize collections with indexes
