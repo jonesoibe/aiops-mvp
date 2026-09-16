@@ -208,7 +208,8 @@
       "Bash(timeout 5 python test_startup.py)",
       "Bash(python test_https_fix.py)",
       "Bash(git commit -m 'fix: Defer MongoDB initialization to prevent startup hang *)",
-      "Bash(git commit -m 'feat: Add user deletion endpoint and comprehensive user management guide *)"
+      "Bash(git commit -m 'feat: Add user deletion endpoint and comprehensive user management guide *)",
+      "Bash(git commit -m 'feat: Add comprehensive Swagger/OpenAPI documentation *)"
     ]
   }
 }

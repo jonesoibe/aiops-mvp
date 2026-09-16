@@ -24,6 +24,9 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 from functools import wraps
 
+# Swagger/OpenAPI Documentation
+from flasgger import Flasgger, swag_from
+
 # Authentication & Security
 import bcrypt
 import jwt
@@ -91,6 +94,30 @@ from src.slo_compliance import (
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# ==================== SWAGGER/OpenAPI DOCUMENTATION ====================
+
+swagger = Flasgger(
+    app,
+    title='Nexus AIOps API',
+    version='1.0.0',
+    description='Enterprise Autonomous Observability Platform API Documentation',
+    uiversion=3,
+    config={
+        'headers': [],
+        'specs': [
+            {
+                'endpoint': 'apispec',
+                'route': '/apispec.json',
+                'rule_filter': lambda rule: True,
+                'model_filter': lambda tag: True,
+            }
+        ],
+        'static_url_path': '/flasgger_static',
+        'swagger_ui': True,
+        'specs_route': '/api/docs'
+    }
+)
 
 # ==================== SECURITY HEADERS ====================
 
@@ -801,7 +828,57 @@ def settings():
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """User login endpoint."""
+    """
+    User login endpoint - Authenticate and get JWT token.
+    ---
+    tags:
+      - Authentication
+    summary: User Login
+    description: Authenticate a user and receive a JWT token for subsequent API calls.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+              example: admin
+              description: Username for login
+            password:
+              type: string
+              example: admin123
+              description: User password (encrypted in transit with HTTPS)
+    responses:
+      200:
+        description: Login successful
+        schema:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWT authentication token
+            user:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+      400:
+        description: Missing credentials
+      401:
+        description: Invalid credentials
+      500:
+        description: Server error
+    security: []
+    """
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -867,7 +944,61 @@ def signup_page():
 
 @app.route('/api/auth/signup', methods=['POST'])
 def signup():
-    """User registration endpoint."""
+    """
+    User registration endpoint - Create a new account.
+    ---
+    tags:
+      - Authentication
+    summary: User Registration
+    description: Register a new user account with email verification.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - email
+            - username
+            - password
+            - first_name
+            - last_name
+            - role
+            - department
+          properties:
+            email:
+              type: string
+              example: user@example.com
+            username:
+              type: string
+              example: john_doe
+            password:
+              type: string
+              example: SecurePass123!
+            first_name:
+              type: string
+              example: John
+            last_name:
+              type: string
+              example: Doe
+            role:
+              type: string
+              enum: [user, tester]
+              example: user
+            department:
+              type: string
+              example: Engineering
+    responses:
+      200:
+        description: Signup initiated, verification code sent to email
+      409:
+        description: User already exists
+      400:
+        description: Invalid input
+      500:
+        description: Server error
+    security: []
+    """
     try:
         data = request.get_json()
 
@@ -1229,7 +1360,47 @@ def profile_page(user=None):
 @app.route('/api/user/profile', methods=['GET'])
 @require_auth
 def get_profile(user=None):
-    """Get user profile information."""
+    """
+    Get user profile information.
+    ---
+    tags:
+      - User
+    summary: Get User Profile
+    description: Retrieve the current user's profile information including personal details and role.
+    parameters:
+      - in: header
+        name: Authorization
+        type: string
+        required: true
+        example: Bearer <jwt_token>
+        description: JWT authentication token
+    responses:
+      200:
+        description: User profile retrieved successfully
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            email:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            role:
+              type: string
+            department:
+              type: string
+            created_at:
+              type: string
+            last_login:
+              type: string
+      401:
+        description: Unauthorized
+      404:
+        description: User not found
+    """
     try:
         # Find user in database
         user_data = None
@@ -2284,6 +2455,46 @@ def get_metrics_by_status(status, user=None):
 @app.route('/api/overview/dashboard', methods=['GET'])
 @require_auth
 def get_dashboard_overview(user=None):
+    """
+    Get dashboard overview with system health metrics.
+    ---
+    tags:
+      - Dashboard
+    summary: Get Dashboard Overview
+    description: Retrieve comprehensive dashboard data including system health, incident summary, and key metrics.
+    parameters:
+      - in: header
+        name: Authorization
+        type: string
+        required: true
+        example: Bearer <jwt_token>
+    responses:
+      200:
+        description: Dashboard overview retrieved successfully
+        schema:
+          type: object
+          properties:
+            health_status:
+              type: string
+              enum: [healthy, warning, critical]
+            total_incidents:
+              type: integer
+            active_incidents:
+              type: integer
+            resolved_incidents:
+              type: integer
+            system_metrics:
+              type: object
+              properties:
+                cpu_usage:
+                  type: number
+                memory_usage:
+                  type: number
+                disk_usage:
+                  type: number
+      401:
+        description: Unauthorized
+    """
     """Get overview dashboard data with real telemetry."""
     storage = get_storage()
     all_metrics = storage.get_all_metrics()
