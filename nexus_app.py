@@ -25,7 +25,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 from functools import wraps
 
 # Swagger/OpenAPI Documentation
-from flasgger import Flasgger, swag_from
+from flasgger import Flasgger
 
 # Authentication & Security
 import bcrypt
@@ -99,23 +99,21 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 swagger = Flasgger(
     app,
-    title='Nexus AIOps API',
-    version='1.0.0',
-    description='Enterprise Autonomous Observability Platform API Documentation',
-    uiversion=3,
     config={
         'headers': [],
         'specs': [
             {
                 'endpoint': 'apispec',
                 'route': '/apispec.json',
-                'rule_filter': lambda rule: True,
-                'model_filter': lambda tag: True,
             }
         ],
         'static_url_path': '/flasgger_static',
         'swagger_ui': True,
-        'specs_route': '/api/docs'
+        'specs_route': '/api/docs',
+        'title': 'Nexus AIOps API',
+        'uiversion': 3,
+        'version': '1.0.0',
+        'description': 'Enterprise Autonomous Observability Platform API Documentation'
     }
 )
 

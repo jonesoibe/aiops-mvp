@@ -209,7 +209,9 @@
       "Bash(python test_https_fix.py)",
       "Bash(git commit -m 'fix: Defer MongoDB initialization to prevent startup hang *)",
       "Bash(git commit -m 'feat: Add user deletion endpoint and comprehensive user management guide *)",
-      "Bash(git commit -m 'feat: Add comprehensive Swagger/OpenAPI documentation *)"
+      "Bash(git commit -m 'feat: Add comprehensive Swagger/OpenAPI documentation *)",
+      "Bash(.venv\\\\Scripts\\\\pip install *)",
+      "Bash(git commit -m 'fix: Correct Flasgger configuration parameters *)"
     ]
   }
 }
