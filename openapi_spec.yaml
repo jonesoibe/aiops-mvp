@@ -1,0 +1,983 @@
+openapi: 3.0.0
+info:
+  title: Nexus AIOps API
+  version: 1.0.0
+  description: Enterprise Autonomous Observability Platform API Documentation
+  contact:
+    name: Nexus AIOps Support
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:5000
+    description: Development Server
+  - url: https://api.nexus.example.com
+    description: Production Server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management operations
+  - name: Incidents
+    description: Incident management and analysis
+  - name: Metrics
+    description: System metrics and monitoring
+  - name: Dashboard
+    description: Dashboard and overview data
+  - name: Topology
+    description: Service topology and dependencies
+  - name: Alerts
+    description: Alert rules and notifications
+  - name: SLOs
+    description: Service Level Objectives
+  - name: Audit
+    description: Audit logs and compliance
+  - name: Approvals
+    description: Approval workflows
+  - name: Simulator
+    description: Simulation and testing
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User Login
+      description: Authenticate user and receive JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: admin123
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+        401:
+          description: Invalid credentials
+        400:
+          description: Missing credentials
+
+  /api/auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: User Registration
+      description: Create new user account with email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - username
+                - password
+                - first_name
+                - last_name
+                - role
+                - department
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                username:
+                  type: string
+                  example: john_doe
+                password:
+                  type: string
+                  example: SecurePass123!
+                first_name:
+                  type: string
+                  example: John
+                last_name:
+                  type: string
+                  example: Doe
+                role:
+                  type: string
+                  enum: [user, tester]
+                  example: user
+                department:
+                  type: string
+                  example: Engineering
+      responses:
+        200:
+          description: Signup initiated, verification code sent
+        409:
+          description: User already exists
+        400:
+          description: Invalid input
+
+  /api/auth/verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify Email Address
+      description: Verify user email with verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - code
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                code:
+                  type: string
+                  example: "123456"
+      responses:
+        200:
+          description: Email verified successfully
+        400:
+          description: Invalid code
+
+  /api/auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request Password Reset
+      description: Request password reset code to be sent to email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+      responses:
+        200:
+          description: Reset code sent to email
+        404:
+          description: User not found
+
+  /api/auth/password-reset:
+    post:
+      tags:
+        - Authentication
+      summary: Reset Password
+      description: Reset password using verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - code
+                - new_password
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                code:
+                  type: string
+                  example: "123456"
+                new_password:
+                  type: string
+                  example: NewPassword123!
+      responses:
+        200:
+          description: Password reset successfully
+        400:
+          description: Invalid code or password
+
+  /api/user/profile:
+    get:
+      tags:
+        - Users
+      summary: Get User Profile
+      description: Retrieve current user's profile information
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  role:
+                    type: string
+                  department:
+                    type: string
+                  created_at:
+                    type: string
+                  last_login:
+                    type: string
+        401:
+          description: Unauthorized
+
+    post:
+      tags:
+        - Users
+      summary: Update User Profile
+      description: Update current user's profile information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                department:
+                  type: string
+      responses:
+        200:
+          description: Profile updated successfully
+        401:
+          description: Unauthorized
+
+  /api/user/change-password:
+    post:
+      tags:
+        - Users
+      summary: Change Password
+      description: Change current user's password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - new_password
+              properties:
+                current_password:
+                  type: string
+                  example: CurrentPass123!
+                new_password:
+                  type: string
+                  example: NewPass123!
+      responses:
+        200:
+          description: Password changed successfully
+        401:
+          description: Invalid current password
+
+  /api/admin/users/{username}:
+    delete:
+      tags:
+        - Users
+      summary: Delete User
+      description: Delete a user account (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User deleted successfully
+        403:
+          description: Admin access required
+        404:
+          description: User not found
+
+  /api/incidents:
+    get:
+      tags:
+        - Incidents
+      summary: List Incidents
+      description: Get list of all incidents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, resolved, investigating]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info]
+      responses:
+        200:
+          description: Incidents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    title:
+                      type: string
+                    severity:
+                      type: string
+                    status:
+                      type: string
+                    created_at:
+                      type: string
+
+  /api/incidents/{incident_id}:
+    get:
+      tags:
+        - Incidents
+      summary: Get Incident Details
+      description: Retrieve details of a specific incident
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Incident details retrieved
+        404:
+          description: Incident not found
+
+  /api/incidents/{incident_id}/remediate:
+    post:
+      tags:
+        - Incidents
+      summary: Trigger Remediation
+      description: Trigger automated remediation for an incident
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Remediation triggered
+        400:
+          description: Cannot remediate this incident
+
+  /api/incidents/{incident_id}/analyze:
+    post:
+      tags:
+        - Incidents
+      summary: AI Analysis
+      description: Get AI-powered root cause analysis
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  root_cause:
+                    type: string
+                  recommendations:
+                    type: array
+                    items:
+                      type: string
+                  confidence:
+                    type: number
+
+  /api/overview/dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Dashboard Overview
+      description: Get comprehensive dashboard data
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Dashboard data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  health_status:
+                    type: string
+                  total_incidents:
+                    type: integer
+                  active_incidents:
+                    type: integer
+                  system_metrics:
+                    type: object
+
+  /api/metrics/summary:
+    get:
+      tags:
+        - Metrics
+      summary: Metrics Summary
+      description: Get summary of all metrics
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Metrics summary retrieved
+
+  /api/metrics/all:
+    get:
+      tags:
+        - Metrics
+      summary: All Metrics
+      description: Get all available metrics
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: All metrics retrieved
+
+  /api/metrics/{metric_name}:
+    get:
+      tags:
+        - Metrics
+      summary: Get Specific Metric
+      description: Get data for a specific metric
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: metric_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Metric data retrieved
+        404:
+          description: Metric not found
+
+  /api/topology/services:
+    get:
+      tags:
+        - Topology
+      summary: List Services
+      description: Get list of all services in topology
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Services retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /api/topology/dependencies:
+    get:
+      tags:
+        - Topology
+      summary: Service Dependencies
+      description: Get service dependencies and relationships
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Dependencies retrieved
+
+  /api/topology/summary:
+    get:
+      tags:
+        - Topology
+      summary: Topology Summary
+      description: Get topology overview and statistics
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Topology summary retrieved
+
+  /api/topology/service/{service_id}:
+    get:
+      tags:
+        - Topology
+      summary: Service Details
+      description: Get detailed information about a service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Service details retrieved
+
+  /api/alerts/rules:
+    get:
+      tags:
+        - Alerts
+      summary: List Alert Rules
+      description: Get all alert rules
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Alert rules retrieved
+
+    post:
+      tags:
+        - Alerts
+      summary: Create Alert Rule
+      description: Create a new alert rule (Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - metric_name
+                - condition
+                - threshold
+              properties:
+                name:
+                  type: string
+                metric_name:
+                  type: string
+                condition:
+                  type: string
+                  enum: ['>', '<', '>=', '<=', '==']
+                threshold:
+                  type: number
+                severity:
+                  type: string
+                  enum: [critical, warning, info]
+      responses:
+        201:
+          description: Alert rule created
+        403:
+          description: Admin access required
+
+  /api/alerts/rules/{rule_id}:
+    put:
+      tags:
+        - Alerts
+      summary: Update Alert Rule
+      description: Update an alert rule (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Alert rule updated
+        403:
+          description: Admin access required
+
+    delete:
+      tags:
+        - Alerts
+      summary: Delete Alert Rule
+      description: Delete an alert rule (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Alert rule deleted
+        403:
+          description: Admin access required
+
+  /api/slos:
+    get:
+      tags:
+        - SLOs
+      summary: List SLOs
+      description: Get all Service Level Objectives
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: SLOs retrieved
+
+    post:
+      tags:
+        - SLOs
+      summary: Create SLO
+      description: Create a new SLO (Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - target
+                - window
+              properties:
+                name:
+                  type: string
+                target:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                window:
+                  type: string
+      responses:
+        201:
+          description: SLO created
+        403:
+          description: Admin access required
+
+  /api/slos/{slo_id}:
+    put:
+      tags:
+        - SLOs
+      summary: Update SLO
+      description: Update an SLO (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: slo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: SLO updated
+        403:
+          description: Admin access required
+
+    delete:
+      tags:
+        - SLOs
+      summary: Delete SLO
+      description: Delete an SLO (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: slo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: SLO deleted
+        403:
+          description: Admin access required
+
+  /api/slos/{slo_id}/compliance:
+    get:
+      tags:
+        - SLOs
+      summary: SLO Compliance
+      description: Get SLO compliance status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: slo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Compliance data retrieved
+
+  /api/slos/{slo_id}/error-budget:
+    get:
+      tags:
+        - SLOs
+      summary: Error Budget
+      description: Get error budget information
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: slo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Error budget retrieved
+
+  /api/audit-log:
+    get:
+      tags:
+        - Audit
+      summary: Audit Log
+      description: Get audit log entries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        200:
+          description: Audit log retrieved
+
+  /api/audit-log/stats:
+    get:
+      tags:
+        - Audit
+      summary: Audit Statistics
+      description: Get audit log statistics
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Audit statistics retrieved
+
+  /api/approvals:
+    get:
+      tags:
+        - Approvals
+      summary: List Approvals
+      description: Get pending approvals
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Approvals retrieved
+
+  /api/approvals/{approval_id}/approve:
+    post:
+      tags:
+        - Approvals
+      summary: Approve Request
+      description: Approve a pending request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: approval_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Request approved
+
+  /api/approvals/{approval_id}/reject:
+    post:
+      tags:
+        - Approvals
+      summary: Reject Request
+      description: Reject a pending request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: approval_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Request rejected
+
+  /api/simulator/start:
+    post:
+      tags:
+        - Simulator
+      summary: Start Simulation
+      description: Start a new simulation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - scenario
+              properties:
+                scenario:
+                  type: string
+                duration:
+                  type: integer
+      responses:
+        201:
+          description: Simulation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sim_id:
+                    type: string
+
+  /api/simulator/{sim_id}/status:
+    get:
+      tags:
+        - Simulator
+      summary: Simulation Status
+      description: Get simulation status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sim_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Status retrieved
+
+  /api/simulator/{sim_id}/result:
+    get:
+      tags:
+        - Simulator
+      summary: Simulation Result
+      description: Get simulation results
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sim_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Results retrieved
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/auth/login endpoint
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        status_code:
+          type: integer
+
+    Incident:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        status:
+          type: string
+        created_at:
+          type: string
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        department:
+          type: string

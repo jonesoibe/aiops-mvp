@@ -211,7 +211,10 @@
       "Bash(git commit -m 'feat: Add user deletion endpoint and comprehensive user management guide *)",
       "Bash(git commit -m 'feat: Add comprehensive Swagger/OpenAPI documentation *)",
       "Bash(.venv\\\\Scripts\\\\pip install *)",
-      "Bash(git commit -m 'fix: Correct Flasgger configuration parameters *)"
+      "Bash(git commit -m 'fix: Correct Flasgger configuration parameters *)",
+      "Bash(curl -s http://localhost:5000/api/docs)",
+      "Bash(curl -s http://localhost:5000/apispec.json)",
+      "Bash(git commit -m 'feat: Add comprehensive OpenAPI specification for all endpoints *)"
     ]
   }
 }

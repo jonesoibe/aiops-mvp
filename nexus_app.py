@@ -97,23 +97,31 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 # ==================== SWAGGER/OpenAPI DOCUMENTATION ====================
 
+# Load OpenAPI spec
+import yaml
+spec_path = os.path.join(os.path.dirname(__file__), 'openapi_spec.yaml')
+with open(spec_path, 'r') as f:
+    openapi_spec = yaml.safe_load(f)
+
 swagger = Flasgger(
     app,
-    config={
-        'headers': [],
-        'specs': [
-            {
-                'endpoint': 'apispec',
-                'route': '/apispec.json',
-            }
-        ],
-        'static_url_path': '/flasgger_static',
-        'swagger_ui': True,
-        'specs_route': '/api/docs',
-        'title': 'Nexus AIOps API',
-        'uiversion': 3,
-        'version': '1.0.0',
-        'description': 'Enterprise Autonomous Observability Platform API Documentation'
+    specs=[
+        {
+            'endpoint': 'apispec',
+            'route': '/apispec.json',
+            'rule_filter': lambda rule: True,
+            'model_filter': lambda tag: True,
+        }
+    ],
+    static_url_path='/flasgger_static',
+    swagger_ui=True,
+    specs_route='/api/docs',
+    template={
+        'swagger': '2.0',
+        'info': openapi_spec.get('info', {}),
+        'host': 'localhost:5000',
+        'basePath': '/',
+        'schemes': ['http', 'https']
     }
 )
 
