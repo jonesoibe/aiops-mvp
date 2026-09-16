@@ -1,146 +1,103 @@
 # MongoDB Setup Guide for Nexus AIOps
 
-## Option 1: MongoDB Atlas (Recommended for Production/Render)
+## Overview
+Nexus AIOps uses MongoDB as its primary database for storing users, incidents, audit logs, and other operational data. This guide explains how to configure MongoDB for your deployment.
 
-### Step 1: Create MongoDB Atlas Account
-1. Go to https://www.mongodb.com/cloud/atlas
-2. Click "Try Free" or Sign Up
-3. Create a new organization and project
-4. Select "Build a Cluster"
-5. Choose Free Tier (M0, 512MB storage)
-6. Select your region (same as Render for best performance)
-7. Create the cluster (takes 5-10 minutes)
+## Configuration Options
 
-### Step 2: Set Up Database User
-1. In Atlas, go to "Database Access"
-2. Click "Add New Database User"
-3. Username: `aiops_user`
-4. Password: Generate a secure password (save it!)
-5. Built-in Roles: Select "readWriteAnyDatabase"
-6. Click "Add User"
+### 1. Local MongoDB (Development)
+If you have MongoDB installed locally:
 
-### Step 3: Allow Network Access
-1. In Atlas, go to "Network Access"
-2. Click "Add IP Address"
-3. For Render: Click "Allow Access from Anywhere" (0.0.0.0/0)
-4. For Local: Add your IP address
-5. Click "Confirm"
-
-### Step 4: Get Connection String
-1. Go to "Clusters" and click "Connect"
-2. Select "Connect your application"
-3. Choose Node.js driver
-4. Copy the connection string
-5. Replace `<username>` and `<password>` with your credentials
-6. Replace `<database>` with `nexus_aiops`
-
-Example format:
 ```
-mongodb+srv://aiops_user:PASSWORD@cluster0.xxxxx.mongodb.net/nexus_aiops?retryWrites=true&w=majority
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DATABASE=nexus_aiops
 ```
 
-### Step 5: Set Environment Variable in Render
-1. Go to https://dashboard.render.com
-2. Select your `aiops-mvp` service
-3. Go to "Environment"
-4. Add new variable:
-   - Name: `MONGODB_URI`
-   - Value: Your connection string from Step 4
-5. Click "Save"
-6. Service will automatically redeploy
+### 2. Remote MongoDB Server
+If MongoDB is running on a remote server:
 
-## Option 2: Local MongoDB (Development Only)
-
-### macOS:
-```bash
-brew tap mongodb/brew
-brew install mongodb-community
-brew services start mongodb-community
+```
+MONGODB_URI=mongodb://host.example.com:27017
+MONGODB_DATABASE=nexus_aiops
 ```
 
-### Linux (Ubuntu):
-```bash
-sudo apt-get install -y mongodb
-sudo systemctl start mongodb
-sudo systemctl enable mongodb
+### 3. MongoDB with Authentication
+If your MongoDB requires username/password:
+
+```
+MONGODB_URI=mongodb://username:password@host:27017
+MONGODB_DATABASE=nexus_aiops
 ```
 
-### Windows:
-1. Download from https://www.mongodb.com/try/download/community
-2. Run installer
-3. Start MongoDB service or run `mongod`
-
-### Local Connection String:
+### 4. MongoDB Atlas (Cloud)
 ```
-mongodb://localhost:27017/nexus_aiops
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+MONGODB_DATABASE=nexus_aiops
 ```
 
-## Testing Your Connection
+## Quick Start
 
-### Python Test Script:
-```python
-from pymongo import MongoClient
-
-uri = "your_mongodb_uri_here"
-client = MongoClient(uri)
-db = client['nexus_aiops']
-
-# Test connection
-try:
-    client.admin.command('ping')
-    print("✓ Connected to MongoDB successfully!")
-    print(f"Collections: {db.list_collection_names()}")
-except Exception as e:
-    print(f"✗ Connection failed: {e}")
-```
-
-### Using MongoDB Compass (GUI):
-1. Download from https://www.mongodb.com/products/compass
-2. Paste your connection string
-3. Connect and browse databases/collections
+1. Update `.env` file with your MongoDB connection string
+2. Restart the application
+3. Look for this message in startup logs:
+   ```
+   ✅ MongoDB connected successfully with collections initialized
+   ```
 
 ## Collections Created Automatically
 
-The Nexus AIOps app creates these collections on first run:
-- `incidents` - Problem incidents from CSV data
-- `responses` - Incident response actions
-- `users` - User accounts and authentication
-- `audit_log` - All system actions and approvals
-- `actions` - Executed remediation actions
-- `approvals` - Approval requests and statuses
+- **users** - User accounts and authentication data
+- **incidents** - Incident records and alerts
+- **responses** - Remediation responses
+- **audit_log** - Audit trail of all actions
+- **actions** - Executed remediation actions
+- **approvals** - Approval workflow records
+
+## If MongoDB is Not Available
+
+The application will fall back to **in-memory storage**:
+- Data persists only during the session
+- Data is lost when server restarts
+- Suitable for development/testing only
+
+**⚠️ Production Warning:** Always ensure MongoDB is configured in production.
 
 ## Troubleshooting
 
-### "Connection refused" error
-- Local MongoDB: Ensure `mongod` is running
-- Atlas: Check that your IP is whitelisted in Network Access
-- Check MONGODB_URI environment variable is set correctly
+### Connection Refused
+Make sure MongoDB service is running:
+```bash
+# Windows
+net start MongoDB
 
-### "Authentication failed"
-- Verify username and password in connection string
-- Check that database user exists in Atlas
-- Ensure special characters in password are URL-encoded
+# Linux
+sudo systemctl start mongod
+```
 
-### Slow connections
-- If using Render + Atlas, select same region as Render
-- Consider upgrading from M0 to M2 free tier if performance issues
+### Authentication Failed
+Check username/password and URL encoding for special characters.
 
-## Monitoring
+### Verify Data is Persisting
+```bash
+mongo mongodb://localhost:27017/nexus_aiops
+db.users.find()
+db.audit_log.find()
+```
 
-### View Database Usage
-1. Go to Atlas Dashboard
-2. Click on your cluster
-3. View "Database" tab for collections and data
-4. Check "Metrics" for performance stats
+## Production Deployment
 
-### Export Data
-1. In Atlas, go to "Clusters"
-2. Click "..." → "Export Collection"
-3. Choose format (CSV, JSON)
-4. Download backup
+For production, use:
+```
+MONGODB_URI=mongodb+srv://prod_user:secure_password@prod-cluster.mongodb.net/
+MONGODB_DATABASE=nexus_aiops_prod
+ENVIRONMENT=production
+LOG_LEVEL=WARNING
+```
 
-## Support
-
-- MongoDB Atlas Support: https://docs.mongodb.com/manual/
-- Nexus AIOps Issues: Check GitHub issues
-- Render Support: https://render.com/docs
+Security best practices:
+- ✅ Use strong passwords
+- ✅ Enable MongoDB authentication
+- ✅ Restrict network access
+- ✅ Use IP whitelisting
+- ✅ Enable SSL/TLS
+- ✅ Regular backups
