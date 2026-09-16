@@ -1431,6 +1431,101 @@ def change_password(user=None):
         print(f"❌ Change password error: {e}")
         return jsonify({'error': 'Failed to change password'}), 500
 
+@app.route('/api/admin/users/<username>', methods=['DELETE'])
+@require_auth
+def delete_user(username, user=None):
+    """Delete a user account. Admin only."""
+    try:
+        # Check if requester is admin
+        if user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required to delete users'}), 403
+
+        username = username.lower().strip()
+
+        # Prevent self-deletion
+        if username == user['username']:
+            return jsonify({'error': 'Cannot delete your own account'}), 400
+
+        # Prevent deleting admin users unless there are other admins
+        if db is not None:
+            try:
+                target_user = db['users'].find_one({'username': username})
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                target_user = in_memory_store['users'].get(username)
+        else:
+            target_user = in_memory_store['users'].get(username)
+
+        if not target_user:
+            return jsonify({'error': 'User not found'}), 404
+
+        if target_user.get('role') == 'admin':
+            # Check if there are other admin users
+            if db is not None:
+                try:
+                    admin_count = db['users'].count_documents({'role': 'admin'})
+                except Exception as e:
+                    print(f"⚠️ MongoDB error: {e}")
+                    admin_count = sum(1 for u in in_memory_store['users'].values() if u.get('role') == 'admin')
+            else:
+                admin_count = sum(1 for u in in_memory_store['users'].values() if u.get('role') == 'admin')
+
+            if admin_count <= 1:
+                return jsonify({'error': 'Cannot delete the last admin user'}), 400
+
+        # Delete user from database
+        if db is not None:
+            try:
+                result = db['users'].delete_one({'username': username})
+                if result.deleted_count == 0:
+                    return jsonify({'error': 'Failed to delete user'}), 500
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                if username in in_memory_store['users']:
+                    del in_memory_store['users'][username]
+        else:
+            if username in in_memory_store['users']:
+                del in_memory_store['users'][username]
+            else:
+                return jsonify({'error': 'Failed to delete user'}), 500
+
+        # Log the action
+        audit_logger.log_action(
+            action='USER_DELETED',
+            user_id=user['username'],
+            resource='user_management',
+            status='success',
+            details={
+                'deleted_user': username,
+                'deleted_user_role': target_user.get('role'),
+                'deleted_user_email': target_user.get('email')
+            },
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({
+            'message': f'User {username} has been deleted successfully',
+            'deleted_user': {
+                'username': username,
+                'email': target_user.get('email'),
+                'role': target_user.get('role')
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Delete user error: {e}")
+        audit_logger.log_action(
+            action='USER_DELETE_FAILED',
+            user_id=user['username'],
+            resource='user_management',
+            status='failed',
+            details={'error': str(e), 'target_user': username},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        return jsonify({'error': 'Failed to delete user'}), 500
+
 # ==================== TELEMETRY API ====================
 
 @app.route('/api/telemetry/current', methods=['GET'])
