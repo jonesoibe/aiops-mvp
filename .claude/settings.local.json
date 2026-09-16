@@ -196,7 +196,8 @@
       "Bash(git commit -m 'feat: Improve email verification UX and implement resend functionality *)",
       "Bash(which gh *)",
       "Bash(git commit -m 'security: Prevent admin role self-assignment during signup *)",
-      "Bash(git commit -m 'docs: Add MongoDB configuration guide and update .env template *)"
+      "Bash(git commit -m 'docs: Add MongoDB configuration guide and update .env template *)",
+      "Bash(git commit -m 'config: Configure MongoDB Atlas connection *)"
     ]
   }
 }
