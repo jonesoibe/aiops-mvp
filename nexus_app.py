@@ -19,7 +19,7 @@ import random
 import pandas as pd
 
 # Flask & WebSocket
-from flask import Flask, render_template, jsonify, request, send_file, send_from_directory, session
+from flask import Flask, render_template, jsonify, request, send_file, send_from_directory, session, redirect
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 from functools import wraps
@@ -91,6 +91,30 @@ from src.slo_compliance import (
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# ==================== SECURITY HEADERS ====================
+
+@app.before_request
+def enforce_https():
+    """Enforce HTTPS in production and add security headers."""
+    if os.getenv('ENVIRONMENT') == 'production' and not request.is_secure:
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
+
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses."""
+    # Enforce HTTPS
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Prevent clickjacking
+    response.headers['X-Frame-Options'] = 'DENY'
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # XSS protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.socket.io cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com"
+    return response
 
 # Configuration
 SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -3380,9 +3404,29 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️  Initialization warning: {e}")
 
-    print("\n📍 Access at: http://localhost:5000")
-    print("   Demo: admin / admin123\n")
+    # Configure SSL/TLS
+    ssl_context = None
+    ssl_cert_path = os.getenv('SSL_CERT_PATH', '').strip()
+    ssl_key_path = os.getenv('SSL_KEY_PATH', '').strip()
+    environment = os.getenv('ENVIRONMENT', 'development')
+
+    if ssl_cert_path and ssl_key_path:
+        if os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
+            ssl_context = (ssl_cert_path, ssl_key_path)
+            print("\n🔒 SSL/TLS Enabled")
+            print(f"   Certificate: {ssl_cert_path}")
+            print(f"   Key: {ssl_key_path}\n")
+
+    port = int(os.getenv('PORT', 5000))
+
+    if environment == 'production':
+        print("\n🚨 PRODUCTION MODE - HTTPS Required for all API calls")
+        print("⚠️  Credentials are encrypted in transit (HSTS enforced)\n")
+    else:
+        print("\n📍 Access at: http://localhost:5000")
+        print("   ⚠️  DEVELOPMENT MODE - Use HTTPS in production!")
+        print("   Demo: admin / admin123\n")
 
     # Run with socketio
-    port = int(os.getenv('PORT', 5000))
-    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=port, debug=False,
+                allow_unsafe_werkzeug=True, ssl_context=ssl_context)

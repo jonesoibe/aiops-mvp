@@ -201,7 +201,10 @@
       "Bash(git commit -m 'fix: Increase MongoDB Atlas connection timeouts *)",
       "Bash(python migrate_users_to_mongodb.py)",
       "Bash(python insert_demo_users.py)",
-      "Bash(git commit -m 'fix: Use proper None check for MongoDB Database object *)"
+      "Bash(git commit -m 'fix: Use proper None check for MongoDB Database object *)",
+      "Bash(curl -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"admin123\"}' -s)",
+      "Bash(python generate_ssl_cert.py)",
+      "Bash(git commit -m 'security: Add HTTPS/TLS encryption for authentication endpoints *)"
     ]
   }
 }

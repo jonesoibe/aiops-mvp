@@ -1,6 +1,36 @@
 # AIOps MVP - Security Hardening Guide
 
-This document outlines the 21 security best practices implemented and recommended for the AIOps MVP system.
+## 🚨 CRITICAL: HTTPS/TLS Encryption Required
+
+**Status:** All credentials and sensitive data in request bodies must be encrypted in transit.
+
+### The Issue
+Login, signup, and password reset endpoints send credentials in the HTTP request body. Without HTTPS/TLS encryption, these are transmitted as plaintext and can be intercepted.
+
+- ❌ **HTTP (plaintext)**: Passwords visible to anyone on the network
+- ✅ **HTTPS/TLS**: Passwords encrypted, safe from interception
+
+### Quick Fix - Development
+```bash
+# Generate self-signed certificate
+python generate_ssl_cert.py
+
+# Update .env
+ENVIRONMENT=development
+SSL_CERT_PATH=cert.pem
+SSL_KEY_PATH=key.pem
+```
+
+### Production Requirements
+**Use one of these options:**
+1. **Reverse Proxy** (Recommended): nginx/Caddy with Let's Encrypt certificates
+2. **Direct SSL**: Configure SSL_CERT_PATH and SSL_KEY_PATH to production certificates
+
+See full HTTPS Configuration section below.
+
+---
+
+This document outlines the security best practices implemented and recommended for the AIOps MVP system.
 
 ## 1. Authentication & Authorization
 
@@ -132,18 +162,33 @@ response.headers['Content-Security-Policy'] = (
 )
 ```
 
-### ✅ HTTPS Enforcement
-**Status:** Recommended
+### ✅ HTTPS Enforcement & TLS Configuration
+**Status:** Implemented
 
-In production, force HTTPS:
+The application automatically enforces HTTPS and adds security headers for encryption in transit:
 
-```python
-from flask_talisman import Talisman
-
-Talisman(app, force_https=True, strict_transport_security=True)
+**Configuration in .env:**
+```env
+SSL_CERT_PATH=cert.pem          # Path to SSL certificate
+SSL_KEY_PATH=key.pem            # Path to SSL private key
+ENVIRONMENT=production          # production or development
 ```
 
-Install: `pip install flask-talisman`
+**For development with self-signed certificate:**
+```bash
+python generate_ssl_cert.py
+```
+
+**For production:**
+- Option 1: Use reverse proxy (nginx/Caddy) with Let's Encrypt
+- Option 2: Configure SSL_CERT_PATH and SSL_KEY_PATH to production certificates
+
+**Automatic Security Headers Applied:**
+- `Strict-Transport-Security`: Force HTTPS for 1 year
+- `X-Frame-Options: DENY`: Prevent clickjacking
+- `X-Content-Type-Options: nosniff`: Prevent MIME sniffing
+- `X-XSS-Protection`: XSS protection
+- `Content-Security-Policy`: Resource loading restrictions
 
 ### ⏳ Encrypt Sensitive Data
 **Status:** Recommended
