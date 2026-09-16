@@ -189,7 +189,8 @@
       "Bash(curl -v http://localhost:5000/signup)",
       "Bash(git commit -m 'docs: Add logging quick start guide with examples and monitoring tips *)",
       "PowerShell(taskkill /PID 11688 /F 2>$null)",
-      "Bash(git commit -m 'fix: Create separate auth_base template without auth checks *)"
+      "Bash(git commit -m 'fix: Create separate auth_base template without auth checks *)",
+      "Bash(git commit -m 'feat: Add Gmail SMTP configuration for email service *)"
     ]
   }
 }

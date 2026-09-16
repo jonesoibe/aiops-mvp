@@ -8,6 +8,10 @@ import os
 import sys
 import json
 from datetime import datetime, timedelta
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
 from dataclasses import asdict
 import threading
 import time
