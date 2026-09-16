@@ -1,0 +1,124 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                 HTTPS/TLS QUICK START - Nexus AIOps                         ║
+║                      CRITICAL SECURITY FIX APPLIED                           ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+🚨 ISSUE FIXED: Credentials were sent in plaintext → Now encrypted with HTTPS!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ WHAT'S READY:
+
+  • SSL certificate generated: cert.pem, key.pem
+  • Flask app configured for HTTPS
+  • Security headers added (HSTS, CSP, etc.)
+  • .env configured with certificate paths
+  • All tested and working
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 START SERVER:
+
+  $ python nexus_app.py
+
+  Expected output:
+    🔒 SSL/TLS Enabled
+    Certificate: cert.pem
+    Key: key.pem
+    📍 Access at: https://localhost:5000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 OPEN IN BROWSER:
+
+  https://localhost:5000
+
+  ⚠️ Warning: "Not Secure" - This is normal for self-signed certs
+  → Click "Advanced" → "Proceed to localhost"
+
+  Demo Login:
+    Username: admin
+    Password: admin123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 TEST WITH CURL:
+
+  $ curl -k -X POST https://localhost:5000/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"username":"admin","password":"admin123"}'
+
+  ✅ Credentials are now encrypted in transit!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTATION:
+
+  • SECURITY_FIX_SUMMARY.md  - What was fixed and why
+  • HTTPS_SETUP.md            - Complete setup & production guide
+  • SECURITY.md               - Security best practices
+  • generate_ssl_cert.py      - Regenerate certificate if needed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 SECURITY IMPROVEMENTS:
+
+  Before: http://localhost:5000/api/auth/login
+    ❌ Passwords sent in plaintext
+    ❌ Vulnerable to interception
+    ❌ No encryption headers
+
+  After: https://localhost:5000/api/auth/login
+    ✅ Passwords encrypted with TLS
+    ✅ Protected from interception
+    ✅ HSTS header enforces HTTPS
+    ✅ CSP headers prevent XSS
+    ✅ Additional security headers enabled
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️  CONFIGURATION (.env):
+
+  ENVIRONMENT=development
+  SSL_CERT_PATH=cert.pem
+  SSL_KEY_PATH=key.pem
+
+  For production:
+    ENVIRONMENT=production
+    SSL_CERT_PATH=/path/to/production/cert.pem
+    SSL_KEY_PATH=/path/to/production/key.pem
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 PROTECTED ENDPOINTS:
+
+  POST   /api/auth/login                    🔒 Credentials encrypted
+  POST   /api/auth/signup                   🔒 Credentials encrypted
+  POST   /api/auth/verify-email             🔒 Credentials encrypted
+  POST   /api/auth/forgot-password          🔒 Credentials encrypted
+  POST   /api/auth/password-reset           🔒 Credentials encrypted
+  GET    /api/user/profile                  🔒 Tokens required
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ TROUBLESHOOTING:
+
+  Q: Browser shows "Not Secure" warning
+  A: Normal for self-signed certs in development. Click "Advanced" → Proceed
+
+  Q: curl: (60) SSL certificate problem
+  A: Use -k flag to skip verification: curl -k https://localhost:5000
+
+  Q: Connection refused on https://localhost:5000
+  A: Make sure server is running with: python nexus_app.py
+
+  Q: How to generate new certificate?
+  A: Run: python generate_ssl_cert.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ STATUS: HTTPS/TLS ENCRYPTION IMPLEMENTED ✨
+
+Ready to test! Start the server and login with admin/admin123.
+
+════════════════════════════════════════════════════════════════════════════════

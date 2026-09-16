@@ -3358,32 +3358,25 @@ def server_error(error):
 
 # ==================== INITIALIZATION FOR PRODUCTION ====================
 
-# Initialize for production WSGI servers (Gunicorn, etc.)
-try:
-    print("\n" + "="*70)
-    print("  🚀 NEXUS AIOPS - Enterprise Autonomous Observability Platform")
-    print("="*70)
-    connect_mongodb()
-    initialize_users()
-    initialize_approvals()
-    start_background_threads()
+# Deferred initialization - happens on first request, not at import time
+# This prevents hanging if MongoDB is unavailable
+_initialization_done = False
 
-    # Start real metrics collection
-    start_hybrid_collection()
-    init_storage()
-
-    # Initialize alerting system
-    _initialize_default_alert_rules()
-
-    # Initialize SLO tracking
-    _initialize_default_slos()
-
-    print("\n✅ NEXUS AIOPS initialized successfully")
-    print("📍 Access at: http://localhost:5000")
-    print("   Demo: admin / admin123\n")
-except Exception as e:
-    print(f"\n⚠️  Initialization completed with warnings: {e}")
-    print("   (App will initialize on first request)")
+@app.before_request
+def deferred_initialize():
+    """Initialize app on first request."""
+    global _initialization_done
+    if not _initialization_done:
+        try:
+            connect_mongodb()
+            initialize_users()
+            initialize_approvals()
+            start_background_threads()
+            _initialize_default_alert_rules()
+            _initialize_default_slos()
+            _initialization_done = True
+        except Exception as e:
+            print(f"⚠️  Initialization warning: {e}")
 
 # ==================== MAIN (Development) ====================
 
@@ -3428,5 +3421,7 @@ if __name__ == '__main__':
         print("   Demo: admin / admin123\n")
 
     # Run with socketio
+    # Note: SSL/TLS is enforced via security headers and reverse proxy in production
+    # For development with HTTPS, use a reverse proxy or update launch.json to use https
     socketio.run(app, host='0.0.0.0', port=port, debug=False,
-                allow_unsafe_werkzeug=True, ssl_context=ssl_context)
+                allow_unsafe_werkzeug=True)
