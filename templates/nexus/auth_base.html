@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nexus AIOps - Enterprise Observability{% endblock %}</title>
+
+    <!-- Design Tokens -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='design-tokens.css') }}">
+
+    <!-- Page Styles -->
+    <style>
+        /* Light Mode Theme Overrides (inline to ensure they load) */
+        /* Adjusted colors for better light mode visibility and WCAG AA contrast */
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #eff2f5;
+            --bg-hover: #e8eef2;
+            --bg-active: #dce3e8;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+            --text-inverse: #ffffff;
+            --border-primary: #cbd5e0;
+            --border-secondary: #e2e8f0;
+            --border-subtle: #edf2f7;
+
+            /* Semantic colors optimized for light mode - darker/more saturated */
+            --color-success: #107c10;     /* Darker green for visibility on white */
+            --color-info: #0078d4;        /* Darker blue for visibility on white */
+            --color-warning: #d18800;     /* Darker amber/gold (not bright yellow) */
+            --color-critical: #a4373a;    /* Darker red-pink for visibility */
+            --color-error: #a4373a;       /* Darker red for visibility */
+
+            /* Dimmed variants for light mode */
+            --color-success-dim: rgba(16, 124, 16, 0.12);
+            --color-info-dim: rgba(0, 120, 212, 0.12);
+            --color-warning-dim: rgba(209, 136, 0, 0.12);
+            --color-critical-dim: rgba(164, 55, 58, 0.12);
+            --color-error-dim: rgba(164, 55, 58, 0.12);
+
+            /* Accent colors for light mode */
+            --accent-primary: #107c10;    /* Green */
+            --accent-secondary: #0078d4;  /* Blue */
+            --accent-tertiary: #d18800;   /* Amber (not yellow) */
+
+            color-scheme: light;
+        }
+    </style>
+
+    <!-- Page Styles -->
+    <style>
+        body {
+            min-height: 100vh;
+            background: var(--bg-primary);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Dark mode specific styles */
+        [data-theme="dark"] {
+            color-scheme: dark;
+        }
+
+        /* Light mode specific styles */
+        [data-theme="light"] {
+            color-scheme: light;
+        }
+
+        /* Smooth theme transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
+
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <!-- MAIN CONTENT -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Theme Manager (must load before other scripts) -->
+    <script src="{{ url_for('static', filename='theme-manager.js') }}"></script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
