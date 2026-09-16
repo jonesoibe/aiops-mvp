@@ -193,7 +193,9 @@
       "Bash(git commit -m 'feat: Add Gmail SMTP configuration for email service *)",
       "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue)",
       "PowerShell(Stop-Process -Id 5580 -Force -ErrorAction SilentlyContinue)",
-      "Bash(git commit -m 'feat: Improve email verification UX and implement resend functionality *)"
+      "Bash(git commit -m 'feat: Improve email verification UX and implement resend functionality *)",
+      "Bash(which gh *)",
+      "Bash(git commit -m 'security: Prevent admin role self-assignment during signup *)"
     ]
   }
 }

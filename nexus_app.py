@@ -852,6 +852,11 @@ def signup():
         role = data.get('role').lower().strip()
         department = data.get('department').strip()
 
+        # Prevent admin role during signup - admin must be assigned by administrators
+        if role.lower() == 'admin':
+            log_security_event('UNAUTHORIZED_SIGNUP', f'Attempted admin signup from user: {username}', username)
+            return jsonify({'error': 'Admin role cannot be self-assigned. Contact your administrator.'}), 403
+
         # Validate email format
         is_valid, message = AuthenticationManager.validate_email(email)
         if not is_valid:
