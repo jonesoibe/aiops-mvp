@@ -491,10 +491,18 @@
         e.preventDefault();
 
         const errorDiv = document.getElementById('errorMessage');
+        const successDiv = document.getElementById('successMessage');
         errorDiv.classList.remove('show');
+        successDiv.classList.remove('show');
 
         try {
-            const code = document.getElementById('verificationCode').value;
+            const code = document.getElementById('verificationCode').value.trim();
+
+            if (!code || code.length !== 6) {
+                throw new Error('Please enter a 6-digit verification code');
+            }
+
+            console.log('Verifying code:', code, 'for email:', signupData.email);
 
             const response = await fetch('/api/auth/verify-email', {
                 method: 'POST',
@@ -508,17 +516,22 @@
             });
 
             const data = await response.json();
+            console.log('Verification response:', response.status, data);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Verification failed');
             }
 
+            // Clear any error messages
+            errorDiv.classList.remove('show');
+
             showSuccess('Email verified! Redirecting to login...');
             setTimeout(() => {
                 window.location.href = '/login';
-            }, 2000);
+            }, 2500);
 
         } catch (error) {
+            console.error('Verification error:', error);
             showError(error.message);
         }
     });
