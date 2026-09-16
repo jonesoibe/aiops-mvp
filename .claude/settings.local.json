@@ -214,7 +214,13 @@
       "Bash(git commit -m 'fix: Correct Flasgger configuration parameters *)",
       "Bash(curl -s http://localhost:5000/api/docs)",
       "Bash(curl -s http://localhost:5000/apispec.json)",
-      "Bash(git commit -m 'feat: Add comprehensive OpenAPI specification for all endpoints *)"
+      "Bash(git commit -m 'feat: Add comprehensive OpenAPI specification for all endpoints *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5000)",
+      "Bash(curl -v http://localhost:5000/)",
+      "Bash(python3 -c \"import sys, json; print\\(json.dumps\\(json.loads\\(sys.stdin.read\\(\\)\\), indent=2\\)[:2000]\\)\")",
+      "Bash(curl -v http://localhost:5000/api/docs)",
+      "Bash(git commit -m 'fix: Add custom Swagger UI route with comprehensive API documentation *)"
     ]
   }
 }

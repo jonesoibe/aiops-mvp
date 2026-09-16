@@ -103,27 +103,90 @@ spec_path = os.path.join(os.path.dirname(__file__), 'openapi_spec.yaml')
 with open(spec_path, 'r') as f:
     openapi_spec = yaml.safe_load(f)
 
-swagger = Flasgger(
-    app,
-    specs=[
-        {
-            'endpoint': 'apispec',
-            'route': '/apispec.json',
-            'rule_filter': lambda rule: True,
-            'model_filter': lambda tag: True,
-        }
-    ],
-    static_url_path='/flasgger_static',
-    swagger_ui=True,
-    specs_route='/api/docs',
-    template={
+# Initialize Flasgger with minimal config
+try:
+    swagger = Flasgger(app)
+except Exception as e:
+    logger.warning(f"Flasgger initialization warning: {e}")
+    swagger = None
+
+# Custom route to serve the OpenAPI spec
+@app.route('/apispec.json', methods=['GET'])
+def get_apispec():
+    """Serve the comprehensive OpenAPI specification"""
+    return jsonify({
         'swagger': '2.0',
-        'info': openapi_spec.get('info', {}),
-        'host': 'localhost:5000',
-        'basePath': '/',
-        'schemes': ['http', 'https']
+        'info': {
+            'title': 'Nexus AIOps API',
+            'version': '1.0.0',
+            'description': 'Enterprise Autonomous Observability Platform API Documentation'
+        },
+        'basePath': '/api',
+        'schemes': ['http', 'https'],
+        'paths': openapi_spec.get('paths', {}),
+        'definitions': openapi_spec.get('components', {}).get('schemas', {})
+    })
+
+# Serve Swagger UI HTML
+@app.route('/api/docs', methods=['GET'])
+def swagger_ui():
+    """Serve the Swagger UI"""
+    return '''<!DOCTYPE html>
+<html>
+  <head>
+    <title>Nexus AIOps - API Documentation</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
+    <style>
+      html {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+      *, *:before, *:after {
+        box-sizing: inherit;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
+    <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "/apispec.json",
+        dom_id: '#swagger-ui',
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        requestInterceptor: (request) => {
+          request.headers['X-CSRFToken'] = (function() {
+            const name = 'XSRF-TOKEN=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const cookieArray = decodedCookie.split(';');
+            for(let i = 0; i < cookieArray.length; i++) {
+              let c = cookieArray[i].trim();
+              if (c.indexOf(name) === 0) {
+                return c.substring(name.length, c.length);
+              }
+            }
+            return '';
+          })();
+          return request;
+        }
+      })
+      window.ui = ui
     }
-)
+  </script>
+  </body>
+</html>'''
 
 # ==================== SECURITY HEADERS ====================
 
