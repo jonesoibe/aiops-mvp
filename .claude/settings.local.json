@@ -190,7 +190,10 @@
       "Bash(git commit -m 'docs: Add logging quick start guide with examples and monitoring tips *)",
       "PowerShell(taskkill /PID 11688 /F 2>$null)",
       "Bash(git commit -m 'fix: Create separate auth_base template without auth checks *)",
-      "Bash(git commit -m 'feat: Add Gmail SMTP configuration for email service *)"
+      "Bash(git commit -m 'feat: Add Gmail SMTP configuration for email service *)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 5580 -Force -ErrorAction SilentlyContinue)",
+      "Bash(git commit -m 'feat: Improve email verification UX and implement resend functionality *)"
     ]
   }
 }

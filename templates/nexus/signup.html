@@ -476,6 +476,12 @@
             document.getElementById('verificationSection').classList.add('show');
             showSuccess(data.message || 'Verification code sent to your email');
 
+            // Scroll to verification section
+            document.getElementById('verificationSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Auto-focus the verification code input
+            setTimeout(() => document.getElementById('verificationCode').focus(), 300);
+
         } catch (error) {
             showError(error.message);
         }
@@ -532,8 +538,38 @@
 
     function resendCode(e) {
         e.preventDefault();
-        // TODO: Implement resend code functionality
-        alert('Resend code functionality coming soon');
+
+        if (!signupData || !signupData.email) {
+            showError('Email not found. Please sign up again.');
+            return;
+        }
+
+        const resendBtn = e.target;
+        resendBtn.disabled = true;
+        resendBtn.textContent = 'Sending...';
+
+        fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(signupData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            showSuccess('✅ New verification code sent to your email!');
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'Resend';
+
+            // Clear the verification code input
+            document.getElementById('verificationCode').value = '';
+            document.getElementById('verificationCode').focus();
+        })
+        .catch(error => {
+            showError('Failed to resend code: ' + error.message);
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'Resend';
+        });
     }
 
     // Auto-focus next input when verification code is full
