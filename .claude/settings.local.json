@@ -220,7 +220,12 @@
       "Bash(curl -v http://localhost:5000/)",
       "Bash(python3 -c \"import sys, json; print\\(json.dumps\\(json.loads\\(sys.stdin.read\\(\\)\\), indent=2\\)[:2000]\\)\")",
       "Bash(curl -v http://localhost:5000/api/docs)",
-      "Bash(git commit -m 'fix: Add custom Swagger UI route with comprehensive API documentation *)"
+      "Bash(git commit -m 'fix: Add custom Swagger UI route with comprehensive API documentation *)",
+      "Bash(curl -i http://localhost:5000/api/docs)",
+      "Bash(cat)",
+      "Bash(chmod +x /tmp/test_api.sh)",
+      "Bash(/tmp/test_api.sh)",
+      "Bash(git commit -m 'fix: Enhance API documentation page with custom HTML interface *)"
     ]
   }
 }

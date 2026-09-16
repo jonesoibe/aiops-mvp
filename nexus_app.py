@@ -132,60 +132,201 @@ def get_apispec():
 def swagger_ui():
     """Serve the Swagger UI"""
     return '''<!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus AIOps - API Documentation</title>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
     <style>
-      html {
-        box-sizing: border-box;
-        overflow: -moz-scrollbars-vertical;
-        overflow-y: scroll;
-      }
-      *, *:before, *:after {
-        box-sizing: inherit;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="swagger-ui"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
-    <script>
-    window.onload = function() {
-      const ui = SwaggerUIBundle({
-        url: "/apispec.json",
-        dom_id: '#swagger-ui',
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIBundle.SwaggerUIStandalonePreset
-        ],
-        layout: "BaseLayout",
-        requestInterceptor: (request) => {
-          request.headers['X-CSRFToken'] = (function() {
-            const name = 'XSRF-TOKEN=';
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const cookieArray = decodedCookie.split(';');
-            for(let i = 0; i < cookieArray.length; i++) {
-              let c = cookieArray[i].trim();
-              if (c.indexOf(name) === 0) {
-                return c.substring(name.length, c.length);
-              }
-            }
-            return '';
-          })();
-          return request;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      })
-      window.ui = ui
-    }
-  </script>
-  </body>
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+
+        .endpoints {
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .endpoint {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 80px 1fr 200px;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .endpoint:last-child {
+            border-bottom: none;
+        }
+
+        .endpoint:hover {
+            background: #f9fafb;
+        }
+
+        .method {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .method.get { background: #e0f2fe; color: #0369a1; }
+        .method.post { background: #dbeafe; color: #1e40af; }
+        .method.put { background: #fef3c7; color: #92400e; }
+        .method.delete { background: #fee2e2; color: #991b1b; }
+
+        .path {
+            font-family: monospace;
+            font-size: 14px;
+            color: #1f2937;
+            word-break: break-all;
+        }
+
+        .description {
+            color: #6b7280;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .search {
+            margin-bottom: 20px;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .count {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Nexus AIOps API Documentation</h1>
+            <p>Enterprise Autonomous Observability Platform</p>
+            <p>For interactive API testing and detailed schemas, please use the endpoints listed below or access the OpenAPI spec at <code>/apispec.json</code></p>
+        </div>
+
+        <div class="search">
+            <input type="text" id="search" placeholder="Search endpoints by path or description...">
+        </div>
+
+        <div class="count">
+            <span id="endpoint-count">Loading endpoints...</span>
+        </div>
+
+        <div class="endpoints" id="endpoints-container">
+            Loading API documentation...
+        </div>
+    </div>
+
+    <script>
+        async function loadEndpoints() {
+            try {
+                const response = await fetch('/apispec.json');
+                const spec = await response.json();
+                const paths = spec.paths || {};
+
+                const container = document.getElementById('endpoints-container');
+                const countEl = document.getElementById('endpoint-count');
+                const searchInput = document.getElementById('search');
+
+                let endpoints = [];
+
+                // Parse all endpoints
+                for (const [path, methods] of Object.entries(paths)) {
+                    for (const [method, details] of Object.entries(methods)) {
+                        if (typeof details === 'object' && details.description) {
+                            endpoints.push({
+                                method: method.toUpperCase(),
+                                path: path,
+                                description: details.description
+                            });
+                        }
+                    }
+                }
+
+                countEl.textContent = `Total Endpoints: ${endpoints.length}`;
+
+                function renderEndpoints(filter = '') {
+                    const filtered = endpoints.filter(ep =>
+                        ep.path.toLowerCase().includes(filter.toLowerCase()) ||
+                        ep.description.toLowerCase().includes(filter.toLowerCase())
+                    );
+
+                    container.innerHTML = filtered.map(ep => `
+                        <div class="endpoint">
+                            <div class="method ${ep.method.toLowerCase()}">${ep.method}</div>
+                            <div class="path">${ep.path}</div>
+                            <div class="description">${ep.description}</div>
+                        </div>
+                    `).join('');
+                }
+
+                renderEndpoints();
+
+                searchInput.addEventListener('input', (e) => {
+                    renderEndpoints(e.target.value);
+                });
+
+            } catch (error) {
+                document.getElementById('endpoints-container').innerHTML =
+                    `<div style="padding: 20px; color: red;">Error loading API specification: ${error.message}</div>`;
+            }
+        }
+
+        loadEndpoints();
+    </script>
+</body>
 </html>'''
 
 # ==================== SECURITY HEADERS ====================
@@ -209,7 +350,7 @@ def add_security_headers(response):
     # XSS protection
     response.headers['X-XSS-Protection'] = '1; mode=block'
     # Content Security Policy
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.socket.io cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.socket.io cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com cdnjs.cloudflare.com; font-src 'self' fonts.gstatic.com"
     return response
 
 # Configuration
