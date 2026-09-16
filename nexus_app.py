@@ -511,7 +511,7 @@ def initialize_users():
         }
     }
 
-    if db:
+    if db is not None:
         # Store in MongoDB
         users_collection = db['users']
         for username, user_data in demo_users.items():
@@ -642,7 +642,7 @@ def initialize_approvals():
         }
     ]
 
-    if db:
+    if db is not None:
         # Store in MongoDB
         try:
             approvals_collection = db['approvals']
@@ -787,7 +787,7 @@ def login():
 
     # Try MongoDB first
     user_data = None
-    if db:
+    if db is not None:
         user_data = db['users'].find_one({'username': username})
     else:
         user_data = in_memory_store['users'].get(username)
@@ -893,7 +893,7 @@ def signup():
 
         # Check if user already exists
         existing_user = None
-        if db:
+        if db is not None:
             existing_user = db['users'].find_one({'$or': [{'email': email}, {'username': username}]})
         else:
             existing_user = in_memory_store['users'].get(username)
@@ -997,7 +997,7 @@ def verify_email():
         }
 
         # Save to database
-        if db:
+        if db is not None:
             try:
                 db['users'].insert_one(final_user)
             except Exception as e:
@@ -1075,7 +1075,7 @@ def forgot_password():
 
         # Check if user exists
         user = None
-        if db:
+        if db is not None:
             try:
                 user = db['users'].find_one({'email': email})
             except Exception as e:
@@ -1157,7 +1157,7 @@ def reset_password():
         # Update password in database
         hashed_password = auth_manager.hash_password(password)
 
-        if db:
+        if db is not None:
             try:
                 db['users'].update_one(
                     {'email': email},
@@ -1210,7 +1210,7 @@ def get_profile(user=None):
         # Find user in database
         user_data = None
 
-        if db:
+        if db is not None:
             try:
                 user_data = db['users'].find_one({'username': user['username']})
             except Exception as e:
@@ -1275,7 +1275,7 @@ def update_profile(user=None):
             return jsonify({'error': 'No fields to update'}), 400
 
         # Update in database
-        if db:
+        if db is not None:
             try:
                 result = db['users'].update_one(
                     {'username': username},
@@ -1298,7 +1298,7 @@ def update_profile(user=None):
 
         # Get updated user data
         user_data = None
-        if db:
+        if db is not None:
             try:
                 user_data = db['users'].find_one({'username': username})
             except Exception as e:
@@ -1351,7 +1351,7 @@ def change_password(user=None):
 
         # Get user from database
         user_data = None
-        if db:
+        if db is not None:
             try:
                 user_data = db['users'].find_one({'username': username})
             except Exception as e:
@@ -1376,7 +1376,7 @@ def change_password(user=None):
         new_password_hash = auth_manager.hash_password(new_password)
 
         # Update password in database
-        if db:
+        if db is not None:
             try:
                 db['users'].update_one(
                     {'username': username},
@@ -1430,7 +1430,7 @@ def get_incidents():
     """Get active incidents (from CSV data or MongoDB)."""
 
     # Try to get from MongoDB first
-    if db:
+    if db is not None:
         try:
             incidents = list(db['incidents'].find({}, {'_id': 0}).sort('timestamp', -1).limit(100))
             if incidents:
@@ -1450,7 +1450,7 @@ def get_incidents():
     active.sort(key=lambda x: x['timestamp'], reverse=True)
 
     # Try to save to MongoDB for future use
-    if db:
+    if db is not None:
         try:
             db['incidents'].delete_many({})  # Clear old data
             db['incidents'].insert_many(active)
@@ -1541,7 +1541,7 @@ def execute_remediation(incident_id, user=None):
         remediation_result['status'] = 'success'
 
         # Store remediation record in MongoDB if available
-        if db:
+        if db is not None:
             try:
                 db['remediation_actions'].insert_one({
                     'incident_id': incident_id,
@@ -1684,7 +1684,7 @@ def ai_analysis(incident_id, user=None):
         })
 
         # Store analysis in MongoDB if available
-        if db:
+        if db is not None:
             try:
                 db['ai_analysis'].insert_one({
                     'incident_id': incident_id,
@@ -1829,7 +1829,7 @@ def get_actions():
     """Get executed remediation actions."""
     limit = request.args.get('limit', 50, type=int)
 
-    if db:
+    if db is not None:
         try:
             actions = list(db['actions'].find({}, {'_id': 0}).sort('timestamp', -1).limit(limit))
             print(f"✅ Retrieved {len(actions)} actions from MongoDB")
@@ -1855,7 +1855,7 @@ def get_approvals_api():
     status = request.args.get('status', 'pending')
     limit = request.args.get('limit', 50, type=int)
 
-    if db:
+    if db is not None:
         try:
             approvals = list(db['approvals'].find({'status': status}, {'_id': 0}).sort('requested_at', -1).limit(limit))
             return jsonify({'total': len(approvals), 'approvals': approvals}), 200
@@ -1869,7 +1869,7 @@ def get_approvals_api():
 @app.route('/api/approvals/<approval_id>', methods=['GET'])
 def get_approval_api(approval_id):
     """Get specific approval request."""
-    if db:
+    if db is not None:
         try:
             approval = db['approvals'].find_one({'approval_id': approval_id}, {'_id': 0})
             if approval:
@@ -1895,7 +1895,7 @@ def approve_approval_api(approval_id):
         'approved_at': timestamp
     }
 
-    if db:
+    if db is not None:
         try:
             db['approvals'].update_one({'approval_id': approval_id}, {'$set': update_data})
         except Exception as e:
@@ -1923,7 +1923,7 @@ def reject_approval_api(approval_id):
         'rejection_reason': reason
     }
 
-    if db:
+    if db is not None:
         try:
             db['approvals'].update_one({'approval_id': approval_id}, {'$set': update_data})
         except Exception as e:
@@ -1974,7 +1974,7 @@ def execute_action():
     }
 
     # Save to MongoDB
-    if db:
+    if db is not None:
         try:
             db['actions'].insert_one(action_record)
             print(f"✅ Action saved to MongoDB: {action_record['action_id']}")
@@ -1994,7 +1994,7 @@ def execute_action():
         'incident_id': incident_id
     }
 
-    if db:
+    if db is not None:
         try:
             db['audit_log'].insert_one(audit_entry)
         except Exception as e:
