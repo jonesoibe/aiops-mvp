@@ -46,6 +46,17 @@ from simulation_output_generator import SimulationOutputGenerator
 
 # Audit & Logging
 from audit_logger import audit_logger, audit_required, log_security_event
+from logger_config import get_logger, get_api_logger, get_performance_logger
+from logging_utils import (
+    log_api_request, log_function_call, log_database_operation,
+    log_security_event as log_sec_event, log_error_with_context,
+    log_startup_info, log_shutdown_info, configure_flask_logging
+)
+
+# Initialize loggers
+logger = get_logger('nexus_aiops')
+api_logger = get_api_logger()
+perf_logger = get_performance_logger()
 
 # Service Topology
 from service_topology_simulator import get_topology_simulator
@@ -83,6 +94,10 @@ MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017')
 DATABASE_NAME = 'nexus_aiops'
 
 app.config['SECRET_KEY'] = SECRET_KEY
+
+# Configure Flask logging
+configure_flask_logging(app)
+log_startup_info('Nexus AIOps', '1.0.0', f'Environment: {os.getenv("ENVIRONMENT", "development")}')
 
 # ==================== DATABASE CONNECTION ====================
 
