@@ -128,206 +128,197 @@ def get_apispec():
     })
 
 # Serve Swagger UI HTML
+# Serve Interactive Swagger UI
 @app.route('/api/docs', methods=['GET'])
 def swagger_ui():
-    """Serve the Swagger UI"""
-    return '''<!DOCTYPE html>
+    """Serve the interactive Swagger UI for API testing"""
+    return """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus AIOps - API Documentation</title>
+    <title>Nexus AIOps API Testing Console</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            color: #1f2937;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            color: #6b7280;
-            margin-bottom: 15px;
-        }
-
-        .endpoints {
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .endpoint {
-            border-bottom: 1px solid #e5e7eb;
-            padding: 15px 20px;
-            display: grid;
-            grid-template-columns: 80px 1fr 200px;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .endpoint:last-child {
-            border-bottom: none;
-        }
-
-        .endpoint:hover {
-            background: #f9fafb;
-        }
-
-        .method {
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 3px;
-            text-align: center;
-            font-size: 12px;
-        }
-
-        .method.get { background: #e0f2fe; color: #0369a1; }
-        .method.post { background: #dbeafe; color: #1e40af; }
-        .method.put { background: #fef3c7; color: #92400e; }
-        .method.delete { background: #fee2e2; color: #991b1b; }
-
-        .path {
-            font-family: monospace;
-            font-size: 14px;
-            color: #1f2937;
-            word-break: break-all;
-        }
-
-        .description {
-            color: #6b7280;
-            font-size: 13px;
-            text-align: right;
-        }
-
-        .search {
-            margin-bottom: 20px;
-        }
-
-        .search input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .search input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .count {
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
+        * {margin:0;padding:0;box-sizing:border-box}
+        body {font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f5f5f5;color:#1f2937}
+        .container {max-width:1400px;margin:0 auto;padding:20px}
+        .header {background:white;padding:30px;border-radius:8px;margin-bottom:30px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        .header h1 {font-size:28px;margin-bottom:10px}
+        .header p {color:#6b7280;margin-bottom:10px}
+        .controls {display:flex;gap:15px;margin-top:20px;flex-wrap:wrap}
+        .token-section,.search-section {flex:1;min-width:300px}
+        .token-section label,.search-section label {display:block;font-size:12px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase}
+        .token-section input,.search-section input {width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:monospace}
+        .token-section input:focus,.search-section input:focus {outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+        .count {color:#6b7280;font-size:14px;margin-bottom:20px}
+        .endpoints {display:grid;gap:20px}
+        .endpoint-card {background:white;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;transition:box-shadow 0.2s}
+        .endpoint-card:hover {box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+        .endpoint-header {padding:20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+        .endpoint-header:hover {background:#f9fafb}
+        .endpoint-info {display:flex;gap:20px;align-items:center;flex:1}
+        .method-badge {font-weight:bold;padding:6px 12px;border-radius:6px;font-size:12px;min-width:60px;text-align:center}
+        .method-badge.get {background:#e0f2fe;color:#0369a1}
+        .method-badge.post {background:#dbeafe;color:#1e40af}
+        .method-badge.put {background:#fef3c7;color:#92400e}
+        .method-badge.delete {background:#fee2e2;color:#991b1b}
+        .endpoint-path {font-family:monospace;font-size:14px;color:#1f2937;flex:1}
+        .endpoint-description {color:#6b7280;font-size:13px;margin:8px 0 0 0}
+        .toggle-icon {color:#9ca3af;font-size:20px;transition:transform 0.2s}
+        .endpoint-card.expanded .toggle-icon {transform:rotate(180deg)}
+        .endpoint-body {display:none;padding:20px;background:#f9fafb}
+        .endpoint-card.expanded .endpoint-body {display:block}
+        .test-form {display:grid;gap:20px}
+        .form-group {display:grid;gap:8px}
+        .form-group label {font-weight:600;font-size:13px;color:#374151}
+        .form-group input,.form-group textarea {padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:12px}
+        .form-group textarea {resize:vertical;min-height:100px}
+        .form-group input:focus,.form-group textarea:focus {outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+        .button-group {display:flex;gap:10px}
+        .btn {padding:10px 20px;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;transition:all 0.2s}
+        .btn-primary {background:#3b82f6;color:white}
+        .btn-primary:hover {background:#2563eb}
+        .btn-secondary {background:#e5e7eb;color:#1f2937}
+        .btn-secondary:hover {background:#d1d5db}
+        .response-section {margin-top:20px}
+        .response-section h4 {font-size:13px;font-weight:600;color:#374151;margin-bottom:10px}
+        .response-box {background:#1f2937;color:#10b981;padding:15px;border-radius:6px;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+        .response-box.error {color:#ef4444}
+        .loading {color:#9ca3af}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Nexus AIOps API Documentation</h1>
-            <p>Enterprise Autonomous Observability Platform</p>
-            <p>For interactive API testing and detailed schemas, please use the endpoints listed below or access the OpenAPI spec at <code>/apispec.json</code></p>
+            <h1>🚀 Nexus AIOps API Testing Console</h1>
+            <p>Interactive API documentation and testing interface</p>
+            <div class="controls">
+                <div class="token-section">
+                    <label>JWT Authorization Token</label>
+                    <input type="password" id="authToken" placeholder="Paste JWT token from /api/auth/login">
+                </div>
+                <div class="search-section">
+                    <label>Search Endpoints</label>
+                    <input type="text" id="search" placeholder="Search by path or description...">
+                </div>
+            </div>
         </div>
-
-        <div class="search">
-            <input type="text" id="search" placeholder="Search endpoints by path or description...">
-        </div>
-
-        <div class="count">
-            <span id="endpoint-count">Loading endpoints...</span>
-        </div>
-
-        <div class="endpoints" id="endpoints-container">
-            Loading API documentation...
-        </div>
+        <div class="count"><span id="endpoint-count">Loading...</span></div>
+        <div class="endpoints" id="endpoints-container">Loading endpoints...</div>
     </div>
-
     <script>
+        const baseUrl = window.location.origin;
+        let allEndpoints = [];
+
         async function loadEndpoints() {
             try {
-                const response = await fetch('/apispec.json');
-                const spec = await response.json();
+                const r = await fetch('/apispec.json');
+                const spec = await r.json();
                 const paths = spec.paths || {};
-
                 const container = document.getElementById('endpoints-container');
                 const countEl = document.getElementById('endpoint-count');
                 const searchInput = document.getElementById('search');
 
-                let endpoints = [];
-
-                // Parse all endpoints
                 for (const [path, methods] of Object.entries(paths)) {
                     for (const [method, details] of Object.entries(methods)) {
                         if (typeof details === 'object' && details.description) {
-                            endpoints.push({
-                                method: method.toUpperCase(),
-                                path: path,
-                                description: details.description
-                            });
+                            allEndpoints.push({method: method.toUpperCase(), path, description: details.description});
                         }
                     }
                 }
 
-                countEl.textContent = `Total Endpoints: ${endpoints.length}`;
+                countEl.textContent = `Total Endpoints: ${allEndpoints.length}`;
+                render('');
+                searchInput.addEventListener('input', (e) => render(e.target.value));
 
-                function renderEndpoints(filter = '') {
-                    const filtered = endpoints.filter(ep =>
-                        ep.path.toLowerCase().includes(filter.toLowerCase()) ||
-                        ep.description.toLowerCase().includes(filter.toLowerCase())
-                    );
-
-                    container.innerHTML = filtered.map(ep => `
-                        <div class="endpoint">
-                            <div class="method ${ep.method.toLowerCase()}">${ep.method}</div>
-                            <div class="path">${ep.path}</div>
-                            <div class="description">${ep.description}</div>
-                        </div>
-                    `).join('');
-                }
-
-                renderEndpoints();
-
-                searchInput.addEventListener('input', (e) => {
-                    renderEndpoints(e.target.value);
-                });
-
-            } catch (error) {
-                document.getElementById('endpoints-container').innerHTML =
-                    `<div style="padding: 20px; color: red;">Error loading API specification: ${error.message}</div>`;
+            } catch (e) {
+                document.getElementById('endpoints-container').innerHTML = `<div style="padding:20px;color:red;">Error: ${e.message}</div>`;
             }
+        }
+
+        function render(filter = '') {
+            const container = document.getElementById('endpoints-container');
+            const filtered = allEndpoints.filter(ep =>
+                ep.path.toLowerCase().includes(filter.toLowerCase()) ||
+                ep.description.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            container.innerHTML = filtered.map(ep => `
+                <div class="endpoint-card" onclick="this.classList.toggle('expanded')">
+                    <div class="endpoint-header">
+                        <div class="endpoint-info">
+                            <div class="method-badge ${ep.method.toLowerCase()}">${ep.method}</div>
+                            <div>
+                                <div class="endpoint-path">${ep.path}</div>
+                                <div class="endpoint-description">${ep.description}</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon">▼</div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="test-form">
+                            <div class="form-group">
+                                <label>Request Body (JSON)</label>
+                                <textarea class="request-body" placeholder='{" key": " value"}' style="display:${['POST','PUT'].includes(ep.method) ? 'block' : 'none'}"></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="testEndpoint('${ep.method}', '${ep.path}', event)">Test Endpoint</button>
+                                <button class="btn btn-secondary" onclick="copyCurl('${ep.method}', '${ep.path}')">Copy cURL</button>
+                            </div>
+                            <div class="response-section" style="display:none">
+                                <h4>Response</h4>
+                                <div class="response-box"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function testEndpoint(method, path, e) {
+            const card = e.target.closest('.endpoint-card');
+            const responseBox = card.querySelector('.response-box');
+            const responseSec = card.querySelector('.response-section');
+            const token = document.getElementById('authToken').value;
+            const bodyInput = card.querySelector('.request-body');
+
+            responseSec.style.display = 'block';
+            responseBox.classList.remove('error');
+            responseBox.textContent = 'Loading...';
+            responseBox.classList.add('loading');
+
+            try {
+                const opts = {method, headers: {'Content-Type': 'application/json'}};
+                if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+                if (bodyInput && bodyInput.value) opts.body = bodyInput.value;
+
+                const res = await fetch(baseUrl + path, opts);
+                const data = await res.json();
+
+                responseBox.classList.remove('loading');
+                responseBox.textContent = JSON.stringify(data, null, 2);
+                responseBox.style.color = res.ok ? '#10b981' : '#ef4444';
+                if (!res.ok) responseBox.classList.add('error');
+
+            } catch (err) {
+                responseBox.classList.remove('loading');
+                responseBox.classList.add('error');
+                responseBox.textContent = `Error: ${err.message}`;
+            }
+        }
+
+        function copyCurl(method, path) {
+            const token = document.getElementById('authToken').value;
+            let curl = `curl -X ${method} ${baseUrl}${path}`;
+            if (token) curl += ` -H "Authorization: Bearer ${token}"`;
+            curl += ` -H "Content-Type: application/json" -d '{}'`;
+            navigator.clipboard.writeText(curl).then(() => alert('Copied!'));
         }
 
         loadEndpoints();
     </script>
 </body>
-</html>'''
+</html>"""
 
 # ==================== SECURITY HEADERS ====================
 
