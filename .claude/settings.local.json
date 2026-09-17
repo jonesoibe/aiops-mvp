@@ -232,7 +232,8 @@
       "Bash(curl -s -H 'Accept: application/vnd.github.v3+json' 'https://api.github.com/repos/jonesoibe/aiops-mvp/pulls?state=open&head=jonesoibe:feature/https-encryption-and-onboarding')",
       "Bash(python3 -c \"import sys, json; data = json.load\\(sys.stdin\\); print\\(f'Found {len\\(data\\)} PR\\(s\\)'\\); [print\\(f'PR #{pr[\\\\\"number\\\\\"]}: {pr[\\\\\"html_url\\\\\"]}'\\) for pr in data]\")",
       "Bash(python3 update_swagger.py)",
-      "Bash(git commit -m 'fix: Replace Swagger UI with fully interactive API testing console *)"
+      "Bash(git commit -m 'fix: Replace Swagger UI with fully interactive API testing console *)",
+      "Bash(git commit -m 'refactor: Remove SSL/HTTPS configuration for development simplicity *)"
     ]
   }
 }
