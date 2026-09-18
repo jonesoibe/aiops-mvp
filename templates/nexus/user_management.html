@@ -411,16 +411,33 @@
 
         async function loadUsers() {
             try {
+                if (!token) {
+                    showError('No authentication token found. Please login again.');
+                    setTimeout(() => window.location.href = '/login', 2000);
+                    return;
+                }
+
+                console.log('Loading users with token:', token.substring(0, 20) + '...');
                 const response = await fetch(`${baseUrl}/user/all-users`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
-                if (!response.ok) throw new Error('Failed to load users');
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Failed to load users (${response.status})`);
+                }
 
                 const data = await response.json();
                 allUsers = data.users || [];
                 renderUsers(allUsers);
             } catch (error) {
+                console.error('Load users error:', error);
                 showError(error.message);
             }
         }

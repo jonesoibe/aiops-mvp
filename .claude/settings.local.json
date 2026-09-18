@@ -238,7 +238,8 @@
       "Bash(curl -v http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
       "Bash(timeout 5 python3 nexus_app.py)",
       "Bash(git commit -m 'refactor: Remove HTTPS from OpenAPI spec schemes for development *)",
-      "Bash(git commit -m 'feat: Add user management interface for admin users *)"
+      "Bash(git commit -m 'feat: Add user management interface for admin users *)",
+      "Bash(git commit -m 'fix: Improve error handling and token validation in user management *)"
     ]
   }
 }
