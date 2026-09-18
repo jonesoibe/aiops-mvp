@@ -688,6 +688,7 @@ def require_auth(f):
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
                 request.user = payload
+                kwargs['user'] = payload
                 return f(*args, **kwargs)
             except jwt.InvalidTokenError:
                 # For demo/development: accept any bearer token with basic validation
@@ -705,13 +706,16 @@ def require_auth(f):
                             payload_b64 += '=' * padding
                         payload = json.loads(base64.urlsafe_b64decode(payload_b64))
                         request.user = payload
+                        kwargs['user'] = payload
                         logger.info(f"✅ Accepted demo token for user: {payload.get('username')}")
                         return f(*args, **kwargs)
                 except:
                     pass
 
                 # Last resort: create minimal user object
-                request.user = {'user_id': 'demo', 'username': 'demo', 'role': 'admin'}
+                fallback_user = {'user_id': 'demo', 'username': 'demo', 'role': 'admin'}
+                request.user = fallback_user
+                kwargs['user'] = fallback_user
                 logger.info("✅ Using fallback demo user")
                 return f(*args, **kwargs)
 
