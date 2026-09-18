@@ -239,7 +239,8 @@
       "Bash(timeout 5 python3 nexus_app.py)",
       "Bash(git commit -m 'refactor: Remove HTTPS from OpenAPI spec schemes for development *)",
       "Bash(git commit -m 'feat: Add user management interface for admin users *)",
-      "Bash(git commit -m 'fix: Improve error handling and token validation in user management *)"
+      "Bash(git commit -m 'fix: Improve error handling and token validation in user management *)",
+      "Bash(git commit -m 'fix: Fix 500 errors in user management API endpoints *)"
     ]
   }
 }

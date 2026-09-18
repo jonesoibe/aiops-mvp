@@ -1899,27 +1899,34 @@ def get_all_users(user=None):
 
         users_list = []
 
-        if db is not None:
-            try:
+        try:
+            if db is not None:
                 users_data = db['users'].find({}, {'password_hash': 0})
-                users_list = [dict(u) for u in users_data]
-                for u in users_list:
+                for u in users_data:
                     u.pop('_id', None)
-            except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
-                users_list = [dict(u) for u in in_memory_store['users'].values()]
-                for u in users_list:
-                    u.pop('password_hash', None)
-        else:
-            users_list = [dict(u) for u in in_memory_store['users'].values()]
-            for u in users_list:
-                u.pop('password_hash', None)
+                    users_list.append(u)
+            else:
+                if 'users' in in_memory_store:
+                    for u in in_memory_store['users'].values():
+                        user_copy = dict(u)
+                        user_copy.pop('password_hash', None)
+                        users_list.append(user_copy)
+        except Exception as e:
+            print(f"⚠️ Database error: {e}")
+            # Fallback to in-memory store
+            if 'users' in in_memory_store:
+                for u in in_memory_store['users'].values():
+                    user_copy = dict(u)
+                    user_copy.pop('password_hash', None)
+                    users_list.append(user_copy)
 
         return jsonify({'users': users_list}), 200
 
     except Exception as e:
         print(f"❌ Get all users error: {e}")
-        return jsonify({'error': 'Failed to retrieve users'}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/user/update-user', methods=['PUT'])
 @require_auth
@@ -1953,10 +1960,12 @@ def update_user_admin(user=None):
                     return jsonify({'error': 'User not found'}), 404
             except Exception as e:
                 print(f"⚠️ MongoDB error: {e}")
-                if username in in_memory_store['users']:
+                if 'users' in in_memory_store and username in in_memory_store['users']:
                     in_memory_store['users'][username].update(update_data)
+                else:
+                    return jsonify({'error': 'User not found'}), 404
         else:
-            if username in in_memory_store['users']:
+            if 'users' in in_memory_store and username in in_memory_store['users']:
                 in_memory_store['users'][username].update(update_data)
             else:
                 return jsonify({'error': 'User not found'}), 404
