@@ -545,7 +545,9 @@
         }
 
         async function deleteUser(username) {
-            if (!confirm(`Are you sure you want to delete user "${username}"?`)) return;
+            // Show custom confirmation modal
+            const confirmed = await showDeleteConfirmation(username);
+            if (!confirmed) return;
 
             try {
                 const response = await fetch(`${baseUrl}/admin/users/${username}`, {
@@ -558,10 +560,89 @@
                     throw new Error(error.error || 'Failed to delete user');
                 }
 
+                showSuccess(`User ${username} deleted successfully`);
                 loadUsers();
             } catch (error) {
                 showError(error.message);
             }
+        }
+
+        function showDeleteConfirmation(username) {
+            return new Promise((resolve) => {
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                `;
+
+                // Create confirmation dialog
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border-primary);
+                    border-radius: 12px;
+                    padding: 32px;
+                    max-width: 400px;
+                    text-align: center;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                `;
+
+                dialog.innerHTML = `
+                    <h2 style="color: var(--text-primary); margin: 0 0 16px 0; font-size: 20px;">Delete User</h2>
+                    <p style="color: var(--text-secondary); margin: 0 0 24px 0; font-size: 14px;">
+                        Are you sure you want to delete user <strong>${username}</strong>? This action cannot be undone.
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button class="btn btn-secondary" style="padding: 10px 20px; cursor: pointer;" onclick="this.closest('[data-confirm-modal]').remove(); this.dispatchEvent(new Event('cancel', {bubbles: true}))">
+                            Cancel
+                        </button>
+                        <button class="btn btn-danger" style="padding: 10px 20px; cursor: pointer; background: rgba(255, 77, 166, 0.2); border: 1px solid var(--color-critical); color: var(--color-critical);" onclick="this.closest('[data-confirm-modal]').remove(); this.dispatchEvent(new Event('confirm', {bubbles: true}))">
+                            Delete
+                        </button>
+                    </div>
+                `;
+
+                dialog.setAttribute('data-confirm-modal', 'true');
+                overlay.appendChild(dialog);
+                document.body.appendChild(overlay);
+
+                // Handle responses
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.remove();
+                        resolve(false);
+                    }
+                });
+
+                dialog.addEventListener('confirm', () => {
+                    overlay.remove();
+                    resolve(true);
+                });
+
+                dialog.addEventListener('cancel', () => {
+                    overlay.remove();
+                    resolve(false);
+                });
+            });
+        }
+
+        function showSuccess(message) {
+            const msgDiv = document.getElementById('errorMessage');
+            msgDiv.textContent = '✅ ' + message;
+            msgDiv.style.display = 'block';
+            msgDiv.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
+            msgDiv.style.borderColor = 'var(--color-success)';
+            msgDiv.style.color = 'var(--color-success)';
+            setTimeout(() => msgDiv.style.display = 'none', 3000);
         }
 
         function showError(message) {

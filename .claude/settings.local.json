@@ -249,7 +249,16 @@
       "Read(//tmp/**)",
       "Bash(.venv/Scripts/python nexus_app.py)",
       "Bash(curl -s http://localhost:5000/api/user/all-users -H \"Authorization: Bearer test_token\")",
-      "Bash(git commit -m 'fix: Fix require_auth decorator to pass user parameter to functions *)"
+      "Bash(git commit -m 'fix: Fix require_auth decorator to pass user parameter to functions *)",
+      "Bash(curl -s http://localhost:5000/api/user/all-users -H 'Authorization: Bearer test_token' -H 'Content-Type: application/json')",
+      "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'nexus_app' } | Stop-Process -Force; Start-Sleep -Seconds 3; Get-Process python -ErrorAction SilentlyContinue | Select-Object -First 3 Id, ProcessName)",
+      "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 3; \"Port check:\" ; netstat -ano 2>$null | Select-String 5000 -ErrorAction SilentlyContinue | ForEach-Object { $_ })",
+      "Bash(curl -s -X GET http://localhost:5000/api/user/all-users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIn0.test' -H 'Content-Type: application/json')",
+      "Bash(curl -s -X GET http://localhost:5000/api/user/all-users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzkwMzY3NzIwfQ.Af8_wk4YrTZjR0XzwccwGonv_t8rcugU6CZtOMnyoOo' -H 'Content-Type: application/json')",
+      "Bash(curl -v -X GET http://localhost:5000/api/user/all-users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzkwMzY3NzIwfQ.Af8_wk4YrTZjR0XzwccwGonv_t8rcugU6CZtOMnyoOo' -H 'Content-Type: application/json')",
+      "Bash(pkill -9 python)",
+      "Bash(curl -s http://localhost:5000/api/user/all-users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzkwMzY3NzIwfQ.Af8_wk4YrTZjR0XzwccwGonv_t8rcugU6CZtOMnyoOo')",
+      "Bash(git commit -m 'feat: Replace native confirm\\(\\) with custom modal for delete user confirmation *)"
     ]
   }
 }
