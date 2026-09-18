@@ -1887,6 +1887,105 @@ def delete_user(username, user=None):
         )
         return jsonify({'error': 'Failed to delete user'}), 500
 
+# ==================== USER MANAGEMENT API ====================
+
+@app.route('/api/user/all-users', methods=['GET'])
+@require_auth
+def get_all_users(user=None):
+    """Get all users. Admin only."""
+    try:
+        if user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+
+        users_list = []
+
+        if db is not None:
+            try:
+                users_data = db['users'].find({}, {'password_hash': 0})
+                users_list = [dict(u) for u in users_data]
+                for u in users_list:
+                    u.pop('_id', None)
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                users_list = [dict(u) for u in in_memory_store['users'].values()]
+                for u in users_list:
+                    u.pop('password_hash', None)
+        else:
+            users_list = [dict(u) for u in in_memory_store['users'].values()]
+            for u in users_list:
+                u.pop('password_hash', None)
+
+        return jsonify({'users': users_list}), 200
+
+    except Exception as e:
+        print(f"❌ Get all users error: {e}")
+        return jsonify({'error': 'Failed to retrieve users'}), 500
+
+@app.route('/api/user/update-user', methods=['PUT'])
+@require_auth
+def update_user_admin(user=None):
+    """Update user details. Admin only."""
+    try:
+        if user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+
+        data = request.get_json()
+        username = data.get('username', '').lower().strip()
+
+        if not username:
+            return jsonify({'error': 'Username is required'}), 400
+
+        update_data = {
+            'email': data.get('email'),
+            'first_name': data.get('first_name'),
+            'last_name': data.get('last_name'),
+            'role': data.get('role', 'user'),
+            'department': data.get('department', 'Other')
+        }
+
+        if db is not None:
+            try:
+                result = db['users'].update_one(
+                    {'username': username},
+                    {'$set': update_data}
+                )
+                if result.matched_count == 0:
+                    return jsonify({'error': 'User not found'}), 404
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                if username in in_memory_store['users']:
+                    in_memory_store['users'][username].update(update_data)
+        else:
+            if username in in_memory_store['users']:
+                in_memory_store['users'][username].update(update_data)
+            else:
+                return jsonify({'error': 'User not found'}), 404
+
+        audit_logger.log_action(
+            action='USER_UPDATED',
+            user_id=user['username'],
+            resource='user_management',
+            status='success',
+            details={'updated_user': username},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({'message': 'User updated successfully'}), 200
+
+    except Exception as e:
+        print(f"❌ Update user error: {e}")
+        return jsonify({'error': 'Failed to update user'}), 500
+
+@app.route('/user-management', methods=['GET'])
+@require_auth
+def user_management_page(user=None):
+    """Serve user management page. Admin only."""
+    if user.get('role') != 'admin':
+        return redirect('/'), 403
+
+    return render_template('nexus/user_management.html')
+
 # ==================== TELEMETRY API ====================
 
 @app.route('/api/telemetry/current', methods=['GET'])

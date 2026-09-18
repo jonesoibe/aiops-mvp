@@ -109,35 +109,6 @@
             cursor: not-allowed;
         }
 
-        .credentials-box {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            margin-top: var(--space-6);
-            font-size: var(--fs-xs);
-            color: var(--text-secondary);
-        }
-
-        .credentials-title {
-            font-weight: var(--fw-bold);
-            color: var(--text-primary);
-            margin-bottom: var(--space-2);
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-
-        .credentials-item {
-            padding: var(--space-2) 0;
-            border-bottom: 1px solid var(--border-primary);
-            font-family: var(--font-mono);
-        }
-
-        .credentials-item:last-child {
-            border-bottom: none;
-        }
-
         .error-message {
             display: none;
             padding: var(--space-3);
@@ -151,25 +122,6 @@
 
         .error-message.show {
             display: block;
-        }
-
-        .toggle-credentials {
-            text-align: center;
-            margin-top: var(--space-4);
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: var(--color-info);
-            cursor: pointer;
-            font-size: var(--fs-xs);
-            text-decoration: underline;
-            transition: all var(--transition-base);
-        }
-
-        .toggle-btn:hover {
-            color: var(--color-success);
         }
 
         .auth-links {
@@ -227,20 +179,6 @@
                 <button type="submit" class="login-button" id="submitBtn">Sign In</button>
             </form>
 
-            <!-- Toggle Credentials -->
-            <div class="toggle-credentials">
-                <button class="toggle-btn" onclick="toggleCredentials()" type="button">
-                    📋 Show Demo Credentials
-                </button>
-            </div>
-
-            <!-- Demo Credentials Box -->
-            <div class="credentials-box" id="credentialsBox" style="display: none;">
-                <div class="credentials-title">🔐 Demo Accounts</div>
-                <div class="credentials-item"><strong>Admin:</strong> admin / admin123</div>
-                <div class="credentials-item"><strong>Operator:</strong> operator / operator123</div>
-                <div class="credentials-item"><strong>Viewer:</strong> viewer / viewer123</div>
-            </div>
 
             <!-- Authentication Links -->
             <div class="auth-links">
@@ -252,11 +190,6 @@
     </div>
 
     <script>
-        function toggleCredentials() {
-            const box = document.getElementById('credentialsBox');
-            box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        }
-
         function handleLogin(event) {
             event.preventDefault();
 
@@ -302,11 +235,6 @@
             });
         }
 
-        // Auto-fill admin credentials on load for demo
-        window.addEventListener('load', () => {
-            document.getElementById('username').value = 'admin';
-            document.getElementById('password').value = 'admin123';
-        });
     </script>
 </body>
 </html>
