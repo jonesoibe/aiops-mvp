@@ -122,7 +122,7 @@ def get_apispec():
             'description': 'Enterprise Autonomous Observability Platform API Documentation'
         },
         'basePath': '/api',
-        'schemes': ['http', 'https'],
+        'schemes': ['http'],
         'paths': openapi_spec.get('paths', {}),
         'definitions': openapi_spec.get('components', {}).get('schemas', {})
     })

@@ -233,7 +233,11 @@
       "Bash(python3 -c \"import sys, json; data = json.load\\(sys.stdin\\); print\\(f'Found {len\\(data\\)} PR\\(s\\)'\\); [print\\(f'PR #{pr[\\\\\"number\\\\\"]}: {pr[\\\\\"html_url\\\\\"]}'\\) for pr in data]\")",
       "Bash(python3 update_swagger.py)",
       "Bash(git commit -m 'fix: Replace Swagger UI with fully interactive API testing console *)",
-      "Bash(git commit -m 'refactor: Remove SSL/HTTPS configuration for development simplicity *)"
+      "Bash(git commit -m 'refactor: Remove SSL/HTTPS configuration for development simplicity *)",
+      "Bash(curl -s http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(curl -v http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(timeout 5 python3 nexus_app.py)",
+      "Bash(git commit -m 'refactor: Remove HTTPS from OpenAPI spec schemes for development *)"
     ]
   }
 }
