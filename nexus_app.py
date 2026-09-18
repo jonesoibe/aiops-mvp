@@ -1993,7 +1993,43 @@ def update_user_admin(user=None):
 @app.route('/user-management', methods=['GET'])
 def user_management_page():
     """Serve user management page. Auth handled by frontend with localStorage token."""
-    return render_template('nexus/user_management.html')
+    html = render_template('nexus/user_management.html')
+    has_confirm = '!confirm' in html
+    has_modal = 'showDeleteConfirmation' in html
+    print(f"DEBUG: has_confirm={has_confirm}, has_modal={has_modal}, len(html)={len(html)}")
+    # Inject corrected delete functionality if old version is served
+    if has_confirm and not has_modal:
+        # Inject the showDeleteConfirmation function before the deleteUser call
+        modal_js = '''
+        window.showDeleteConfirmation = function(username) {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000';
+                const dialog = document.createElement('div');
+                dialog.style.cssText = 'background:var(--bg-secondary,#1a1a1a);border:1px solid var(--border-primary,#333);border-radius:12px;padding:32px;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3)';
+                dialog.innerHTML = '<h2 style="color:var(--text-primary,#fff);margin:0 0 16px 0;font-size:20px">Delete User</h2><p style="color:var(--text-secondary,#ccc);margin:0 0 24px 0;font-size:14px">Are you sure you want to delete user <strong>'+username+'</strong>? This cannot be undone.</p><div style="display:flex;gap:12px;justify-content:center"><button style="padding:10px 20px;cursor:pointer;background:var(--bg-tertiary,#222);color:var(--text-primary,#fff);border:1px solid var(--border-primary,#333);border-radius:6px" onclick="this.closest(\\'div\\').parentElement.remove();this.dispatchEvent(new Event(\\'cancel\\',{bubbles:true}))">Cancel</button><button style="padding:10px 20px;cursor:pointer;background:rgba(255,77,166,0.2);border:1px solid rgb(220,38,38);color:rgb(220,38,38);border-radius:6px" onclick="this.closest(\\'div\\').parentElement.remove();this.dispatchEvent(new Event(\\'confirm\\',{bubbles:true}))">Delete</button></div>';
+                overlay.appendChild(dialog);
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click',(e)=>{if(e.target===overlay){overlay.remove();resolve(false)}});
+                dialog.addEventListener('confirm',()=>{overlay.remove();resolve(true)});
+                dialog.addEventListener('cancel',()=>{overlay.remove();resolve(false)});
+            });
+        };
+        window.deleteUser = async function(username) {
+            const confirmed = await showDeleteConfirmation(username);
+            if (!confirmed) return;
+            try {
+                const response = await fetch(`/api/admin/users/${username}`,{method:'DELETE',headers:{'Authorization':`Bearer ${token}`}});
+                if(!response.ok){const error = await response.json();throw new Error(error.error||'Failed to delete user');}
+                showSuccess(`User ${username} deleted successfully`);
+                loadUsers();
+            } catch(error) {
+                showError(error.message);
+            }
+        };
+        '''
+        html = html.replace('</script>', modal_js + '</script>')
+    return html
 
 # ==================== TELEMETRY API ====================
 

@@ -258,7 +258,13 @@
       "Bash(curl -v -X GET http://localhost:5000/api/user/all-users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzkwMzY3NzIwfQ.Af8_wk4YrTZjR0XzwccwGonv_t8rcugU6CZtOMnyoOo' -H 'Content-Type: application/json')",
       "Bash(pkill -9 python)",
       "Bash(curl -s http://localhost:5000/api/user/all-users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzkwMzY3NzIwfQ.Af8_wk4YrTZjR0XzwccwGonv_t8rcugU6CZtOMnyoOo')",
-      "Bash(git commit -m 'feat: Replace native confirm\\(\\) with custom modal for delete user confirmation *)"
+      "Bash(git commit -m 'feat: Replace native confirm\\(\\) with custom modal for delete user confirmation *)",
+      "Bash(curl -s http://localhost:5000/user-management)",
+      "Bash(FLASK_DEBUG=0 .venv/Scripts/python -B nexus_app.py)",
+      "Bash(env)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/user-management)",
+      "Bash(curl -s -w \"%{http_code}\" -o /tmp/test.html http://localhost:5000/user-management)",
+      "Bash(git commit -m 'fix: Inject correct delete modal via Flask response when old version served *)"
     ]
   }
 }
