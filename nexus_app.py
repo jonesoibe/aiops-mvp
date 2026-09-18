@@ -1978,12 +1978,8 @@ def update_user_admin(user=None):
         return jsonify({'error': 'Failed to update user'}), 500
 
 @app.route('/user-management', methods=['GET'])
-@require_auth
-def user_management_page(user=None):
-    """Serve user management page. Admin only."""
-    if user.get('role') != 'admin':
-        return redirect('/'), 403
-
+def user_management_page():
+    """Serve user management page. Auth handled by frontend with localStorage token."""
     return render_template('nexus/user_management.html')
 
 # ==================== TELEMETRY API ====================
