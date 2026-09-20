@@ -1038,9 +1038,34 @@ async function startAnalysis() {
             return;
         }
 
-        const data = await response.json();
-        console.log('Stream data:', data);
-        updateDashboard(data);
+        const rawData = await response.json();
+        console.log('Stream data:', rawData);
+
+        // Transform API response to dashboard format
+        const transformedData = {
+            metrics: (rawData.series || []).map((row, idx) => ({
+                timestamp: Date.now() / 1000,
+                feature_name: `Row ${rawData.offset + idx}`,
+                value: row.cpu || 0,
+                baseline: 50,
+                deviation: Math.abs(row.cpu - 50),
+                status: row.cpu > 70 ? 'anomaly' : 'normal'
+            })),
+            anomaly_score: Math.max(...(rawData.findings || []).map(f => f.severity === 'critical' ? 0.8 : 0.4), 0),
+            alerts: (rawData.findings || []).map(f => ({
+                timestamp: Date.now() / 1000,
+                severity: f.severity,
+                anomaly_score: 0.5
+            })),
+            detected_faults: (rawData.findings || []).map(f => ({
+                name: f.type,
+                severity: f.severity,
+                affected_metrics: [f.metric_name],
+                recommendations: f.recommendations ? [{ priority: 'high', action: f.recommendations }] : []
+            }))
+        };
+
+        updateDashboard(transformedData);
         updateStatus('streaming');
         document.getElementById('start-btn').disabled = true;
         document.getElementById('pause-btn').disabled = false;
