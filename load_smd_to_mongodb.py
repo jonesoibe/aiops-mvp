@@ -96,9 +96,21 @@ def load_smd_files_to_mongodb():
                 'status': 'active'
             })
 
-            # Insert machine data
+            # Insert machine data in batches to avoid timeouts
             if data_rows:
-                machine_data_collection.insert_many(data_rows)
+                batch_size = 500
+                total_batches = (len(data_rows) + batch_size - 1) // batch_size
+
+                for batch_num in range(0, len(data_rows), batch_size):
+                    batch = data_rows[batch_num:batch_num + batch_size]
+                    batch_idx = batch_num // batch_size + 1
+
+                    try:
+                        machine_data_collection.insert_many(batch, ordered=False)
+                        print(f"    Batch {batch_idx}/{total_batches} ✓")
+                    except Exception as batch_err:
+                        print(f"    Batch {batch_idx} partial error (continuing): {str(batch_err)[:50]}...")
+                        continue
 
             print(f"  ✅ Uploaded {machine_id}")
 
