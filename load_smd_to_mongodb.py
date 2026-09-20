@@ -21,12 +21,25 @@ def load_smd_files_to_mongodb():
     """Load all SMD files from disk into MongoDB."""
 
     try:
-        # Connect to MongoDB
-        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        # Connect to MongoDB with extended timeout for Atlas recovery
+        print("Connecting to MongoDB Atlas (this may take a moment)...")
+        client = MongoClient(
+            MONGODB_URI,
+            serverSelectionTimeoutMS=20000,
+            connectTimeoutMS=20000,
+            socketTimeoutMS=20000,
+            retryWrites=False
+        )
+        # Test connection
         client.admin.command('ping')
         print("✅ Connected to MongoDB")
     except Exception as e:
         print(f"❌ MongoDB connection failed: {e}")
+        print("\n⚠️  Troubleshooting tips:")
+        print("1. Check if MongoDB cluster is running in Atlas dashboard")
+        print("2. Verify MONGODB_URI in .env is correct")
+        print("3. Ensure network access is allowed (IP whitelist)")
+        print("4. Try again in a few minutes if cluster is recovering")
         return False
 
     db = client[DATABASE_NAME]
