@@ -423,8 +423,8 @@ def add_security_headers(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
     # Force HTTPS (HSTS)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    # Content Security Policy
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
+    # Content Security Policy - Allow socket.io CDN and WebSocket connections
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; connect-src 'self' wss: ws:; style-src 'self' 'unsafe-inline'"
     # Referrer Policy
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     return response
