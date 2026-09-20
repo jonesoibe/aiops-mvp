@@ -799,7 +799,10 @@ def require_auth(f):
     def decorated(*args, **kwargs):
         auth_header = request.headers.get('Authorization', '')
         if not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Missing authorization header'}), 401
+            return jsonify({
+                'error': 'Unauthorized',
+                'message': 'Missing or invalid Authorization header. Use: Authorization: Bearer <token>'
+            }), 401
 
         try:
             token = auth_header[7:]
@@ -3941,13 +3944,8 @@ def on_leave_simulation(data):
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Lightweight health check endpoint for monitoring and keeping app alive."""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.utcnow().isoformat(),
-        'service': 'nexus-aiops',
-        'version': '1.0.0'
-    }), 200
+    """Ultra-lightweight health check - no DB calls, <50ms"""
+    return jsonify({'status': 'ok'}), 200
 
 @app.route('/ready', methods=['GET'])
 def readiness_check():
@@ -3968,6 +3966,9 @@ _initialized = False
 def setup():
     """Setup on first request."""
     global _initialized
+    # Skip initialization for health check endpoints
+    if request.path in ['/health', '/ready']:
+        return
     if not _initialized:
         initialize_on_startup()
         _initialized = True
@@ -4781,6 +4782,9 @@ _initialization_done = False
 def deferred_initialize():
     """Initialize app on first request."""
     global _initialization_done
+    # Skip initialization for health check endpoints
+    if request.path in ['/health', '/ready']:
+        return
     if not _initialization_done:
         try:
             connect_mongodb()
