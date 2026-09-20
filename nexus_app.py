@@ -1248,11 +1248,23 @@ def login():
         if not username or not password:
             return jsonify({'error': 'Missing credentials'}), 400
 
-        # Try MongoDB first
+        # Ensure demo users are in memory as fallback
+        if 'users' not in in_memory_store:
+            in_memory_store['users'] = {
+                'admin': {'password_hash': hash_password('admin123'), 'role': 'admin', 'email': 'admin@nexus.local'},
+                'operator': {'password_hash': hash_password('operator123'), 'role': 'operator', 'email': 'operator@nexus.local'},
+                'viewer': {'password_hash': hash_password('viewer123'), 'role': 'viewer', 'email': 'viewer@nexus.local'}
+            }
+
+        # Try MongoDB first, then fallback to in-memory
         user_data = None
         if db is not None:
-            user_data = db['users'].find_one({'username': username})
-        else:
+            try:
+                user_data = db['users'].find_one({'username': username})
+            except Exception as e:
+                logger.warning(f'MongoDB lookup failed: {e}, using in-memory store')
+
+        if user_data is None:
             user_data = in_memory_store['users'].get(username)
 
         if user_data and check_password(password, user_data.get('password_hash', '')):
