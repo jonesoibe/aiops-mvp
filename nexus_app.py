@@ -1111,16 +1111,38 @@ _machines_cache = {'data': None, 'timestamp': 0}
 
 @app.route('/api/command/machines', methods=['GET'])
 def command_machines():
-    """Get list of available SMD machines. Cached for performance."""
+    """Get list of available SMD machines from MongoDB or file system."""
     import time
 
     # Cache for 60 seconds
     now = time.time()
     if _machines_cache['data'] and (now - _machines_cache['timestamp']) < 60:
-        return jsonify({'machines': _machines_cache['data'], 'source': 'data/raw/smd', 'cached': True})
+        return jsonify({'machines': _machines_cache['data'], 'source': _machines_cache.get('source', 'unknown'), 'cached': True})
 
     machines = []
-    if os.path.isdir(SMD_DATA_DIR):
+    source = 'unknown'
+
+    # Try MongoDB first
+    if db is not None:
+        try:
+            machines_collection = db['machines']
+            mongo_machines = list(machines_collection.find({}, {'_id': 0}).sort('machine_id', 1))
+            if mongo_machines:
+                machines = [
+                    {
+                        'id': m['machine_id'],
+                        'label': m.get('label', m['machine_id'].replace('-', ' ').title()),
+                        'bytes': m.get('file_size', 0)
+                    }
+                    for m in mongo_machines
+                ]
+                source = 'mongodb'
+                logger.info(f"Loaded {len(machines)} machines from MongoDB")
+        except Exception as e:
+            logger.warning(f"MongoDB machines lookup failed: {e}, falling back to filesystem")
+
+    # Fallback to file system
+    if not machines and os.path.isdir(SMD_DATA_DIR):
         files = sorted([f for f in os.listdir(SMD_DATA_DIR) if f.endswith('.txt')])
         for filename in files:
             path = _smd_file(filename)
@@ -1132,31 +1154,83 @@ def command_machines():
                         'bytes': os.path.getsize(path)
                     })
                 except OSError:
-                    pass  # Skip files that can't be accessed
+                    pass
+        source = 'filesystem'
+        if machines:
+            logger.info(f"Loaded {len(machines)} machines from filesystem")
 
     # Update cache
     _machines_cache['data'] = machines
+    _machines_cache['source'] = source
     _machines_cache['timestamp'] = now
 
-    return jsonify({'machines': machines, 'source': 'data/raw/smd', 'cached': False})
+    return jsonify({'machines': machines, 'source': source, 'cached': False})
 
 @app.route('/api/command/stream', methods=['GET'])
 def command_stream():
-    machine, path = request.args.get('machine'), _smd_file(request.args.get('machine'))
-    if not path:
-        return jsonify({'error': 'Unknown SMD machine file.'}), 404
+    """Stream machine data from MongoDB or file system."""
+    machine = request.args.get('machine')
+    offset = max(0, int(request.args.get('offset', 0)))
+    size = min(24, max(1, int(request.args.get('size', 12))))
+
+    rows = []
+    source = 'unknown'
+
+    # Try MongoDB first
+    if db is not None:
+        try:
+            machine_data_collection = db['machine_data']
+            mongo_rows = list(
+                machine_data_collection.find(
+                    {'machine_id': machine},
+                    {'_id': 0, 'values': 1}
+                )
+                .sort('row_num', 1)
+                .skip(offset)
+                .limit(size)
+            )
+            if mongo_rows:
+                rows = [m['values'] for m in mongo_rows]
+                source = 'mongodb'
+                logger.info(f"Loaded {len(rows)} rows for {machine} from MongoDB")
+        except Exception as e:
+            logger.warning(f"MongoDB data lookup failed: {e}, falling back to filesystem")
+
+    # Fallback to file system
+    if not rows:
+        path = _smd_file(machine)
+        if not path:
+            return jsonify({'error': 'Unknown SMD machine file.'}), 404
+        try:
+            frame = pd.read_csv(path, header=None, skiprows=offset, nrows=size)
+            if frame.empty:
+                offset, frame = 0, pd.read_csv(path, header=None, nrows=size)
+            rows = frame.fillna(0).astype(float).values.tolist()
+            source = 'filesystem'
+        except (ValueError, pd.errors.ParserError) as exc:
+            return jsonify({'error': f'Unable to read machine data: {exc}'}), 400
+
+    if not rows:
+        return jsonify({'error': 'No data found for machine.'}), 404
+
     try:
-        offset, size = max(0, int(request.args.get('offset', 0))), min(24, max(1, int(request.args.get('size', 12))))
-        frame = pd.read_csv(path, header=None, skiprows=offset, nrows=size)
-        if frame.empty:
-            offset, frame = 0, pd.read_csv(path, header=None, nrows=size)
-        rows = frame.fillna(0).astype(float).values.tolist()
         latest = rows[-1]
         key_metrics = [{'name': SMD_METRICS[index], 'value': round(latest[index] * 100, 1), 'index': index} for index in [0, 5, 11, 12, 15, 29, 31, 33, 34]]
         findings = _smd_findings(latest)
-        return jsonify({'machine': machine, 'offset': offset, 'next_offset': offset + len(rows), 'rows_loaded': len(rows), 'metrics': key_metrics, 'findings': findings, 'health': 'critical' if any(item['severity'] == 'critical' for item in findings) else ('attention' if findings else 'healthy'), 'series': [{'sample': offset + idx, 'cpu': round(row[0] * 100, 1), 'memory': round(row[5] * 100, 1), 'disk': round(row[11] * 100, 1)} for idx, row in enumerate(rows)]})
-    except (ValueError, pd.errors.ParserError) as exc:
-        return jsonify({'error': f'Unable to read machine data: {exc}'}), 400
+        return jsonify({
+            'machine': machine,
+            'offset': offset,
+            'next_offset': offset + len(rows),
+            'rows_loaded': len(rows),
+            'source': source,
+            'metrics': key_metrics,
+            'findings': findings,
+            'health': 'critical' if any(item['severity'] == 'critical' for item in findings) else ('attention' if findings else 'healthy'),
+            'series': [{'sample': offset + idx, 'cpu': round(row[0] * 100, 1), 'memory': round(row[5] * 100, 1), 'disk': round(row[11] * 100, 1)} for idx, row in enumerate(rows)]
+        })
+    except Exception as e:
+        logger.error(f"Error processing stream data: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/topology')
 def topology():
@@ -3865,17 +3939,31 @@ def setup():
 def initialize_on_startup():
     """Initialize app on first request (for production servers)"""
     try:
-        # Seed sample data if needed (for Render/production without local data)
-        try:
-            from seed_sample_data import create_sample_data
-            data_dir = os.path.join(os.path.dirname(__file__), 'data', 'raw', 'smd')
-            if not os.path.exists(data_dir) or not os.listdir(data_dir):
-                print("📊 Seeding sample machine data...")
-                create_sample_data(data_dir, num_machines=10)
-        except Exception as seed_err:
-            print(f"⚠️  Could not seed data: {seed_err}")
-
         connect_mongodb()
+
+        # Try to load SMD data into MongoDB if not already there
+        if db is not None:
+            try:
+                machines_collection = db['machines']
+                existing_count = machines_collection.count_documents({})
+                if existing_count == 0:
+                    print("📊 MongoDB machines collection is empty, attempting to load SMD files...")
+                    from load_smd_to_mongodb import load_smd_files_to_mongodb
+                    load_smd_files_to_mongodb()
+                else:
+                    print(f"✅ MongoDB contains {existing_count} machines")
+            except Exception as seed_err:
+                print(f"⚠️  Could not load SMD data: {seed_err}")
+                # Fallback: generate sample data if needed
+                try:
+                    from seed_sample_data import create_sample_data
+                    data_dir = os.path.join(os.path.dirname(__file__), 'data', 'raw', 'smd')
+                    if not os.path.exists(data_dir) or not os.listdir(data_dir):
+                        print("Generating sample machine data...")
+                        create_sample_data(data_dir, num_machines=10)
+                except Exception as fallback_err:
+                    print(f"⚠️  Could not create sample data: {fallback_err}")
+
         initialize_users()
         initialize_approvals()
         start_background_threads()
