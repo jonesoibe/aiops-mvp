@@ -146,9 +146,17 @@ class AutoScalingMonitor:
         """Provide resource optimization recommendations"""
         recommendations = []
         recent_metrics = self.get_metrics_history(50)
-        
+
         if not recent_metrics:
-            return {"recommendations": []}
+            return {
+                "timestamp": datetime.now().isoformat(),
+                "current_metrics": {
+                    "cpu": 0,
+                    "memory": 0,
+                    "error_rate": 0
+                },
+                "recommendations": []
+            }
         
         avg_cpu = sum(m["cpu"] for m in recent_metrics) / len(recent_metrics)
         avg_memory = sum(m["memory"] for m in recent_metrics) / len(recent_metrics)
