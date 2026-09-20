@@ -1117,28 +1117,50 @@ def command_machines():
     # Cache for 60 seconds
     now = time.time()
     if _machines_cache['data'] and (now - _machines_cache['timestamp']) < 60:
-        return jsonify({'machines': _machines_cache['data'], 'source': 'cache', 'cached': True})
+        logger.info(f"[MACHINES] Cache hit: {len(_machines_cache['data'])} machines")
+        return jsonify({'machines': _machines_cache['data'], 'source': 'cache', 'cached': True, 'count': len(_machines_cache['data'])})
 
     machines = []
+    logger.info(f"[MACHINES] Checking directory: {SMD_DATA_DIR}")
+
     if os.path.isdir(SMD_DATA_DIR):
-        files = sorted([f for f in os.listdir(SMD_DATA_DIR) if f.endswith('.txt')])
-        for filename in files:
-            path = _smd_file(filename)
-            if path:
-                try:
-                    machines.append({
-                        'id': filename,
-                        'label': filename.replace('.txt', '').replace('-', ' ').title(),
-                        'bytes': os.path.getsize(path)
-                    })
-                except OSError:
-                    pass
+        try:
+            files = sorted([f for f in os.listdir(SMD_DATA_DIR) if f.endswith('.txt')])
+            logger.info(f"[MACHINES] Found {len(files)} .txt files")
+
+            for filename in files:
+                path = _smd_file(filename)
+                if path and os.path.isfile(path):
+                    try:
+                        size = os.path.getsize(path)
+                        machines.append({
+                            'id': filename,
+                            'label': filename.replace('.txt', '').replace('-', ' ').title(),
+                            'bytes': size
+                        })
+                        logger.debug(f"[MACHINES] Added: {filename} ({size} bytes)")
+                    except OSError as e:
+                        logger.warning(f"[MACHINES] Could not access {filename}: {e}")
+                else:
+                    logger.warning(f"[MACHINES] Invalid path for {filename}: {path}")
+        except Exception as e:
+            logger.error(f"[MACHINES] Error listing directory: {e}")
+    else:
+        logger.warning(f"[MACHINES] Directory does not exist: {SMD_DATA_DIR}")
 
     # Update cache
     _machines_cache['data'] = machines
     _machines_cache['timestamp'] = now
 
-    return jsonify({'machines': machines, 'source': 'filesystem', 'cached': False})
+    logger.info(f"[MACHINES] Returning {len(machines)} machines")
+    return jsonify({
+        'machines': machines,
+        'source': 'filesystem',
+        'cached': False,
+        'count': len(machines),
+        'directory': SMD_DATA_DIR,
+        'dir_exists': os.path.isdir(SMD_DATA_DIR)
+    })
 
 @app.route('/api/command/stream', methods=['GET'])
 def command_stream():
@@ -3942,13 +3964,28 @@ def initialize_on_startup():
         try:
             from seed_sample_data import create_sample_data
             data_dir = os.path.join(os.path.dirname(__file__), 'data', 'raw', 'smd')
-            if not os.path.exists(data_dir) or not os.listdir(data_dir):
+
+            # Create directory if needed
+            os.makedirs(data_dir, exist_ok=True)
+
+            # Check what's in the directory
+            existing_files = []
+            if os.path.exists(data_dir):
+                existing_files = [f for f in os.listdir(data_dir) if f.endswith('.txt')]
+
+            print(f"[INIT] Machine data directory: {data_dir}")
+            print(f"[INIT] Existing machines: {len(existing_files)}")
+
+            if not existing_files or len(existing_files) < 5:
                 print("📊 Generating sample machine data for Machine Analyzer...")
                 create_sample_data(data_dir, num_machines=10)
+                updated_files = [f for f in os.listdir(data_dir) if f.endswith('.txt')]
+                print(f"✅ Sample data ready ({len(updated_files)} machines)")
             else:
-                print(f"✅ Machine data ready ({len(os.listdir(data_dir))} machines)")
+                print(f"✅ Machine data ready ({len(existing_files)} machines)")
         except Exception as err:
             print(f"⚠️  Could not prepare machine data: {err}")
+            logger.error(f"[INIT] Machine data preparation failed: {err}")
 
         initialize_users()
         initialize_approvals()
