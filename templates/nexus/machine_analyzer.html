@@ -1019,14 +1019,17 @@ async function startAnalysis() {
     }
 
     try {
-        const response = await fetch('/api/machine-analyzer/start', {
+        console.log('Starting analysis for:', machine);
+        const response = await fetch('/api/command/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ machine: machine, update_frequency: 0.5 })
+            body: JSON.stringify({ machine_id: machine, update_frequency: 0.5 })
         });
 
         if (!response.ok) {
-            alert('Error starting analysis');
+            const error = await response.text();
+            console.error('Stream error:', error);
+            alert('Error starting analysis: ' + error);
             return;
         }
 
