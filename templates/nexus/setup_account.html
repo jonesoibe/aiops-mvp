@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Up Your Account - Nexus AIOps</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='design-tokens.css') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .setup-container {
+            width: 100%;
+            max-width: 480px;
+            padding: var(--space-6);
+        }
+
+        .setup-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .setup-logo {
+            font-size: 2.5em;
+            margin-bottom: var(--space-3);
+        }
+
+        .setup-title {
+            font-size: var(--fs-2xl);
+            font-weight: var(--fw-bold);
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+        }
+
+        .setup-subtitle {
+            font-size: var(--fs-sm);
+            color: var(--text-secondary);
+        }
+
+        .user-info {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+            font-size: var(--fs-sm);
+        }
+
+        .user-info-label {
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            font-size: var(--fs-xs);
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-1);
+        }
+
+        .user-info-value {
+            color: var(--text-primary);
+            font-weight: var(--fw-medium);
+            word-break: break-all;
+        }
+
+        .form-group {
+            margin-bottom: var(--space-6);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--fs-sm);
+            font-weight: var(--fw-medium);
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-size: var(--fs-sm);
+            box-sizing: border-box;
+            transition: all var(--transition-base);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-success);
+            box-shadow: 0 0 0 3px rgba(16, 124, 16, 0.1);
+        }
+
+        .password-requirements {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--color-info);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            font-size: var(--fs-xs);
+        }
+
+        .password-requirements-title {
+            color: var(--text-primary);
+            font-weight: var(--fw-semibold);
+            margin-bottom: var(--space-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .password-requirement {
+            color: var(--text-secondary);
+            margin: var(--space-1) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .requirement-check {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .requirement-check.valid {
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .setup-button {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: linear-gradient(135deg, var(--color-success), var(--color-info));
+            border: none;
+            border-radius: var(--radius-lg);
+            color: var(--text-inverse);
+            font-size: var(--fs-sm);
+            font-weight: var(--fw-bold);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .setup-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(16, 124, 16, 0.3);
+        }
+
+        .setup-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            display: none;
+            padding: var(--space-3);
+            background: rgba(255, 77, 166, 0.1);
+            border: 1px solid var(--color-critical);
+            border-radius: var(--radius-lg);
+            color: var(--color-critical);
+            font-size: var(--fs-sm);
+            margin-bottom: var(--space-4);
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+            padding: var(--space-3);
+            background: rgba(16, 124, 16, 0.1);
+            border: 1px solid var(--color-success);
+            border-radius: var(--radius-lg);
+            color: var(--color-success);
+            font-size: var(--fs-sm);
+            margin-bottom: var(--space-4);
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <!-- Header -->
+            <div class="setup-header">
+                <div class="setup-logo">🚀</div>
+                <div class="setup-title">Set Up Your Account</div>
+                <div class="setup-subtitle">Welcome to Nexus AIOps</div>
+            </div>
+
+            <!-- User Info -->
+            <div class="user-info">
+                <div class="user-info-label">Username</div>
+                <div class="user-info-value" id="usernameDisplay">-</div>
+                <div class="user-info-label" style="margin-top: var(--space-3);">Email</div>
+                <div class="user-info-value" id="emailDisplay">-</div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Setup Form -->
+            <form id="setupForm" onsubmit="handleSetup(event)">
+                <!-- Password -->
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Create a strong password" required>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
+                </div>
+
+                <!-- Password Requirements -->
+                <div class="password-requirements">
+                    <div class="password-requirements-title">Password Requirements</div>
+                    <div class="password-requirement">
+                        <span class="requirement-check" id="reqLength">✗</span>
+                        <span>At least 8 characters</span>
+                    </div>
+                    <div class="password-requirement">
+                        <span class="requirement-check" id="reqUppercase">✗</span>
+                        <span>At least one uppercase letter</span>
+                    </div>
+                    <div class="password-requirement">
+                        <span class="requirement-check" id="reqLowercase">✗</span>
+                        <span>At least one lowercase letter</span>
+                    </div>
+                    <div class="password-requirement">
+                        <span class="requirement-check" id="reqNumber">✗</span>
+                        <span>At least one number</span>
+                    </div>
+                    <div class="password-requirement">
+                        <span class="requirement-check" id="reqSpecial">✗</span>
+                        <span>At least one special character (!@#$%^&*)</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="setup-button" id="submitBtn">Complete Setup</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5000';
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // Load user info on page load
+        window.onload = function() {
+            loadUserInfo();
+            setupPasswordValidation();
+        };
+
+        function loadUserInfo() {
+            if (!token) {
+                showError('Invalid or missing invitation token');
+                return;
+            }
+
+            fetch(`${baseUrl}/api/setup-account/info?token=${encodeURIComponent(token)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load account info');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('usernameDisplay').textContent = data.username || '-';
+                    document.getElementById('emailDisplay').textContent = data.email || '-';
+                })
+                .catch(error => {
+                    console.error('Error loading user info:', error);
+                    showError('Failed to load account information. The invitation link may have expired.');
+                });
+        }
+
+        function setupPasswordValidation() {
+            const passwordInput = document.getElementById('password');
+
+            passwordInput.addEventListener('input', validatePassword);
+        }
+
+        function validatePassword() {
+            const password = document.getElementById('password').value;
+
+            const checks = {
+                reqLength: password.length >= 8,
+                reqUppercase: /[A-Z]/.test(password),
+                reqLowercase: /[a-z]/.test(password),
+                reqNumber: /[0-9]/.test(password),
+                reqSpecial: /[!@#$%^&*]/.test(password)
+            };
+
+            Object.keys(checks).forEach(key => {
+                const element = document.getElementById(key);
+                if (checks[key]) {
+                    element.textContent = '✓';
+                    element.classList.add('valid');
+                } else {
+                    element.textContent = '✗';
+                    element.classList.remove('valid');
+                }
+            });
+
+            return Object.values(checks).every(v => v === true);
+        }
+
+        function handleSetup(event) {
+            event.preventDefault();
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Clear messages
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('successMessage').classList.remove('show');
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            // Validate password requirements
+            if (!validatePassword()) {
+                showError('Password does not meet all requirements');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Setting Up...';
+
+            // API call to set password
+            fetch(`${baseUrl}/api/setup-account/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showSuccess('Account setup complete! Redirecting to login...');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Setup failed');
+                }
+            })
+            .catch(error => {
+                console.error('Setup error:', error);
+                showError(error.message || 'Failed to complete account setup');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Setup';
+            });
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.classList.add('show');
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = '✓ ' + message;
+            successEl.classList.add('show');
+        }
+    </script>
+</body>
+</html>
