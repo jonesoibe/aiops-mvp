@@ -1111,38 +1111,16 @@ _machines_cache = {'data': None, 'timestamp': 0}
 
 @app.route('/api/command/machines', methods=['GET'])
 def command_machines():
-    """Get list of available SMD machines from MongoDB or file system."""
+    """Get list of available SMD machines. Cached for performance."""
     import time
 
     # Cache for 60 seconds
     now = time.time()
     if _machines_cache['data'] and (now - _machines_cache['timestamp']) < 60:
-        return jsonify({'machines': _machines_cache['data'], 'source': _machines_cache.get('source', 'unknown'), 'cached': True})
+        return jsonify({'machines': _machines_cache['data'], 'source': 'cache', 'cached': True})
 
     machines = []
-    source = 'unknown'
-
-    # Try MongoDB first
-    if db is not None:
-        try:
-            machines_collection = db['machines']
-            mongo_machines = list(machines_collection.find({}, {'_id': 0}).sort('machine_id', 1))
-            if mongo_machines:
-                machines = [
-                    {
-                        'id': m['machine_id'],
-                        'label': m.get('label', m['machine_id'].replace('-', ' ').title()),
-                        'bytes': m.get('file_size', 0)
-                    }
-                    for m in mongo_machines
-                ]
-                source = 'mongodb'
-                logger.info(f"Loaded {len(machines)} machines from MongoDB")
-        except Exception as e:
-            logger.warning(f"MongoDB machines lookup failed: {e}, falling back to filesystem")
-
-    # Fallback to file system
-    if not machines and os.path.isdir(SMD_DATA_DIR):
+    if os.path.isdir(SMD_DATA_DIR):
         files = sorted([f for f in os.listdir(SMD_DATA_DIR) if f.endswith('.txt')])
         for filename in files:
             path = _smd_file(filename)
@@ -1155,16 +1133,12 @@ def command_machines():
                     })
                 except OSError:
                     pass
-        source = 'filesystem'
-        if machines:
-            logger.info(f"Loaded {len(machines)} machines from filesystem")
 
     # Update cache
     _machines_cache['data'] = machines
-    _machines_cache['source'] = source
     _machines_cache['timestamp'] = now
 
-    return jsonify({'machines': machines, 'source': source, 'cached': False})
+    return jsonify({'machines': machines, 'source': 'filesystem', 'cached': False})
 
 @app.route('/api/command/stream', methods=['GET'])
 def command_stream():
@@ -3941,28 +3915,17 @@ def initialize_on_startup():
     try:
         connect_mongodb()
 
-        # Try to load SMD data into MongoDB if not already there
-        if db is not None:
-            try:
-                machines_collection = db['machines']
-                existing_count = machines_collection.count_documents({})
-                if existing_count == 0:
-                    print("📊 MongoDB machines collection is empty, attempting to load SMD files...")
-                    from load_smd_to_mongodb import load_smd_files_to_mongodb
-                    load_smd_files_to_mongodb()
-                else:
-                    print(f"✅ MongoDB contains {existing_count} machines")
-            except Exception as seed_err:
-                print(f"⚠️  Could not load SMD data: {seed_err}")
-                # Fallback: generate sample data if needed
-                try:
-                    from seed_sample_data import create_sample_data
-                    data_dir = os.path.join(os.path.dirname(__file__), 'data', 'raw', 'smd')
-                    if not os.path.exists(data_dir) or not os.listdir(data_dir):
-                        print("Generating sample machine data...")
-                        create_sample_data(data_dir, num_machines=10)
-                except Exception as fallback_err:
-                    print(f"⚠️  Could not create sample data: {fallback_err}")
+        # Ensure sample data exists for Machine Analyzer
+        try:
+            from seed_sample_data import create_sample_data
+            data_dir = os.path.join(os.path.dirname(__file__), 'data', 'raw', 'smd')
+            if not os.path.exists(data_dir) or not os.listdir(data_dir):
+                print("📊 Generating sample machine data for Machine Analyzer...")
+                create_sample_data(data_dir, num_machines=10)
+            else:
+                print(f"✅ Machine data ready ({len(os.listdir(data_dir))} machines)")
+        except Exception as err:
+            print(f"⚠️  Could not prepare machine data: {err}")
 
         initialize_users()
         initialize_approvals()
