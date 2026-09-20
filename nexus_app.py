@@ -1240,63 +1240,67 @@ def login():
         description: Server error
     security: []
     """
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
 
-    if not username or not password:
-        return jsonify({'error': 'Missing credentials'}), 400
+        if not username or not password:
+            return jsonify({'error': 'Missing credentials'}), 400
 
-    # Try MongoDB first
-    user_data = None
-    if db is not None:
-        user_data = db['users'].find_one({'username': username})
-    else:
-        user_data = in_memory_store['users'].get(username)
+        # Try MongoDB first
+        user_data = None
+        if db is not None:
+            user_data = db['users'].find_one({'username': username})
+        else:
+            user_data = in_memory_store['users'].get(username)
 
-    if user_data and check_password(password, user_data.get('password_hash', '')):
-        token = generate_token(username, username, user_data['role'])
+        if user_data and check_password(password, user_data.get('password_hash', '')):
+            token = generate_token(username, username, user_data['role'])
 
-        # Log login event using audit logger
+            # Log login event using audit logger
+            audit_logger.log_action(
+                action='LOGIN',
+                user_id=username,
+                resource='authentication',
+                status='success',
+                details={
+                    'role': user_data.get('role'),
+                    'email': user_data.get('email')
+                },
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
+
+            return jsonify({
+                'token': token,
+                'user': {
+                    'username': username,
+                    'email': user_data.get('email'),
+                    'role': user_data.get('role')
+                }
+            }), 200
+
+        # Log failed login
         audit_logger.log_action(
             action='LOGIN',
             user_id=username,
             resource='authentication',
-            status='success',
+            status='failure',
             details={
-                'role': user_data.get('role'),
-                'email': user_data.get('email')
+                'reason': 'Invalid credentials'
             },
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
 
-        return jsonify({
-            'token': token,
-            'user': {
-                'username': username,
-                'email': user_data.get('email'),
-                'role': user_data.get('role')
-            }
-        }), 200
+        # Log security event
+        log_security_event('FAILED_LOGIN', f'Failed login attempt for user: {username}', username)
 
-    # Log failed login
-    audit_logger.log_action(
-        action='LOGIN',
-        user_id=username,
-        resource='authentication',
-        status='failure',
-        details={
-            'reason': 'Invalid credentials'
-        },
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent')
-    )
-
-    # Log security event
-    log_security_event('FAILED_LOGIN', f'Failed login attempt for user: {username}', username)
-
-    return jsonify({'error': 'Invalid credentials'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
+    except Exception as e:
+        logger.error(f'❌ Login error: {str(e)}')
+        return jsonify({'error': f'Login error: {str(e)}'}), 500
 
 @app.route('/signup')
 def signup_page():
