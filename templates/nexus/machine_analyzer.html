@@ -919,29 +919,36 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load available machines
 async function loadMachines() {
     try {
-        const response = await fetch('/api/machine-analyzer/machines');
+        const response = await fetch('/api/command/machines');
         const data = await response.json();
-
-        machineData = data.machines;
 
         const select = document.getElementById('machine-select');
         select.innerHTML = '<option value="">-- Select a machine --</option>';
 
-        for (const [server, machines] of Object.entries(data.machines)) {
-            const group = document.createElement('optgroup');
-            group.label = server;
+        // Handle both array format (from /api/command/machines) and object format
+        const machines = Array.isArray(data.machines) ? data.machines : data.machines || [];
 
-            machines.forEach(machine => {
-                const option = document.createElement('option');
-                option.value = machine.name;
-                option.textContent = `${machine.name} (Period ${machine.period})`;
-                group.appendChild(option);
-            });
+        console.log(`Loaded ${machines.length} machines`, machines);
 
-            select.appendChild(group);
+        machines.forEach(machine => {
+            const option = document.createElement('option');
+            // Support both formats: {id, label} and {name, period}
+            option.value = machine.id || machine.name;
+            option.textContent = machine.label || `${machine.name} (Period ${machine.period})`;
+            select.appendChild(option);
+        });
+
+        if (machines.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '-- No machines available --';
+            option.disabled = true;
+            select.appendChild(option);
         }
     } catch (error) {
         console.error('Error loading machines:', error);
+        const select = document.getElementById('machine-select');
+        select.innerHTML = '<option value="">-- Error loading machines --</option>';
     }
 }
 
