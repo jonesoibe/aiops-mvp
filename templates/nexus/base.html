@@ -490,8 +490,13 @@
 
     <!-- Common Scripts -->
     <script>
-        // Initialize Socket.IO
-        const socket = io();
+        // Initialize Socket.IO (namespace-specific socket defined in page templates)
+        var globalSocket = null;
+
+        // Initialize default socket connection if not overridden
+        if (typeof io !== 'undefined') {
+            globalSocket = io();
+        }
 
         // Toggle sidebar on mobile
         function toggleSidebar() {
@@ -542,9 +547,11 @@
             document.getElementById('userRole').textContent = (user.role || 'user').toUpperCase();
 
             // Subscribe to telemetry stream
-            socket.emit('subscribe_telemetry');
-            socket.emit('subscribe_logs');
-            socket.emit('subscribe_incidents');
+            if (globalSocket) {
+                globalSocket.emit('subscribe_telemetry');
+                globalSocket.emit('subscribe_logs');
+                globalSocket.emit('subscribe_incidents');
+            }
         });
 
         async function logout() {
@@ -563,23 +570,25 @@
         }
 
         // Real-time telemetry updates
-        socket.on('telemetry_update', function(data) {
-            console.log('📡 Telemetry:', data);
-            // Dispatch custom event for pages to listen to
-            window.dispatchEvent(new CustomEvent('telemetry_update', { detail: data }));
-        });
+        if (globalSocket) {
+            globalSocket.on('telemetry_update', function(data) {
+                console.log('📡 Telemetry:', data);
+                // Dispatch custom event for pages to listen to
+                window.dispatchEvent(new CustomEvent('telemetry_update', { detail: data }));
+            });
 
-        // Real-time log updates
-        socket.on('log_update', function(data) {
-            console.log('📝 Log:', data);
-            window.dispatchEvent(new CustomEvent('log_update', { detail: data }));
-        });
+            // Real-time log updates
+            globalSocket.on('log_update', function(data) {
+                console.log('📝 Log:', data);
+                window.dispatchEvent(new CustomEvent('log_update', { detail: data }));
+            });
 
-        // Real-time incident updates
-        socket.on('incident_update', function(data) {
-            console.log('🚨 Incident:', data);
-            window.dispatchEvent(new CustomEvent('incident_update', { detail: data }));
-        });
+            // Real-time incident updates
+            globalSocket.on('incident_update', function(data) {
+                console.log('🚨 Incident:', data);
+                window.dispatchEvent(new CustomEvent('incident_update', { detail: data }));
+            });
+        }
     </script>
 
     {% block extra_scripts %}{% endblock %}
