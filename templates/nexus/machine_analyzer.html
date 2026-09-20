@@ -1020,10 +1020,15 @@ async function startAnalysis() {
 
     try {
         console.log('Starting analysis for:', machine);
-        const response = await fetch('/api/command/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ machine_id: machine, update_frequency: 0.5 })
+        const params = new URLSearchParams({
+            machine: machine,
+            offset: 0,
+            size: 12
+        });
+
+        const response = await fetch(`/api/command/stream?${params}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
         });
 
         if (!response.ok) {
@@ -1033,6 +1038,9 @@ async function startAnalysis() {
             return;
         }
 
+        const data = await response.json();
+        console.log('Stream data:', data);
+        updateDashboard(data);
         updateStatus('streaming');
         document.getElementById('start-btn').disabled = true;
         document.getElementById('pause-btn').disabled = false;
