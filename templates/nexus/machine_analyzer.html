@@ -906,8 +906,7 @@
 </div>
 
 <script>
-// WebSocket connection
-let socket = null;
+// WebSocket connection (socket defined in base.html)
 let machineData = {};
 
 // Initialize
@@ -1057,11 +1056,11 @@ async function startAnalysis() {
                 severity: f.severity,
                 anomaly_score: 0.5
             })),
-            detected_faults: (rawData.findings || []).map(f => ({
-                name: f.type,
-                severity: f.severity,
-                affected_metrics: [f.metric_name],
-                recommendations: f.recommendations ? [{ priority: 'high', action: f.recommendations }] : []
+            detected_faults: (rawData.findings || []).map((f, idx) => ({
+                name: f.type || f.name || `Anomaly ${idx + 1}`,
+                severity: f.severity || 'warning',
+                affected_metrics: f.affected_metrics || [f.metric_name || 'unknown_metric'],
+                recommendations: f.recommendations ? [{ priority: 'high', action: f.recommendations }] : [{ priority: 'medium', action: 'Monitor closely' }]
             }))
         };
 
@@ -1313,31 +1312,39 @@ function updateRecommendations(faults) {
     }
 
     let html = '';
-    faults.forEach(fault => {
-        const severityClass = `fault-category ${fault.severity}`;
-        const badgeClass = `fault-severity severity-${fault.severity}`;
+    faults.forEach((fault, idx) => {
+        const severityClass = `fault-category ${fault.severity || 'warning'}`;
+        const badgeClass = `fault-severity severity-${fault.severity || 'warning'}`;
+        const faultName = fault.name || `Anomaly ${idx + 1}`;
+        const affectedMetrics = (fault.affected_metrics && fault.affected_metrics.length > 0)
+            ? fault.affected_metrics.join(', ')
+            : 'multiple metrics';
 
         let recsHtml = '';
         if (fault.recommendations && fault.recommendations.length > 0) {
             fault.recommendations.forEach(rec => {
-                const priorityClass = `priority-${rec.priority}`;
-                recsHtml += `
-                    <div class="recommendation">
-                        <span class="priority-badge ${priorityClass}">${rec.priority}</span>
-                        <span>${rec.action}</span>
-                    </div>
-                `;
+                if (rec && rec.action && rec.action !== 'undefined') {
+                    const priorityClass = `priority-${rec.priority || 'medium'}`;
+                    recsHtml += `
+                        <div class="recommendation">
+                            <span class="priority-badge ${priorityClass}">${rec.priority || 'medium'}</span>
+                            <span>${rec.action}</span>
+                        </div>
+                    `;
+                }
             });
+        } else {
+            recsHtml = '<div class="recommendation"><span class="priority-badge priority-medium">medium</span><span>Monitor this anomaly</span></div>';
         }
 
         html += `
             <div class="${severityClass}">
                 <div class="fault-name">
-                    ${fault.name}
-                    <span class="${badgeClass}">${fault.severity}</span>
+                    ${faultName}
+                    <span class="${badgeClass}">${fault.severity || 'warning'}</span>
                 </div>
                 <div class="affected-metrics">
-                    <strong>Affected:</strong> ${fault.affected_metrics.join(', ')}
+                    <strong>Affected:</strong> ${affectedMetrics}
                 </div>
                 <div class="recommendations">
                     ${recsHtml}
