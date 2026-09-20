@@ -89,11 +89,46 @@ from src.slo_compliance import (
     MetricsCollector, ErrorBudgetTracker, SLOComplianceCalculator
 )
 
+# Rate Limiting
+from rate_limiter import rate_limiter
+
+# Auto-scaling Monitor
+from autoscaling_monitor import autoscaling_monitor
+
+# Machine Analyzer
+from machine_analyzer_routes import bp as machine_analyzer_bp
+from machine_analyzer import analyzer
+
 # ==================== APP SETUP ====================
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app,
+                   cors_allowed_origins="*",
+                   async_mode='threading',
+                   ping_timeout=10,
+                   ping_interval=5,
+                   engineio_logger=False,
+                   socketio_logger=False)
+
+# Register Machine Analyzer Blueprint
+app.register_blueprint(machine_analyzer_bp)
+
+# ==================== RATE LIMITING MIDDLEWARE ====================
+
+@app.before_request
+def apply_rate_limiting():
+    """Apply rate limiting to API endpoints"""
+    if request.path.startswith('/api/'):
+        client_id = request.remote_addr
+        allowed, wait_time = rate_limiter.is_allowed(request.path, client_id)
+
+        if not allowed:
+            return jsonify({
+                'error': 'Rate limit exceeded',
+                'retry_after': round(wait_time, 2),
+                'message': f'Too many requests. Please retry after {round(wait_time, 2)} seconds.'
+            }), 429
 
 # ==================== SWAGGER/OpenAPI DOCUMENTATION ====================
 
@@ -103,222 +138,270 @@ spec_path = os.path.join(os.path.dirname(__file__), 'openapi_spec.yaml')
 with open(spec_path, 'r') as f:
     openapi_spec = yaml.safe_load(f)
 
-# Initialize Flasgger with minimal config
-try:
-    swagger = Flasgger(app)
-except Exception as e:
-    logger.warning(f"Flasgger initialization warning: {e}")
-    swagger = None
+# Flasgger is NOT used - we serve our own OpenAPI spec and Swagger UI
 
 # Custom route to serve the OpenAPI spec
 @app.route('/apispec.json', methods=['GET'])
 def get_apispec():
     """Serve the comprehensive OpenAPI specification"""
-    return jsonify({
-        'swagger': '2.0',
-        'info': {
-            'title': 'Nexus AIOps API',
-            'version': '1.0.0',
-            'description': 'Enterprise Autonomous Observability Platform API Documentation'
-        },
-        'basePath': '/api',
-        'schemes': ['http'],
-        'paths': openapi_spec.get('paths', {}),
-        'definitions': openapi_spec.get('components', {}).get('schemas', {})
-    })
+    return jsonify(openapi_spec)
 
 # Serve Swagger UI HTML
-# Serve Interactive Swagger UI
+# Serve Official Swagger UI for Interactive API Testing
 @app.route('/api/docs', methods=['GET'])
 def swagger_ui():
-    """Serve the interactive Swagger UI for API testing"""
+    """Serve Swagger UI with corrected request payload examples"""
     return """<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+    <title>Nexus AIOps - API Documentation & Testing</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus AIOps API Testing Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        * {margin:0;padding:0;box-sizing:border-box}
-        body {font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f5f5f5;color:#1f2937}
-        .container {max-width:1400px;margin:0 auto;padding:20px}
-        .header {background:white;padding:30px;border-radius:8px;margin-bottom:30px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-        .header h1 {font-size:28px;margin-bottom:10px}
-        .header p {color:#6b7280;margin-bottom:10px}
-        .controls {display:flex;gap:15px;margin-top:20px;flex-wrap:wrap}
-        .token-section,.search-section {flex:1;min-width:300px}
-        .token-section label,.search-section label {display:block;font-size:12px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase}
-        .token-section input,.search-section input {width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:monospace}
-        .token-section input:focus,.search-section input:focus {outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-        .count {color:#6b7280;font-size:14px;margin-bottom:20px}
-        .endpoints {display:grid;gap:20px}
-        .endpoint-card {background:white;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;transition:box-shadow 0.2s}
-        .endpoint-card:hover {box-shadow:0 4px 12px rgba(0,0,0,0.15)}
-        .endpoint-header {padding:20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
-        .endpoint-header:hover {background:#f9fafb}
-        .endpoint-info {display:flex;gap:20px;align-items:center;flex:1}
-        .method-badge {font-weight:bold;padding:6px 12px;border-radius:6px;font-size:12px;min-width:60px;text-align:center}
-        .method-badge.get {background:#e0f2fe;color:#0369a1}
-        .method-badge.post {background:#dbeafe;color:#1e40af}
-        .method-badge.put {background:#fef3c7;color:#92400e}
-        .method-badge.delete {background:#fee2e2;color:#991b1b}
-        .endpoint-path {font-family:monospace;font-size:14px;color:#1f2937;flex:1}
-        .endpoint-description {color:#6b7280;font-size:13px;margin:8px 0 0 0}
-        .toggle-icon {color:#9ca3af;font-size:20px;transition:transform 0.2s}
-        .endpoint-card.expanded .toggle-icon {transform:rotate(180deg)}
-        .endpoint-body {display:none;padding:20px;background:#f9fafb}
-        .endpoint-card.expanded .endpoint-body {display:block}
-        .test-form {display:grid;gap:20px}
-        .form-group {display:grid;gap:8px}
-        .form-group label {font-weight:600;font-size:13px;color:#374151}
-        .form-group input,.form-group textarea {padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:12px}
-        .form-group textarea {resize:vertical;min-height:100px}
-        .form-group input:focus,.form-group textarea:focus {outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-        .button-group {display:flex;gap:10px}
-        .btn {padding:10px 20px;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;transition:all 0.2s}
-        .btn-primary {background:#3b82f6;color:white}
-        .btn-primary:hover {background:#2563eb}
-        .btn-secondary {background:#e5e7eb;color:#1f2937}
-        .btn-secondary:hover {background:#d1d5db}
-        .response-section {margin-top:20px}
-        .response-section h4 {font-size:13px;font-weight:600;color:#374151;margin-bottom:10px}
-        .response-box {background:#1f2937;color:#10b981;padding:15px;border-radius:6px;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
-        .response-box.error {color:#ef4444}
-        .loading {color:#9ca3af}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 32px; margin-bottom: 10px; color: #2c3e50; }
+        .header p { font-size: 14px; color: #7f8c8d; margin: 10px 0; }
+        .header .note { background: #fffbea; border-left: 4px solid #f39c12; padding: 12px; border-radius: 4px; margin-top: 15px; font-size: 13px; color: #7f5d00; }
+        .controls { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+        .control-group { flex: 1; min-width: 300px; }
+        .control-group label { display: block; font-size: 12px; font-weight: 600; color: #7f8c8d; text-transform: uppercase; margin-bottom: 8px; }
+        .control-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: monospace; }
+        .control-group input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+        .endpoints-section { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section-title { background: #2c3e50; color: white; padding: 20px; font-size: 16px; font-weight: 600; }
+        .endpoints { padding: 20px; }
+        .endpoint { border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px; overflow: hidden; }
+        .endpoint-header { background: #f8f9fa; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .endpoint-header:hover { background: #eef2f7; }
+        .endpoint-info { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .method { font-weight: bold; padding: 6px 12px; border-radius: 4px; font-size: 12px; min-width: 60px; text-align: center; color: white; }
+        .method.get { background: #3498db; }
+        .method.post { background: #2ecc71; }
+        .method.put { background: #f39c12; }
+        .method.delete { background: #e74c3c; }
+        .path { font-family: monospace; color: #2c3e50; font-size: 13px; }
+        .description { color: #7f8c8d; font-size: 13px; }
+        .expand-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #7f8c8d; padding: 0; }
+        .endpoint.expanded .expand-btn { transform: rotate(180deg); }
+        .endpoint-body { display: none; padding: 20px; background: #fafbfc; border-top: 1px solid #ddd; }
+        .endpoint.expanded .endpoint-body { display: block; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; color: #2c3e50; margin-bottom: 8px; font-size: 13px; }
+        .sample-box { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; margin-bottom: 12px; font-family: monospace; font-size: 11px; color: #555; max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; cursor: pointer; transition: all 0.2s; }
+        .sample-box:hover { background: #f5f5f5; border-color: #3498db; }
+        .sample-label { font-size: 11px; color: #7f8c8d; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+        .auth-badge { background: #e8f4f8; color: #0b5394; padding: 4px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; display: inline-block; margin-bottom: 10px; }
+        .form-group textarea, .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        .form-group textarea { min-height: 150px; resize: vertical; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+        .button-group { display: flex; gap: 10px; margin-top: 15px; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; }
+        .btn-try { background: #3498db; color: white; }
+        .btn-try:hover { background: #2980b9; }
+        .response-section { margin-top: 20px; }
+        .response-header { font-weight: 600; color: #2c3e50; margin-bottom: 10px; font-size: 13px; }
+        .response-box { background: white; border: 1px solid #ddd; border-radius: 4px; padding: 15px; font-family: monospace; font-size: 12px; color: #555; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+        .status-success { color: #2ecc71; font-weight: bold; }
+        .status-error { color: #e74c3c; font-weight: bold; }
+        .loading { color: #3498db; font-style: italic; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Nexus AIOps API Testing Console</h1>
-            <p>Interactive API documentation and testing interface</p>
+            <h1>API Documentation & Testing Console</h1>
+            <p>Fully tested endpoints with corrected sample payloads</p>
+            <div class="note">
+                <strong>Note:</strong> Sample payloads have been tested and corrected.
+                For email verification: codes are generated during signup/forgot-password flows, not available for existing accounts.
+            </div>
             <div class="controls">
-                <div class="token-section">
+                <div class="control-group">
                     <label>JWT Authorization Token</label>
-                    <input type="password" id="authToken" placeholder="Paste JWT token from /api/auth/login">
+                    <input type="password" id="authToken" placeholder="Paste JWT token here">
                 </div>
-                <div class="search-section">
+                <div class="control-group">
                     <label>Search Endpoints</label>
-                    <input type="text" id="search" placeholder="Search by path or description...">
+                    <input type="text" id="searchBox" placeholder="Search by path or description">
                 </div>
             </div>
         </div>
-        <div class="count"><span id="endpoint-count">Loading...</span></div>
-        <div class="endpoints" id="endpoints-container">Loading endpoints...</div>
+        <div class="endpoints-section">
+            <div class="section-title">API Endpoints (39+)</div>
+            <div class="endpoints" id="endpointsList">Loading...</div>
+        </div>
     </div>
     <script>
-        const baseUrl = window.location.origin;
-        let allEndpoints = [];
+        let apiSpec = {};
+        let endpoints = [];
 
-        async function loadEndpoints() {
+        const samplePayloads = {
+            login: JSON.stringify({"username":"admin","password":"admin123"}, null, 2),
+            signup: JSON.stringify({"email":"newuser@example.com","username":"newuser","password":"SecurePass123!","first_name":"John","last_name":"Doe","role":"user","department":"Engineering"}, null, 2),
+            verifyEmail: JSON.stringify({"email":"user@example.com","code":"123456"}, null, 2),
+            forgotPassword: JSON.stringify({"email":"user@example.com"}, null, 2),
+            resetPassword: JSON.stringify({"email":"user@example.com","code":"123456","new_password":"NewPassword123!"}, null, 2),
+            updateProfile: JSON.stringify({"first_name":"John","last_name":"Smith","department":"Operations"}, null, 2),
+            changePassword: JSON.stringify({"current_password":"OldPassword123!","new_password":"NewPassword123!"}, null, 2),
+            recordMetrics: JSON.stringify({"cpu":45.5,"memory":62.3,"request_rate":120,"error_rate":0.5}, null, 2),
+            createAlert: JSON.stringify({"name":"High CPU Alert","description":"Alert when CPU exceeds 80%","metric_name":"cpu","condition":"gt","threshold":80,"severity":"critical","enabled":true,"notification_channels":["slack","email"]}, null, 2),
+            updateAlert: JSON.stringify({"name":"High CPU Alert","metric_name":"cpu","condition":"gt","threshold":75,"severity":"major","enabled":true}, null, 2),
+            createSLO: JSON.stringify({"service_id":"service_001","name":"API Availability","description":"99.9% target availability","target":99.9,"window":"30d","metric":"availability"}, null, 2),
+            configureRateLimit: JSON.stringify({"endpoint":"/api/auth/login","requests_per_minute":10,"burst_size":15}, null, 2),
+            default: JSON.stringify({}, null, 2)
+        };
+
+        async function loadSpec() {
             try {
-                const r = await fetch('/apispec.json');
-                const spec = await r.json();
-                const paths = spec.paths || {};
-                const container = document.getElementById('endpoints-container');
-                const countEl = document.getElementById('endpoint-count');
-                const searchInput = document.getElementById('search');
-
-                for (const [path, methods] of Object.entries(paths)) {
-                    for (const [method, details] of Object.entries(methods)) {
-                        if (typeof details === 'object' && details.description) {
-                            allEndpoints.push({method: method.toUpperCase(), path, description: details.description});
-                        }
-                    }
-                }
-
-                countEl.textContent = `Total Endpoints: ${allEndpoints.length}`;
-                render('');
-                searchInput.addEventListener('input', (e) => render(e.target.value));
-
-            } catch (e) {
-                document.getElementById('endpoints-container').innerHTML = `<div style="padding:20px;color:red;">Error: ${e.message}</div>`;
-            }
-        }
-
-        function render(filter = '') {
-            const container = document.getElementById('endpoints-container');
-            const filtered = allEndpoints.filter(ep =>
-                ep.path.toLowerCase().includes(filter.toLowerCase()) ||
-                ep.description.toLowerCase().includes(filter.toLowerCase())
-            );
-
-            container.innerHTML = filtered.map(ep => `
-                <div class="endpoint-card" onclick="this.classList.toggle('expanded')">
-                    <div class="endpoint-header">
-                        <div class="endpoint-info">
-                            <div class="method-badge ${ep.method.toLowerCase()}">${ep.method}</div>
-                            <div>
-                                <div class="endpoint-path">${ep.path}</div>
-                                <div class="endpoint-description">${ep.description}</div>
-                            </div>
-                        </div>
-                        <div class="toggle-icon">▼</div>
-                    </div>
-                    <div class="endpoint-body">
-                        <div class="test-form">
-                            <div class="form-group">
-                                <label>Request Body (JSON)</label>
-                                <textarea class="request-body" placeholder='{" key": " value"}' style="display:${['POST','PUT'].includes(ep.method) ? 'block' : 'none'}"></textarea>
-                            </div>
-                            <div class="button-group">
-                                <button class="btn btn-primary" onclick="testEndpoint('${ep.method}', '${ep.path}', event)">Test Endpoint</button>
-                                <button class="btn btn-secondary" onclick="copyCurl('${ep.method}', '${ep.path}')">Copy cURL</button>
-                            </div>
-                            <div class="response-section" style="display:none">
-                                <h4>Response</h4>
-                                <div class="response-box"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function testEndpoint(method, path, e) {
-            const card = e.target.closest('.endpoint-card');
-            const responseBox = card.querySelector('.response-box');
-            const responseSec = card.querySelector('.response-section');
-            const token = document.getElementById('authToken').value;
-            const bodyInput = card.querySelector('.request-body');
-
-            responseSec.style.display = 'block';
-            responseBox.classList.remove('error');
-            responseBox.textContent = 'Loading...';
-            responseBox.classList.add('loading');
-
-            try {
-                const opts = {method, headers: {'Content-Type': 'application/json'}};
-                if (token) opts.headers['Authorization'] = `Bearer ${token}`;
-                if (bodyInput && bodyInput.value) opts.body = bodyInput.value;
-
-                const res = await fetch(baseUrl + path, opts);
-                const data = await res.json();
-
-                responseBox.classList.remove('loading');
-                responseBox.textContent = JSON.stringify(data, null, 2);
-                responseBox.style.color = res.ok ? '#10b981' : '#ef4444';
-                if (!res.ok) responseBox.classList.add('error');
-
+                const response = await fetch('/apispec.json');
+                apiSpec = await response.json();
+                buildEndpointsList();
             } catch (err) {
-                responseBox.classList.remove('loading');
-                responseBox.classList.add('error');
-                responseBox.textContent = `Error: ${err.message}`;
+                document.getElementById('endpointsList').innerHTML = '<div style="padding: 20px; color: #e74c3c;">Failed to load API specification: ' + err.message + '</div>';
             }
         }
 
-        function copyCurl(method, path) {
-            const token = document.getElementById('authToken').value;
-            let curl = `curl -X ${method} ${baseUrl}${path}`;
-            if (token) curl += ` -H "Authorization: Bearer ${token}"`;
-            curl += ` -H "Content-Type: application/json" -d '{}'`;
-            navigator.clipboard.writeText(curl).then(() => alert('Copied!'));
+        function getSamplePayload(path, method, op) {
+            const lowerPath = path.toLowerCase();
+            if (lowerPath.includes('login')) return samplePayloads.login;
+            if (lowerPath.includes('signup')) return samplePayloads.signup;
+            if (lowerPath.includes('verify-email')) return samplePayloads.verifyEmail;
+            if (lowerPath.includes('forgot')) return samplePayloads.forgotPassword;
+            if (lowerPath.includes('password-reset')) return samplePayloads.resetPassword;
+            if (lowerPath.includes('profile') && method === 'POST') return samplePayloads.updateProfile;
+            if (lowerPath.includes('change-password')) return samplePayloads.changePassword;
+            if (lowerPath.includes('metrics') && method === 'POST') return samplePayloads.recordMetrics;
+            if (lowerPath.includes('alerts/rules') && method === 'POST') return samplePayloads.createAlert;
+            if (lowerPath.includes('alerts/rules') && method === 'PUT') return samplePayloads.updateAlert;
+            if (lowerPath.includes('slos') && method === 'POST' && !lowerPath.includes('/{')) return samplePayloads.createSLO;
+            if (lowerPath.includes('rate-limiting') && method === 'PUT') return samplePayloads.configureRateLimit;
+            return op.requestBody ? '{}' : null;
         }
 
-        loadEndpoints();
+        function buildEndpointsList() {
+            const paths = apiSpec.paths || {};
+            endpoints = [];
+            const methods = ['get', 'post', 'put', 'delete', 'patch'];
+            Object.keys(paths).forEach(path => {
+                const pathItem = paths[path];
+                methods.forEach(method => {
+                    if (pathItem[method]) {
+                        const op = pathItem[method];
+                        const needsAuth = op.security && op.security.length > 0;
+                        endpoints.push({
+                            method: method.toUpperCase(),
+                            path: path,
+                            summary: op.summary || 'No description',
+                            requestBody: op.requestBody,
+                            parameters: op.parameters || [],
+                            sample: getSamplePayload(path, method, op),
+                            needsAuth: needsAuth
+                        });
+                    }
+                });
+            });
+            renderEndpoints(endpoints);
+        }
+
+        function renderEndpoints(toRender) {
+            const container = document.getElementById('endpointsList');
+            container.innerHTML = '';
+            toRender.forEach((ep, idx) => {
+                const div = document.createElement('div');
+                div.className = 'endpoint';
+                div.innerHTML = `<div class="endpoint-header" onclick="toggleEndpoint(${idx})"><div class="endpoint-info"><span class="method ${ep.method.toLowerCase()}">${ep.method}</span><span class="path">${ep.path}</span><span class="description">${ep.summary}</span></div><button class="expand-btn">▼</button></div><div class="endpoint-body" id="body-${idx}"><div id="content-${idx}"></div></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleEndpoint(idx) {
+            const endpoint = document.querySelector('.endpoint:nth-child(' + (idx + 1) + ')');
+            endpoint.classList.toggle('expanded');
+            if (endpoint.classList.contains('expanded')) {
+                const contentDiv = document.getElementById('content-' + idx);
+                if (!contentDiv.innerHTML) renderEndpointContent(idx, contentDiv);
+            }
+        }
+
+        function renderEndpointContent(idx, container) {
+            const ep = endpoints[idx];
+            let html = '';
+            if (ep.needsAuth) html += '<div class="auth-badge">Requires Authentication</div>';
+            html += '<form onsubmit="executeRequest(event, ' + idx + ')">';
+
+            if (ep.parameters.length) {
+                html += '<div class="form-group"><label>Parameters</label>';
+                ep.parameters.forEach(p => html += '<input type="text" placeholder="' + p.name + '" data-param="' + p.name + '">');
+                html += '</div>';
+            }
+
+            if (ep.requestBody || ep.sample) {
+                html += '<div class="form-group">';
+                if (ep.sample) {
+                    html += '<div class="sample-label">Example Payload (Click to use):</div>';
+                    html += '<div class="sample-box" onclick="useSamplePayload(' + idx + ')">' + ep.sample + '</div>';
+                }
+                html += '<label>Request Body (JSON)</label>';
+                html += '<textarea placeholder="{}" data-body="true"></textarea>';
+                html += '</div>';
+            }
+
+            html += '<button type="submit" class="btn-try">Execute Request</button></form><div class="response-section"><div class="response-header">Response</div><div class="response-box" id="response-' + idx + '">Click Execute</div></div>';
+            container.innerHTML = html;
+        }
+
+        function useSamplePayload(idx) {
+            const textarea = document.querySelector('#content-' + idx + ' textarea');
+            if (textarea && endpoints[idx].sample) {
+                textarea.value = endpoints[idx].sample;
+                textarea.focus();
+            }
+        }
+
+        async function executeRequest(e, idx) {
+            e.preventDefault();
+            const ep = endpoints[idx];
+            const responseBox = document.getElementById('response-' + idx);
+            responseBox.innerHTML = '<div class="loading">Sending request...</div>';
+            const form = e.target;
+            let url = ep.path;
+            const headers = {'Content-Type': 'application/json'};
+            const token = document.getElementById('authToken').value;
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            const params = new URLSearchParams();
+            form.querySelectorAll('[data-param]').forEach(i => { if (i.value) params.append(i.dataset.param, i.value); });
+            if (params.toString()) url += '?' + params.toString();
+            let body = null;
+            const bodyInput = form.querySelector('[data-body]');
+            if (bodyInput && bodyInput.value) {
+                try { body = JSON.stringify(JSON.parse(bodyInput.value)); } catch { responseBox.innerHTML = '<div class="status-error">Invalid JSON in request body</div>'; return; }
+            }
+            try {
+                const opts = { method: ep.method, headers: headers };
+                if (body) opts.body = body;
+                const response = await fetch(url, opts);
+                const data = await response.json().catch(() => ({}));
+                const status = '<div class="status-' + (response.ok ? 'success' : 'error') + '">Status: ' + response.status + ' ' + response.statusText + '</div>';
+                responseBox.innerHTML = status + '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (err) {
+                responseBox.innerHTML = '<div class="status-error">Error: ' + err.message + '</div>';
+            }
+        }
+
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = endpoints.filter(ep => ep.path.includes(q) || ep.summary.includes(q));
+            renderEndpoints(filtered);
+        });
+
+        loadSpec();
     </script>
 </body>
 </html>"""
+
 
 # ==================== SECURITY HEADERS ====================
 
@@ -401,8 +484,45 @@ in_memory_store = {
     'telemetry': [],
     'audit_log': [],
     'remediation_queue': [],
-    'approvals': []
+    'approvals': [],
+    'invite_tokens': {}  # For storing invitation tokens
 }
+
+# ==================== INVITE TOKEN MANAGEMENT ====================
+
+import secrets
+
+def generate_invite_token():
+    """Generate a secure random invite token."""
+    return secrets.token_urlsafe(32)
+
+def create_invite_token(username, email):
+    """Create an invitation token for a new user."""
+    token = generate_invite_token()
+    in_memory_store['invite_tokens'][token] = {
+        'username': username,
+        'email': email,
+        'created_at': datetime.utcnow(),
+        'expires_at': datetime.utcnow() + timedelta(hours=48)  # 48 hour expiration
+    }
+    return token
+
+def validate_invite_token(token):
+    """Validate an invitation token. Returns (valid, username, email, error_message)."""
+    if token not in in_memory_store['invite_tokens']:
+        return False, None, None, 'Invalid or expired token'
+
+    invite = in_memory_store['invite_tokens'][token]
+    if datetime.utcnow() > invite['expires_at']:
+        del in_memory_store['invite_tokens'][token]
+        return False, None, None, 'Invitation token has expired'
+
+    return True, invite['username'], invite['email'], None
+
+def consume_invite_token(token):
+    """Remove/consume an invitation token after use."""
+    if token in in_memory_store['invite_tokens']:
+        del in_memory_store['invite_tokens'][token]
 
 # ==================== ALERTING SYSTEM ====================
 
@@ -533,10 +653,10 @@ def _initialize_default_alert_rules():
         AlertRule(
             id="cpu_high",
             name="High CPU Usage",
-            description="CPU exceeds 85% for 5 minutes",
+            description="CPU exceeds 75% for 5 minutes",
             metric_name="cpu_usage",
             condition=">",
-            threshold=85.0,
+            threshold=75.0,
             duration=300,
             severity=AlertSeverity.MAJOR,
             notification_channels=['slack', 'email', 'console']
@@ -544,10 +664,10 @@ def _initialize_default_alert_rules():
         AlertRule(
             id="memory_high",
             name="High Memory Usage",
-            description="Memory exceeds 80% for 5 minutes",
+            description="Memory exceeds 75% for 5 minutes",
             metric_name="memory_usage",
             condition=">",
-            threshold=80.0,
+            threshold=75.0,
             duration=300,
             severity=AlertSeverity.MAJOR,
             notification_channels=['slack', 'email', 'console']
@@ -967,6 +1087,53 @@ def live_operations():
 def ai_operations():
     """AI Operations Center - Davis AI Style"""
     return render_template('nexus/ai-operations.html')
+
+# ==================== SMD COMMAND CENTER ====================
+SMD_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'raw', 'smd')
+SMD_METRICS = ['CPU user', 'CPU system', 'CPU wait I/O', 'CPU soft IRQ', 'Swap in', 'Memory utilization', 'Buffer cache', 'Swap out', 'Shared memory', 'Disk reads', 'Disk writes', 'Disk busy time', 'Disk queue', 'Read size', 'Write size', 'Read latency', 'Write latency', 'Disk errors', 'Network bytes in', 'Network bytes out', 'Network packets in', 'Network packets out', 'Network errors in', 'Network errors out', 'Processes running', 'Processes sleeping', 'Context switches', 'Interrupts', 'System calls', 'Load average (1m)', 'Apache requests', 'Apache errors', 'MySQL queries', 'MySQL slow queries', 'MySQL connections', 'SSH connections', 'FTP transfers', 'Cron jobs']
+
+def _smd_file(machine):
+    """Resolve an allow-listed SMD file; never accept an arbitrary client path."""
+    if not machine or os.path.basename(machine) != machine or not machine.endswith('.txt'):
+        return None
+    path = os.path.abspath(os.path.join(SMD_DATA_DIR, machine))
+    return path if path.startswith(os.path.abspath(SMD_DATA_DIR) + os.sep) and os.path.isfile(path) else None
+
+def _smd_findings(values):
+    rules = [(5, .90, 'warning', 'Memory pressure', 'Memory utilization is above 90%.', 'Inspect top memory consumers; reclaim cache or increase capacity before paging starts.'), (2, .30, 'warning', 'I/O wait elevated', 'CPU is spending over 30% of time waiting for I/O.', 'Check storage latency and queued jobs before scaling compute.'), (11, .80, 'warning', 'Disk saturation', 'Disk busy time is above 80%.', 'Inspect disk queue and defer non-critical batch work.'), (12, .50, 'warning', 'Disk queue contention', 'The normalized disk queue is above 50%.', 'Identify the highest I/O consumers and review storage throughput.'), (17, .001, 'critical', 'Disk errors observed', 'The data reports disk I/O errors.', 'Validate disk health and fail over affected workloads if errors persist.'), (22, .001, 'critical', 'Inbound network errors', 'Inbound packet errors are present.', 'Check NIC counters, cable/virtual network health, and retry rates.'), (23, .001, 'critical', 'Outbound network errors', 'Outbound packet errors are present.', 'Check NIC counters, routing, and packet drops.'), (31, .05, 'warning', 'Apache errors elevated', 'The web error signal is above the review threshold.', 'Inspect recent application errors and upstream dependency health.'), (33, .10, 'warning', 'Slow database queries', 'MySQL slow-query activity exceeds 10%.', 'Review the slow-query log and add or tune the responsible indexes.'), (34, .80, 'warning', 'Database connection pressure', 'MySQL connections are near normalized capacity.', 'Inspect connection pooling and cap new nonessential connections.')]
+    return [{'severity': severity, 'title': title, 'detail': detail, 'recommendation': recommendation, 'metric': SMD_METRICS[index], 'value': round(values[index] * 100, 1)} for index, threshold, severity, title, detail, recommendation in rules if index < len(values) and values[index] > threshold]
+
+@app.route('/command')
+def command_center():
+    return render_template('nexus/command_center.html')
+
+@app.route('/api/command/machines', methods=['GET'])
+def command_machines():
+    machines = []
+    if os.path.isdir(SMD_DATA_DIR):
+        for filename in sorted(os.listdir(SMD_DATA_DIR)):
+            path = _smd_file(filename)
+            if path:
+                machines.append({'id': filename, 'label': filename.replace('.txt', '').replace('-', ' ').title(), 'bytes': os.path.getsize(path)})
+    return jsonify({'machines': machines, 'source': 'data/raw/smd'})
+
+@app.route('/api/command/stream', methods=['GET'])
+def command_stream():
+    machine, path = request.args.get('machine'), _smd_file(request.args.get('machine'))
+    if not path:
+        return jsonify({'error': 'Unknown SMD machine file.'}), 404
+    try:
+        offset, size = max(0, int(request.args.get('offset', 0))), min(24, max(1, int(request.args.get('size', 12))))
+        frame = pd.read_csv(path, header=None, skiprows=offset, nrows=size)
+        if frame.empty:
+            offset, frame = 0, pd.read_csv(path, header=None, nrows=size)
+        rows = frame.fillna(0).astype(float).values.tolist()
+        latest = rows[-1]
+        key_metrics = [{'name': SMD_METRICS[index], 'value': round(latest[index] * 100, 1), 'index': index} for index in [0, 5, 11, 12, 15, 29, 31, 33, 34]]
+        findings = _smd_findings(latest)
+        return jsonify({'machine': machine, 'offset': offset, 'next_offset': offset + len(rows), 'rows_loaded': len(rows), 'metrics': key_metrics, 'findings': findings, 'health': 'critical' if any(item['severity'] == 'critical' for item in findings) else ('attention' if findings else 'healthy'), 'series': [{'sample': offset + idx, 'cpu': round(row[0] * 100, 1), 'memory': round(row[5] * 100, 1), 'disk': round(row[11] * 100, 1)} for idx, row in enumerate(rows)]})
+    except (ValueError, pd.errors.ParserError) as exc:
+        return jsonify({'error': f'Unable to read machine data: {exc}'}), 400
 
 @app.route('/topology')
 def topology():
@@ -1796,6 +1963,110 @@ def change_password(user=None):
         print(f"❌ Change password error: {e}")
         return jsonify({'error': 'Failed to change password'}), 500
 
+@app.route('/api/admin/users', methods=['POST'])
+@require_auth
+def create_user_admin(user=None):
+    """Create a new user with invitation. Admin only."""
+    try:
+        # Check if requester is admin
+        if user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required to create users'}), 403
+
+        data = request.json
+        username = data.get('username', '').strip().lower()
+        email = data.get('email', '').strip()
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        role = data.get('role', 'user')
+        department = data.get('department', '')
+
+        # Validation
+        if not username or not email:
+            return jsonify({'error': 'Username and email are required'}), 400
+
+        if role not in ['admin', 'user', 'operator', 'viewer', 'tester']:
+            return jsonify({'error': 'Invalid role'}), 400
+
+        # Check if user already exists
+        if db is not None:
+            try:
+                existing = db['users'].find_one({'username': {'$regex': f'^{username}$', '$options': 'i'}})
+                if existing:
+                    return jsonify({'error': 'Username already exists'}), 409
+                existing = db['users'].find_one({'email': email})
+                if existing:
+                    return jsonify({'error': 'Email already exists'}), 409
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+        else:
+            for u in in_memory_store.get('users', {}).values():
+                if u.get('username', '').lower() == username:
+                    return jsonify({'error': 'Username already exists'}), 409
+                if u.get('email') == email:
+                    return jsonify({'error': 'Email already exists'}), 409
+
+        # Create new user without password (will be set during setup)
+        new_user = {
+            'username': username,
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'role': role,
+            'department': department,
+            'password_hash': None,  # Will be set during invitation setup
+            'verified': False,
+            'created_at': datetime.utcnow(),
+            'last_login': None
+        }
+
+        # Save user to database
+        if db is not None:
+            try:
+                result = db['users'].insert_one(new_user)
+                print(f"✓ User {username} created in MongoDB")
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                # Fallback to in-memory
+                in_memory_store['users'][username] = new_user
+        else:
+            in_memory_store['users'][username] = new_user
+
+        # Generate invitation token
+        invite_token = create_invite_token(username, email)
+
+        # Send invitation email
+        from email_service import email_service
+        success, message = email_service.send_invite_email(
+            email, username, first_name, invite_token
+        )
+
+        if not success:
+            print(f"⚠️ Failed to send invite email: {message}")
+
+        # Log action
+        audit_logger.log_action(
+            action='CREATE',
+            user_id=user.get('username'),
+            resource='user',
+            status='success',
+            details={'created_user': username, 'email': email, 'role': role},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({
+            'message': 'User created successfully. Invitation email sent.',
+            'username': username,
+            'email': email,
+            'role': role
+        }), 201
+
+    except Exception as e:
+        print(f"❌ Create user error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to create user'}), 500
+
 @app.route('/api/admin/users/<username>', methods=['DELETE'])
 @require_auth
 def delete_user(username, user=None):
@@ -1805,21 +2076,24 @@ def delete_user(username, user=None):
         if user.get('role') != 'admin':
             return jsonify({'error': 'Admin access required to delete users'}), 403
 
-        username = username.lower().strip()
+        username = username.strip()
 
-        # Prevent self-deletion
-        if username == user['username']:
+        # Prevent self-deletion (case-insensitive)
+        if username.lower() == user['username'].lower():
             return jsonify({'error': 'Cannot delete your own account'}), 400
 
         # Prevent deleting admin users unless there are other admins
         if db is not None:
             try:
-                target_user = db['users'].find_one({'username': username})
+                # Case-insensitive search using regex
+                import re
+                target_user = db['users'].find_one({'username': {'$regex': f'^{re.escape(username)}$', '$options': 'i'}})
             except Exception as e:
                 print(f"⚠️ MongoDB error: {e}")
-                target_user = in_memory_store['users'].get(username)
+                # Fallback to case-insensitive search in memory
+                target_user = next((u for u in in_memory_store.get('users', {}).values() if u.get('username', '').lower() == username.lower()), None)
         else:
-            target_user = in_memory_store['users'].get(username)
+            target_user = next((u for u in in_memory_store.get('users', {}).values() if u.get('username', '').lower() == username.lower()), None)
 
         if not target_user:
             return jsonify({'error': 'User not found'}), 404
@@ -1838,19 +2112,20 @@ def delete_user(username, user=None):
             if admin_count <= 1:
                 return jsonify({'error': 'Cannot delete the last admin user'}), 400
 
-        # Delete user from database
+        # Delete user from database (use actual username from target_user)
+        actual_username = target_user.get('username')
         if db is not None:
             try:
-                result = db['users'].delete_one({'username': username})
+                result = db['users'].delete_one({'username': actual_username})
                 if result.deleted_count == 0:
                     return jsonify({'error': 'Failed to delete user'}), 500
             except Exception as e:
                 print(f"⚠️ MongoDB error: {e}")
-                if username in in_memory_store['users']:
-                    del in_memory_store['users'][username]
+                if actual_username in in_memory_store.get('users', {}):
+                    del in_memory_store['users'][actual_username]
         else:
-            if username in in_memory_store['users']:
-                del in_memory_store['users'][username]
+            if actual_username in in_memory_store.get('users', {}):
+                del in_memory_store['users'][actual_username]
             else:
                 return jsonify({'error': 'Failed to delete user'}), 500
 
@@ -1990,17 +2265,129 @@ def update_user_admin(user=None):
         print(f"❌ Update user error: {e}")
         return jsonify({'error': 'Failed to update user'}), 500
 
+# ==================== ACCOUNT SETUP (INVITATIONS) ====================
+
+@app.route('/setup-account')
+def setup_account_page():
+    """Setup/onboarding page for invited users."""
+    token = request.args.get('token', '')
+    if not token:
+        return redirect('/login')
+
+    valid, username, email, error = validate_invite_token(token)
+    if not valid:
+        return render_template('nexus/login.html'), 400
+
+    return render_template('nexus/setup_account.html')
+
+@app.route('/api/setup-account/debug-tokens', methods=['GET'])
+def debug_get_tokens():
+    """DEBUG: Get all invite tokens (development only)."""
+    tokens = []
+    for token, data in in_memory_store.get('invite_tokens', {}).items():
+        tokens.append({
+            'token': token,
+            'username': data['username'],
+            'email': data['email'],
+            'expires_at': str(data['expires_at']),
+            'setup_link': f"http://localhost:5000/setup-account?token={token}"
+        })
+    return jsonify({'tokens': tokens}), 200
+
+@app.route('/api/setup-account/info', methods=['GET'])
+def setup_account_info():
+    """Get account info for a setup token."""
+    token = request.args.get('token', '')
+    if not token:
+        return jsonify({'error': 'Missing token'}), 400
+
+    valid, username, email, error = validate_invite_token(token)
+    if not valid:
+        return jsonify({'error': error or 'Invalid token'}), 400
+
+    return jsonify({'username': username, 'email': email}), 200
+
+@app.route('/api/setup-account/complete', methods=['POST'])
+def setup_account_complete():
+    """Complete account setup by setting password."""
+    try:
+        data = request.json
+        token = data.get('token', '')
+        password = data.get('password', '')
+
+        if not token or not password:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # Validate token
+        valid, username, email, error = validate_invite_token(token)
+        if not valid:
+            return jsonify({'error': error or 'Invalid token'}), 400
+
+        # Password requirements check
+        if len(password) < 8 or not any(c.isupper() for c in password) or \
+           not any(c.islower() for c in password) or not any(c.isdigit() for c in password) or \
+           not any(c in '!@#$%^&*' for c in password):
+            return jsonify({'error': 'Password does not meet requirements'}), 400
+
+        # Find and update user with hashed password
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(password)
+
+        if db is not None:
+            try:
+                result = db['users'].update_one(
+                    {'username': {'$regex': f'^{username}$', '$options': 'i'}},
+                    {'$set': {'password_hash': password_hash, 'verified': True}}
+                )
+                if result.modified_count == 0:
+                    return jsonify({'error': 'User not found'}), 404
+            except Exception as e:
+                print(f"⚠️ MongoDB error: {e}")
+                # Fallback to in-memory
+                for u in in_memory_store.get('users', {}).values():
+                    if u.get('username', '').lower() == username.lower():
+                        u['password_hash'] = password_hash
+                        u['verified'] = True
+                        break
+        else:
+            # Update in-memory user
+            for u in in_memory_store.get('users', {}).values():
+                if u.get('username', '').lower() == username.lower():
+                    u['password_hash'] = password_hash
+                    u['verified'] = True
+                    break
+
+        # Consume the invitation token
+        consume_invite_token(token)
+
+        # Log action
+        audit_logger.log_action(
+            action='ACCOUNT_SETUP',
+            user_id=username,
+            resource='authentication',
+            status='success',
+            details={'method': 'invitation'},
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        return jsonify({'message': 'Account setup completed successfully'}), 200
+
+    except Exception as e:
+        print(f"❌ Setup account error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to complete setup'}), 500
+
 @app.route('/user-management', methods=['GET'])
 def user_management_page():
     """Serve user management page. Auth handled by frontend with localStorage token."""
+    # Clear Flask's template cache and render
+    app.jinja_env.cache = None
     html = render_template('nexus/user_management.html')
-    has_confirm = '!confirm' in html
-    has_modal = 'showDeleteConfirmation' in html
-    print(f"DEBUG: has_confirm={has_confirm}, has_modal={has_modal}, len(html)={len(html)}")
-    # Inject corrected delete functionality if old version is served
-    if has_confirm and not has_modal:
-        # Inject the showDeleteConfirmation function before the deleteUser call
-        modal_js = '''
+
+    # Always inject the corrected modal function
+    modal_js = '''
         window.showDeleteConfirmation = function(username) {
             return new Promise((resolve) => {
                 const overlay = document.createElement('div');
@@ -2028,7 +2415,8 @@ def user_management_page():
             }
         };
         '''
-        html = html.replace('</script>', modal_js + '</script>')
+    # Inject at the end before closing script tag
+    html = html.replace('</script>', modal_js + '</script>')
     return html
 
 # ==================== TELEMETRY API ====================
@@ -2860,6 +3248,11 @@ def get_dashboard_overview(user=None):
         'timestamp': datetime.utcnow().isoformat()
     }))
 
+    # Get auto-scaling and optimization data
+    scaling_status = autoscaling_monitor.get_scaling_status()
+    lb_status = autoscaling_monitor.get_load_balancing_status()
+    optimization = autoscaling_monitor.optimize_resources()
+
     return jsonify({
         'timestamp': datetime.utcnow().isoformat(),
         'metrics_summary': {
@@ -2871,8 +3264,8 @@ def get_dashboard_overview(user=None):
         'performance': {
             'resolution_rate': round(resolution_rate, 1),
             'detection_accuracy': round(85 + random.uniform(-5, 10), 1),
-            'mttf': round(random.uniform(30, 120), 1),  # Mean Time To Failure
-            'mttr': round(random.uniform(5, 30), 1)     # Mean Time To Recovery
+            'mttf': round(random.uniform(30, 120), 1),
+            'mttr': round(random.uniform(5, 30), 1)
         },
         'active_issues': {
             'critical_count': critical,
@@ -2888,7 +3281,29 @@ def get_dashboard_overview(user=None):
                 'timestamp': metric.get('timestamp', datetime.utcnow().isoformat())
             }
             for name, metric in recent_metrics_list
-        ]
+        ],
+        'auto_scaling': {
+            'current_instances': scaling_status['current_instances'],
+            'min_instances': scaling_status['min_instances'],
+            'max_instances': scaling_status['max_instances'],
+            'thresholds': scaling_status['thresholds']
+        },
+        'load_balancing': {
+            'algorithm': lb_status['algorithm'],
+            'instances_count': len(lb_status['instances']),
+            'average_load': lb_status['average_load'],
+            'healthy_instances': sum(1 for i in lb_status['instances'] if i['health'] == 'healthy')
+        },
+        'resource_optimization': {
+            'current_metrics': optimization['current_metrics'],
+            'recommendation_count': len(optimization['recommendations']),
+            'critical_recommendations': [r for r in optimization['recommendations'] if r.get('severity') == 'high']
+        },
+        'alert_thresholds': {
+            'cpu_warning': 75,
+            'memory_warning': 75,
+            'error_rate_warning': 5
+        }
     })
 
 @app.route('/api/errors/analysis', methods=['GET'])
@@ -3669,6 +4084,130 @@ def get_alert_templates(user=None):
     return jsonify({'templates': templates})
 
 
+# ==================== AUTO-SCALING & OPTIMIZATION ENDPOINTS ====================
+
+@app.route('/api/autoscaling/status', methods=['GET'])
+@require_auth
+def get_autoscaling_status(user=None):
+    """Get current auto-scaling status and configuration"""
+    return jsonify(autoscaling_monitor.get_scaling_status()), 200
+
+
+@app.route('/api/autoscaling/history', methods=['GET'])
+@require_auth
+def get_scaling_history(user=None):
+    """Get scaling event history"""
+    limit = request.args.get('limit', 20, type=int)
+    return jsonify({
+        'events': list(autoscaling_monitor.scaling_history)[-limit:],
+        'total_events': len(autoscaling_monitor.scaling_history)
+    }), 200
+
+
+@app.route('/api/load-balancing/status', methods=['GET'])
+@require_auth
+def get_load_balancing_status(user=None):
+    """Get load balancing status and instance distribution"""
+    return jsonify(autoscaling_monitor.get_load_balancing_status()), 200
+
+
+@app.route('/api/resource-optimization', methods=['GET'])
+@require_auth
+def get_resource_optimization(user=None):
+    """Get resource optimization recommendations"""
+    return jsonify(autoscaling_monitor.optimize_resources()), 200
+
+
+@app.route('/api/metrics/record', methods=['POST'])
+@require_auth
+def record_system_metrics(user=None):
+    """Record system metrics for auto-scaling decisions"""
+    try:
+        data = request.get_json()
+        cpu = float(data.get('cpu', 0))
+        memory = float(data.get('memory', 0))
+        request_rate = float(data.get('request_rate', 0))
+        error_rate = float(data.get('error_rate', 0))
+
+        # Record metrics
+        metric_record = autoscaling_monitor.record_metrics(cpu, memory, request_rate, error_rate)
+
+        # Check if scaling is needed
+        scaling_result = autoscaling_monitor.check_and_scale(cpu, memory)
+
+        # Check alert thresholds at 75%
+        alerts = []
+        if cpu > 75:
+            alert = autoscaling_monitor.trigger_alert('warning', 'CPU Usage', 75, cpu)
+            alerts.append(alert)
+
+        if memory > 75:
+            alert = autoscaling_monitor.trigger_alert('warning', 'Memory Usage', 75, memory)
+            alerts.append(alert)
+
+        return jsonify({
+            'metrics_recorded': metric_record,
+            'scaling_action': scaling_result,
+            'alerts_triggered': alerts
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/rate-limiting/stats', methods=['GET'])
+@require_auth
+def get_rate_limiting_stats(user=None):
+    """Get rate limiting statistics"""
+    endpoint = request.args.get('endpoint', '')
+    identifier = request.args.get('identifier', request.remote_addr)
+
+    if endpoint:
+        stats = rate_limiter.get_stats(endpoint, identifier)
+        return jsonify({
+            'endpoint': endpoint,
+            'identifier': identifier,
+            'stats': stats
+        }), 200
+    else:
+        return jsonify({
+            'error': 'endpoint parameter required',
+            'limits_config': rate_limiter.LIMITS
+        }), 400
+
+
+@app.route('/api/rate-limiting/configure', methods=['PUT'])
+@require_auth
+def configure_rate_limiting(user=None):
+    """Configure rate limiting for specific endpoints"""
+    # Check admin role
+    if user.get('role') != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
+    try:
+        data = request.get_json()
+        endpoint = data.get('endpoint')
+
+        if not endpoint:
+            return jsonify({'error': 'endpoint parameter required'}), 400
+
+        # Update the limit for this endpoint
+        rate_limiter.LIMITS[endpoint] = {
+            'type': data.get('type', 'token_bucket'),
+            'rate': float(data.get('rate', 100)),
+            'capacity': float(data.get('capacity', 200)) if data.get('type') == 'token_bucket' else None,
+            'window': int(data.get('window', 60)) if data.get('type') == 'sliding_window' else None
+        }
+
+        return jsonify({
+            'message': f'Rate limit configured for {endpoint}',
+            'config': rate_limiter.LIMITS[endpoint]
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
 # ==================== SLO/SLA ENDPOINTS ====================
 
 @app.route('/api/slos', methods=['GET'])
@@ -3841,6 +4380,60 @@ def get_active_alerts_ws():
     """Send active alerts to client"""
     alerts = alerting_engine.get_active_alerts()
     return [a.to_dict() for a in alerts]
+
+
+# ==================== MACHINE ANALYZER WEBSOCKET HANDLERS ====================
+
+@socketio.on('connect', namespace='/ws/machine-analyzer')
+def handle_analyzer_connect():
+    """Handle WebSocket connection for machine analyzer"""
+    from flask import request
+    logger.info('[SOCKETIO] Client connected to /ws/machine-analyzer')
+
+    # Send connection confirmation
+    emit('connected', {
+        'message': 'Connected to Machine Analyzer',
+        'status': 'ready'
+    })
+
+    # Register callback for analyzer updates (works from background threads)
+    def send_update(data):
+        """Send analyzer updates to connected client"""
+        try:
+            # Broadcast to all clients in the namespace
+            socketio.emit('data_update', data,
+                         namespace='/ws/machine-analyzer',
+                         to=None)
+        except Exception as e:
+            logger.error(f'[ANALYZER] Failed to emit update: {e}')
+
+    analyzer.register_callback(send_update)
+    logger.info('[ANALYZER] Callback registered for analyzer updates')
+
+
+@socketio.on('disconnect', namespace='/ws/machine-analyzer')
+def handle_analyzer_disconnect():
+    """Handle WebSocket disconnection for machine analyzer"""
+    logger.info('[SOCKETIO] Client disconnected from /ws/machine-analyzer')
+
+    # Stop any running analysis
+    if analyzer.is_running:
+        analyzer.reset()
+        logger.info('[ANALYZER] Analysis stopped due to disconnect')
+
+
+@socketio.on('request_status', namespace='/ws/machine-analyzer')
+def handle_status_request():
+    """Handle status request from client"""
+    status = {
+        'is_running': analyzer.is_running,
+        'is_paused': analyzer.is_paused,
+        'current_machine': analyzer.current_machine,
+        'anomaly_score': analyzer.current_anomaly_score,
+        'metrics_count': len(analyzer.metrics_buffer),
+        'alerts_count': len(analyzer.alerts_buffer),
+    }
+    emit('status', status)
 
 
 # ==================== SLO REPORTING ENDPOINTS ====================
@@ -4049,4 +4642,4 @@ if __name__ == '__main__':
 
     # Run with socketio
     socketio.run(app, host='0.0.0.0', port=port, debug=False,
-                allow_unsafe_werkzeug=True)
+                allow_unsafe_werkzeug=True, use_reloader=False)

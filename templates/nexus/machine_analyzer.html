@@ -1,0 +1,1572 @@
+{% extends "nexus/base.html" %}
+
+{% block title %}Machine Analyzer - Real-time Analysis{% endblock %}
+
+{% block topbar_title %}Machine Analyzer{% endblock %}
+
+{% block content %}
+<style>
+    .machine-analyzer {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background: #0a0e27;
+        color: #e0e0e0;
+        font-family: 'Courier New', monospace;
+    }
+
+    /* TOP BAR */
+    .analyzer-topbar {
+        background: linear-gradient(135deg, #1a1f3a, #16213e);
+        border-bottom: 2px solid #00d4ff;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 2px 10px rgba(0,212,255,0.1);
+    }
+
+    .machine-selector {
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .machine-selector label {
+        display: block;
+        font-size: 12px;
+        color: #00d4ff;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .machine-selector select {
+        width: 100%;
+        padding: 10px;
+        background: #0f1419;
+        border: 1px solid #00d4ff;
+        color: #00d4ff;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+    }
+
+    .machine-selector select:hover {
+        border-color: #00ffff;
+        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .status-ready {
+        background: #2d5a2d;
+        color: #90ee90;
+        border: 1px solid #90ee90;
+    }
+
+    .status-loading {
+        background: #5a5a2d;
+        color: #ffff00;
+        border: 1px solid #ffff00;
+        animation: pulse 1s infinite;
+    }
+
+    .status-streaming {
+        background: #2d5a2d;
+        color: #00ff00;
+        border: 1px solid #00ff00;
+    }
+
+    .status-paused {
+        background: #5a2d2d;
+        color: #ffaa00;
+        border: 1px solid #ffaa00;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: 1px solid #00d4ff;
+        background: #0f1419;
+        color: #00d4ff;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn:hover {
+        background: #00d4ff;
+        color: #0a0e27;
+        box-shadow: 0 0 20px rgba(0,212,255,0.5);
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* MAIN CONTENT */
+    .analyzer-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    /* LEFT PANEL - LIVE DATA */
+    .live-data-panel {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+        background: #0f1419;
+        border: 1px solid #1a3a4a;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        background: linear-gradient(90deg, #1a2847, #1a1f3a);
+        padding: 12px 15px;
+        border-bottom: 1px solid #00d4ff;
+        font-size: 13px;
+        font-weight: bold;
+        color: #00d4ff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .live-data-table {
+        flex: 1;
+        overflow-y: auto;
+        font-size: 11px;
+    }
+
+    .live-data-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .live-data-table th {
+        background: #1a2847;
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #00d4ff;
+        color: #00d4ff;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.5px;
+    }
+
+    .live-data-table td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #1a3a4a;
+    }
+
+    .metric-name {
+        color: #00d4ff;
+        font-weight: bold;
+    }
+
+    .metric-value {
+        text-align: right;
+        font-weight: bold;
+    }
+
+    .metric-baseline {
+        color: #888;
+        font-size: 10px;
+    }
+
+    .deviation-bar {
+        width: 100%;
+        height: 4px;
+        background: #1a1f3a;
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .deviation-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s;
+    }
+
+    .status-green { color: #00ff00; }
+    .status-yellow { color: #ffff00; }
+    .status-red { color: #ff0000; }
+
+    .fill-green { background: #00ff00; }
+    .fill-yellow { background: #ffff00; }
+    .fill-red { background: #ff0000; }
+
+    /* RIGHT PANEL */
+    .analyzer-right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* ANOMALY PANEL */
+    .anomaly-panel {
+        background: #0f1419;
+        border: 1px solid #1a3a4a;
+        border-radius: 4px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .anomaly-title {
+        color: #00d4ff;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #00d4ff;
+        padding-bottom: 8px;
+    }
+
+    .anomaly-gauge {
+        text-align: center;
+    }
+
+    .gauge-value {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .gauge-bar {
+        width: 100%;
+        height: 20px;
+        background: #1a1f3a;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #00d4ff;
+        position: relative;
+    }
+
+    .gauge-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s;
+    }
+
+    .threshold-line {
+        position: absolute;
+        width: 2px;
+        height: 100%;
+        background: #ff6600;
+        left: 52%;
+        top: 0;
+        z-index: 10;
+    }
+
+    .gauge-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        margin-top: 5px;
+        color: #888;
+    }
+
+    .threshold-label {
+        color: #ff6600;
+        font-weight: bold;
+    }
+
+    .anomaly-status {
+        padding: 8px;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
+    .anomaly-normal {
+        background: rgba(0, 255, 0, 0.1);
+        color: #00ff00;
+        border: 1px solid #00ff00;
+    }
+
+    .anomaly-warning {
+        background: rgba(255, 255, 0, 0.1);
+        color: #ffff00;
+        border: 1px solid #ffff00;
+    }
+
+    .anomaly-alert {
+        background: rgba(255, 0, 0, 0.1);
+        color: #ff0000;
+        border: 1px solid #ff0000;
+    }
+
+    .alert-log {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .alert-item {
+        padding: 8px;
+        margin-bottom: 5px;
+        background: #1a1f3a;
+        border-left: 3px solid #00d4ff;
+        border-radius: 2px;
+        font-size: 10px;
+    }
+
+    .alert-item.high { border-left-color: #ff6600; }
+    .alert-item.critical { border-left-color: #ff0000; }
+
+    .alert-time {
+        color: #888;
+        font-size: 9px;
+    }
+
+    .alert-score {
+        font-weight: bold;
+        color: #00d4ff;
+    }
+
+    /* ACTION PANEL */
+    .action-panel {
+        background: #0f1419;
+        border: 1px solid #1a3a4a;
+        border-radius: 4px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .action-title {
+        color: #00d4ff;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #00d4ff;
+        padding-bottom: 8px;
+    }
+
+    .fault-category {
+        background: #1a1f3a;
+        border-left: 3px solid #00d4ff;
+        padding: 10px;
+        border-radius: 2px;
+        margin-bottom: 10px;
+    }
+
+    .fault-category.critical {
+        border-left-color: #ff0000;
+        background: rgba(255, 0, 0, 0.05);
+    }
+
+    .fault-category.high {
+        border-left-color: #ff6600;
+        background: rgba(255, 102, 0, 0.05);
+    }
+
+    .fault-category.medium {
+        border-left-color: #ffff00;
+        background: rgba(255, 255, 0, 0.05);
+    }
+
+    .fault-name {
+        font-weight: bold;
+        color: #00d4ff;
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .fault-severity {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 9px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-left: 5px;
+    }
+
+    .severity-critical {
+        background: #ff0000;
+        color: white;
+    }
+
+    .severity-high {
+        background: #ff6600;
+        color: white;
+    }
+
+    .severity-medium {
+        background: #ffff00;
+        color: #000;
+    }
+
+    .affected-metrics {
+        font-size: 10px;
+        color: #888;
+        margin-bottom: 8px;
+    }
+
+    .affected-metrics strong {
+        color: #ffaa00;
+    }
+
+    .recommendations {
+        font-size: 10px;
+    }
+
+    .recommendation {
+        padding: 4px 8px;
+        margin: 3px 0;
+        background: #0f1419;
+        border-left: 2px solid #00d4ff;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .priority-badge {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 16px;
+        font-weight: bold;
+        font-size: 9px;
+        flex-shrink: 0;
+    }
+
+    .priority-1 { background: #ff0000; color: white; }
+    .priority-2 { background: #ff6600; color: white; }
+    .priority-3 { background: #ffff00; color: #000; }
+    .priority-4 { background: #00d4ff; color: #000; }
+
+    /* SCROLLBARS */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #0f1419;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #00d4ff;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #00ffff;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #888;
+        text-align: center;
+    }
+
+    .empty-state h3 {
+        color: #00d4ff;
+        margin-bottom: 10px;
+    }
+
+    /* TAB NAVIGATION */
+    .analyzer-tabs {
+        display: flex;
+        gap: 10px;
+        background: #0a0e27;
+        border-bottom: 2px solid #1a2340;
+        padding: 0 20px;
+        overflow-x: auto;
+    }
+
+    .tab-btn {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #888;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-family: 'Courier New', monospace;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+        color: #00d4ff;
+        border-bottom-color: #00d4ff;
+    }
+
+    .tab-btn.active {
+        color: #00ff41;
+        border-bottom-color: #00ff41;
+        box-shadow: 0 -2px 8px rgba(0,255,65,0.2);
+    }
+
+    /* TAB CONTENT */
+    .tab-content {
+        display: none;
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .tab-content.active {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #dashboard-tab.active {
+        display: flex;
+    }
+
+    /* ANALYSIS TAB STYLES */
+    .analysis-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .analysis-card {
+        background: #1a1f3a;
+        border: 1px solid #00d4ff;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .analysis-card:hover {
+        box-shadow: 0 0 15px rgba(0,212,255,0.3);
+        border-color: #00ffff;
+        transform: translateY(-2px);
+    }
+
+    .analysis-card h3 {
+        color: #00ff41;
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .analysis-card-image {
+        width: 100%;
+        height: 300px;
+        background: #0f1419;
+        border: 1px solid #1a3a3a;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .analysis-card-image img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .analysis-card-desc {
+        font-size: 12px;
+        color: #aaa;
+        line-height: 1.4;
+    }
+
+    /* REPORT SECTION */
+    .report-section {
+        background: #1a1f3a;
+        border: 1px solid #00d4ff;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .report-header {
+        background: linear-gradient(135deg, #1a2340, #1a1f3a);
+        padding: 15px 20px;
+        border-bottom: 1px solid #00d4ff;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .report-header h3 {
+        color: #00ff41;
+        margin: 0;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .report-toggle {
+        color: #00d4ff;
+        font-size: 16px;
+    }
+
+    .report-content {
+        padding: 20px;
+        display: none;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .report-content.active {
+        display: block;
+    }
+
+    .report-content p, .report-content li {
+        color: #ddd;
+        line-height: 1.6;
+        font-size: 12px;
+    }
+
+    .report-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 11px;
+    }
+
+    .report-content th, .report-content td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #333;
+        color: #ddd;
+    }
+
+    .report-content th {
+        background: #0f1419;
+        color: #00ff41;
+        font-weight: bold;
+    }
+
+    /* INCIDENT LOG STYLES */
+    .incident-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #1a1f3a;
+        border: 1px solid #00d4ff;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .incident-table th {
+        background: linear-gradient(135deg, #1a2340, #1a1f3a);
+        padding: 12px;
+        text-align: left;
+        color: #00ff41;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-bottom: 2px solid #00d4ff;
+    }
+
+    .incident-table td {
+        padding: 12px;
+        border-bottom: 1px solid #2a2f4a;
+        color: #ddd;
+        font-size: 12px;
+    }
+
+    .incident-table tr:hover {
+        background: #1f2640;
+    }
+
+    .severity-critical {
+        color: #ff0000;
+        font-weight: bold;
+    }
+
+    .severity-high {
+        color: #ff6b00;
+    }
+
+    .severity-medium {
+        color: #ffb800;
+    }
+
+    .severity-low {
+        color: #00ff41;
+    }
+
+    .status-badge-small {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .status-remediation_applied {
+        background: #1a4d1a;
+        color: #00ff41;
+    }
+
+    .status-escalated {
+        background: #4d3a1a;
+        color: #ffb800;
+    }
+
+    .status-acknowledged {
+        background: #1a3a4d;
+        color: #00d4ff;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+        font-size: 14px;
+    }
+</style>
+
+<div class="machine-analyzer">
+    <!-- TOP BAR -->
+    <div class="analyzer-topbar">
+        <div class="machine-selector">
+            <label for="machine-select">Select Machine</label>
+            <select id="machine-select">
+                <option value="">-- Select a machine --</option>
+                <optgroup label="Machine 1">
+                    <option value="">Loading...</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div>
+            <span class="status-badge status-ready" id="status-badge">Ready</span>
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn" id="start-btn" onclick="startAnalysis()">Start</button>
+            <button class="btn" id="pause-btn" onclick="pauseAnalysis()" disabled>Pause</button>
+            <button class="btn" id="resume-btn" onclick="resumeAnalysis()" disabled>Resume</button>
+            <button class="btn" id="reset-btn" onclick="resetAnalysis()">Reset</button>
+        </div>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <div class="analyzer-tabs">
+        <button class="tab-btn active" data-tab="dashboard">📊 Live Dashboard</button>
+        <button class="tab-btn" data-tab="analysis">📈 Analysis Results</button>
+        <button class="tab-btn" data-tab="incidents">📋 Incident Log</button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="analyzer-content" id="dashboard-tab">
+
+        <!-- LEFT: LIVE DATA STREAM -->
+        <div class="live-data-panel">
+            <div class="panel-header">Live Data Stream (60-second window)</div>
+            <div class="live-data-table" id="live-data-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%">Time</th>
+                            <th style="width: 20%">Feature</th>
+                            <th style="width: 15%">Value</th>
+                            <th style="width: 15%">Baseline</th>
+                            <th style="width: 15%">Deviation</th>
+                            <th style="width: 15%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="live-data-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #888;">
+                                Select a machine and click Start to begin analysis
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT PANELS -->
+        <div class="analyzer-right">
+            <!-- ANOMALY DETECTION -->
+            <div class="anomaly-panel">
+                <div class="anomaly-title">Anomaly Detection</div>
+
+                <div class="anomaly-gauge">
+                    <div class="gauge-value" id="anomaly-score">0.00</div>
+                    <div class="gauge-bar">
+                        <div class="threshold-line"></div>
+                        <div class="gauge-fill fill-green" id="gauge-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>0.0 (Normal)</span>
+                        <span class="threshold-label">0.52 (Threshold)</span>
+                        <span>1.0 (Critical)</span>
+                    </div>
+                </div>
+
+                <div class="anomaly-status anomaly-normal" id="anomaly-status">
+                    NORMAL - No anomalies detected
+                </div>
+
+                <div>
+                    <div style="font-size: 11px; color: #00d4ff; margin-bottom: 8px; font-weight: bold;">Recent Alerts</div>
+                    <div class="alert-log" id="alert-log">
+                        <div style="color: #888; text-align: center; padding: 20px;">
+                            No alerts yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIONS & RECOMMENDATIONS -->
+            <div class="action-panel">
+                <div class="action-title">Recommended Actions</div>
+                <div id="action-container" style="color: #888; text-align: center; padding: 20px;">
+                    Awaiting analysis results...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALYSIS RESULTS TAB -->
+    <div class="tab-content" id="analysis-tab">
+        <div class="analysis-grid" id="visualizations-container">
+            <div class="loading">Loading visualizations...</div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <h2 style="color: #00ff41; margin-bottom: 20px;">📊 Detailed Evaluation Reports</h2>
+            <div id="reports-container">
+                <div class="loading">Loading reports...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INCIDENT LOG TAB -->
+    <div class="tab-content" id="incidents-tab">
+        <h2 style="color: #00ff41; margin-bottom: 20px;">📋 Incident Log</h2>
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <input type="text" id="incident-search" placeholder="Search incidents..." style="flex: 1; padding: 10px; background: #0f1419; border: 1px solid #00d4ff; color: #00d4ff; border-radius: 4px; font-size: 12px;">
+            <select id="severity-filter" style="padding: 10px; background: #0f1419; border: 1px solid #00d4ff; color: #00d4ff; border-radius: 4px; font-size: 12px;">
+                <option value="">All Severities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+        </div>
+        <div id="incidents-container" style="overflow-x: auto;">
+            <div class="loading">Loading incident log...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// WebSocket connection
+let socket = null;
+let machineData = {};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadMachines();
+    connectWebSocket();
+});
+
+// Load available machines
+async function loadMachines() {
+    try {
+        const response = await fetch('/api/machine-analyzer/machines');
+        const data = await response.json();
+
+        machineData = data.machines;
+
+        const select = document.getElementById('machine-select');
+        select.innerHTML = '<option value="">-- Select a machine --</option>';
+
+        for (const [server, machines] of Object.entries(data.machines)) {
+            const group = document.createElement('optgroup');
+            group.label = server;
+
+            machines.forEach(machine => {
+                const option = document.createElement('option');
+                option.value = machine.name;
+                option.textContent = `${machine.name} (Period ${machine.period})`;
+                group.appendChild(option);
+            });
+
+            select.appendChild(group);
+        }
+    } catch (error) {
+        console.error('Error loading machines:', error);
+    }
+}
+
+// Socket.IO connection
+function connectWebSocket() {
+    // Check if io is available
+    if (typeof io === 'undefined') {
+        if (document.getElementById('status-badge')) {
+            document.getElementById('status-badge').innerHTML = 'ERROR - io undefined';
+        }
+        return;
+    }
+
+    // Connect to /ws/machine-analyzer namespace using Socket.IO
+    socket = io('/ws/machine-analyzer', {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', function() {
+        if (document.getElementById('status-badge')) {
+            document.getElementById('status-badge').style.background = '#0f0';
+        }
+    });
+
+    socket.on('connected', function(data) {
+        if (document.getElementById('status-badge')) {
+            document.getElementById('status-badge').innerHTML = 'WS: READY';
+        }
+    });
+
+    socket.on('data_update', function(data) {
+        updateDashboard(data);
+    });
+
+    socket.on('error', function(error) {
+        if (document.getElementById('status-badge')) {
+            document.getElementById('status-badge').style.background = '#f00';
+        }
+    });
+
+    socket.on('disconnect', function() {
+        if (document.getElementById('status-badge')) {
+            document.getElementById('status-badge').style.background = '#f80';
+        }
+    });
+
+    socket.on('connect_error', function(error) {
+        if (document.getElementById('status-badge')) {
+            document.getElementById('status-badge').style.background = '#f00';
+        }
+    });
+}
+
+// Polling timeout for metrics updates
+let metricsPollingTimeout = null;
+
+// Start analysis
+async function startAnalysis() {
+    const machine = document.getElementById('machine-select').value;
+
+    if (!machine) {
+        alert('Please select a machine');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/machine-analyzer/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ machine: machine, update_frequency: 0.5 })
+        });
+
+        if (!response.ok) {
+            alert('Error starting analysis');
+            return;
+        }
+
+        updateStatus('streaming');
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('pause-btn').disabled = false;
+        document.getElementById('machine-select').disabled = true;
+
+        // Start polling for metrics
+        if (metricsPollingTimeout) clearTimeout(metricsPollingTimeout);
+
+        // Polling function
+        async function pollMetricsNow() {
+            try {
+                const response = await fetch('/api/machine-analyzer/metrics');
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (!data || !data.metrics || data.metrics.length === 0) return;
+
+                const dashboardData = {
+                    metrics: data.metrics,
+                    anomaly_score: data.anomaly_score,
+                    alerts: [],
+                    detected_faults: []
+                };
+
+                updateDashboard(dashboardData);
+            } catch (e) {
+                // silent
+            }
+        }
+
+        // Start polling
+        pollMetricsNow();
+        metricsPollingTimeout = setInterval(pollMetricsNow, 500);
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Recursive polling function
+function startMetricsPolling() {
+    pollMetrics();
+    metricsPollingTimeout = setTimeout(startMetricsPolling, 500);
+}
+
+// Poll metrics from API endpoint
+async function pollMetrics() {
+    try {
+        const response = await fetch('/api/machine-analyzer/metrics');
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+
+        if (!data || !data.metrics || data.metrics.length === 0) {
+            return;
+        }
+
+        // Format data to match WebSocket format
+        const dashboardData = {
+            metrics: data.metrics,
+            anomaly_score: data.anomaly_score,
+            alerts: [],
+            detected_faults: []
+        };
+
+        updateDashboard(dashboardData);
+    } catch (error) {
+        // Silent fail
+    }
+}
+
+// Pause analysis
+async function pauseAnalysis() {
+    try {
+        await fetch('/api/machine-analyzer/pause', { method: 'POST' });
+        updateStatus('paused');
+        document.getElementById('pause-btn').disabled = true;
+        document.getElementById('resume-btn').disabled = false;
+    } catch (error) {
+        console.error('Error pausing analysis:', error);
+    }
+}
+
+// Resume analysis
+async function resumeAnalysis() {
+    try {
+        await fetch('/api/machine-analyzer/resume', { method: 'POST' });
+        updateStatus('streaming');
+        document.getElementById('pause-btn').disabled = false;
+        document.getElementById('resume-btn').disabled = true;
+    } catch (error) {
+        console.error('Error resuming analysis:', error);
+    }
+}
+
+// Reset analysis
+async function resetAnalysis() {
+    try {
+        await fetch('/api/machine-analyzer/reset', { method: 'POST' });
+
+        // Clear polling interval
+        if (metricsPollingTimeout) {
+            clearInterval(metricsPollingTimeout);
+            metricsPollingTimeout = null;
+        }
+
+        updateStatus('ready');
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('pause-btn').disabled = true;
+        document.getElementById('resume-btn').disabled = true;
+        document.getElementById('machine-select').disabled = false;
+        document.getElementById('live-data-tbody').innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; color: #888;">
+                    Select a machine and click Start to begin analysis
+                </td>
+            </tr>
+        `;
+        document.getElementById('anomaly-score').textContent = '0.00';
+        document.getElementById('gauge-fill').style.width = '0%';
+        document.getElementById('anomaly-status').textContent = 'NORMAL - No anomalies detected';
+        document.getElementById('action-container').innerHTML = 'Awaiting analysis results...';
+        document.getElementById('alert-log').innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No alerts yet</div>';
+    } catch (error) {
+        console.error('Error resetting analysis:', error);
+    }
+}
+
+// Update dashboard with new data
+function updateDashboard(data) {
+    try {
+        // Update live metrics table
+        updateLiveData(data.metrics);
+
+        // Update anomaly gauge
+        updateAnomalyGauge(data.anomaly_score);
+
+        // Update alerts
+        updateAlerts(data.alerts);
+
+        // Update recommendations
+        updateRecommendations(data.detected_faults);
+    } catch (e) {
+        document.getElementById('status-badge').textContent = 'DASH_ERROR';
+        console.error('Dashboard update error:', e);
+    }
+}
+
+// Update live data table
+function updateLiveData(metrics) {
+    const tbody = document.getElementById('live-data-tbody');
+
+    // Keep last 38 metrics (one row at a time)
+    const recentMetrics = metrics.slice(-38);
+
+    let html = '';
+    recentMetrics.forEach(metric => {
+        const time = new Date(metric.timestamp * 1000).toLocaleTimeString();
+        const statusClass = `status-${metric.status}`;
+        const fillClass = `fill-${metric.status}`;
+
+        html += `
+            <tr>
+                <td>${time}</td>
+                <td class="metric-name">${metric.feature_name}</td>
+                <td class="metric-value">${metric.value.toFixed(4)}</td>
+                <td class="metric-baseline">${metric.baseline.toFixed(4)}</td>
+                <td>
+                    <div class="deviation-bar">
+                        <div class="deviation-fill ${fillClass}" style="width: ${Math.min(metric.deviation, 100)}%"></div>
+                    </div>
+                    <small style="color: #888;">${metric.deviation.toFixed(1)}%</small>
+                </td>
+                <td class="${statusClass}">● ${metric.status.toUpperCase()}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+
+    // Auto-scroll to bottom
+    const container = document.getElementById('live-data-container');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Update anomaly gauge
+function updateAnomalyGauge(score) {
+    document.getElementById('anomaly-score').textContent = score.toFixed(2);
+    document.getElementById('gauge-fill').style.width = (score * 100) + '%';
+
+    const statusEl = document.getElementById('anomaly-status');
+    const fill = document.getElementById('gauge-fill');
+
+    if (score < 0.3) {
+        statusEl.className = 'anomaly-status anomaly-normal';
+        statusEl.textContent = '✓ NORMAL - Below threshold';
+        fill.className = 'gauge-fill fill-green';
+    } else if (score < 0.52) {
+        statusEl.className = 'anomaly-status anomaly-warning';
+        statusEl.textContent = '⚠ WARNING - Approaching threshold';
+        fill.className = 'gauge-fill fill-yellow';
+    } else {
+        statusEl.className = 'anomaly-status anomaly-alert';
+        statusEl.textContent = '🚨 ALERT - Above threshold!';
+        fill.className = 'gauge-fill fill-red';
+    }
+}
+
+// Update alerts log
+function updateAlerts(alerts) {
+    const log = document.getElementById('alert-log');
+
+    if (!alerts || alerts.length === 0) {
+        log.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No alerts yet</div>';
+        return;
+    }
+
+    let html = '';
+    alerts.slice(-5).reverse().forEach(alert => {
+        const time = new Date(alert.timestamp * 1000).toLocaleTimeString();
+        const severityClass = alert.severity.toLowerCase();
+
+        html += `
+            <div class="alert-item ${severityClass}">
+                <div style="display: flex; justify-content: space-between;">
+                    <span class="alert-time">${time}</span>
+                    <span class="alert-score">Score: ${alert.anomaly_score.toFixed(3)}</span>
+                </div>
+                <div style="color: #ffaa00; margin-top: 3px;">${alert.severity}</div>
+            </div>
+        `;
+    });
+
+    log.innerHTML = html;
+}
+
+// Update recommendations
+function updateRecommendations(faults) {
+    const container = document.getElementById('action-container');
+
+    if (!faults || faults.length === 0) {
+        container.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No faults detected</div>';
+        return;
+    }
+
+    let html = '';
+    faults.forEach(fault => {
+        const severityClass = `fault-category ${fault.severity}`;
+        const badgeClass = `fault-severity severity-${fault.severity}`;
+
+        let recsHtml = '';
+        if (fault.recommendations && fault.recommendations.length > 0) {
+            fault.recommendations.forEach(rec => {
+                const priorityClass = `priority-${rec.priority}`;
+                recsHtml += `
+                    <div class="recommendation">
+                        <span class="priority-badge ${priorityClass}">${rec.priority}</span>
+                        <span>${rec.action}</span>
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+            <div class="${severityClass}">
+                <div class="fault-name">
+                    ${fault.name}
+                    <span class="${badgeClass}">${fault.severity}</span>
+                </div>
+                <div class="affected-metrics">
+                    <strong>Affected:</strong> ${fault.affected_metrics.join(', ')}
+                </div>
+                <div class="recommendations">
+                    ${recsHtml}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Update status badge
+function updateStatus(status) {
+    const badge = document.getElementById('status-badge');
+    badge.className = 'status-badge status-' + status;
+    badge.textContent = status.toUpperCase();
+}
+
+// ==================== TAB SWITCHING ====================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            switchTab(tabName);
+        });
+    });
+
+    // Load analysis data when Analysis tab is clicked
+    document.querySelector('[data-tab="analysis"]').addEventListener('click', () => {
+        loadAnalysisVisualizations();
+        loadAnalysisReports();
+    });
+
+    // Load incidents when Incidents tab is clicked
+    document.querySelector('[data-tab="incidents"]').addEventListener('click', () => {
+        loadIncidentLog();
+    });
+});
+
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    const dashboardTab = document.getElementById('dashboard-tab');
+    if (dashboardTab) {
+        dashboardTab.classList.remove('active');
+    }
+
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Show selected tab
+    if (tabName === 'dashboard') {
+        if (dashboardTab) dashboardTab.classList.add('active');
+    } else {
+        const tab = document.getElementById(tabName + '-tab');
+        if (tab) tab.classList.add('active');
+    }
+
+    // Add active class to button
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+
+// ==================== ANALYSIS TAB FUNCTIONS ====================
+
+async function loadAnalysisVisualizations() {
+    const container = document.getElementById('visualizations-container');
+
+    try {
+        const response = await fetch('/api/machine-analyzer/analysis/visualizations');
+        const result = await response.json();
+
+        if (!result.success) {
+            container.innerHTML = '<div class="loading">Error loading visualizations</div>';
+            return;
+        }
+
+        let html = '';
+        const visualizations = [
+            { key: 'chaos_simulation', title: 'Chaos Simulation', desc: 'System resilience under failure scenarios' },
+            { key: 'classification_results', title: 'Classification Results', desc: 'Anomaly detection model performance' },
+            { key: 'confusion_matrix_mvp', title: 'MVP Confusion Matrix', desc: 'Real-time detection accuracy (MVP)' },
+            { key: 'confusion_matrix_supervised', title: 'Supervised Confusion Matrix', desc: 'ML model performance (supervised)' },
+            { key: 'dos_simulation_analysis', title: 'DoS Simulation', desc: 'DDoS attack detection and mitigation' },
+            { key: 'threshold_calibration', title: 'Threshold Calibration', desc: 'Optimal anomaly detection threshold' },
+            { key: 'remediation_results', title: 'Remediation Results', desc: 'Automated incident response effectiveness' }
+        ];
+
+        visualizations.forEach(viz => {
+            const imgData = result.visualizations[viz.key];
+            if (imgData) {
+                html += `
+                    <div class="analysis-card">
+                        <h3>${viz.title}</h3>
+                        <div class="analysis-card-image">
+                            <img src="data:image/png;base64,${imgData}" alt="${viz.title}">
+                        </div>
+                        <div class="analysis-card-desc">${viz.desc}</div>
+                    </div>
+                `;
+            }
+        });
+
+        container.innerHTML = html;
+    } catch (error) {
+        container.innerHTML = '<div class="loading">Error loading visualizations</div>';
+        console.error('Visualization loading error:', error);
+    }
+}
+
+async function loadAnalysisReports() {
+    const container = document.getElementById('reports-container');
+
+    try {
+        const response = await fetch('/api/machine-analyzer/analysis/reports');
+        const result = await response.json();
+
+        if (!result.success) {
+            container.innerHTML = '<div class="loading">Error loading reports</div>';
+            return;
+        }
+
+        let html = '';
+
+        Object.entries(result.reports).forEach(([key, report]) => {
+            const reportId = key.replace(/_/g, '-');
+            html += `
+                <div class="report-section">
+                    <div class="report-header" onclick="toggleReport('${reportId}')">
+                        <div>
+                            <h3>${report.title}</h3>
+                            <div style="font-size: 11px; color: #888;">${report.description}</div>
+                        </div>
+                        <div class="report-toggle">▼</div>
+                    </div>
+                    <div class="report-content" id="${reportId}">
+                        ${markdownToHtml(report.content)}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    } catch (error) {
+        container.innerHTML = '<div class="loading">Error loading reports</div>';
+        console.error('Report loading error:', error);
+    }
+}
+
+function toggleReport(reportId) {
+    const content = document.getElementById(reportId);
+    if (content) {
+        content.classList.toggle('active');
+    }
+}
+
+function markdownToHtml(markdown) {
+    // Simple markdown to HTML conversion
+    let html = markdown
+        .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^- (.*?)$/gm, '<li>$1</li>')
+        .replace(/(\<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/\`(.*?)\`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+
+    return '<p>' + html + '</p>';
+}
+
+// ==================== INCIDENT LOG FUNCTIONS ====================
+
+let allIncidents = [];
+
+async function loadIncidentLog() {
+    const container = document.getElementById('incidents-container');
+
+    try {
+        const response = await fetch('/api/machine-analyzer/analysis/incident-log');
+        const result = await response.json();
+
+        if (!result.success) {
+            container.innerHTML = '<div class="loading">Error loading incidents</div>';
+            return;
+        }
+
+        allIncidents = result.incidents;
+        renderIncidentTable(allIncidents);
+
+        // Setup search and filter handlers
+        document.getElementById('incident-search').addEventListener('input', filterIncidents);
+        document.getElementById('severity-filter').addEventListener('change', filterIncidents);
+    } catch (error) {
+        container.innerHTML = '<div class="loading">Error loading incidents</div>';
+        console.error('Incident loading error:', error);
+    }
+}
+
+function filterIncidents() {
+    const searchText = document.getElementById('incident-search').value.toLowerCase();
+    const severityFilter = document.getElementById('severity-filter').value;
+
+    const filtered = allIncidents.filter(incident => {
+        const matchesSearch = incident.id.toLowerCase().includes(searchText) ||
+                            incident.type.toLowerCase().includes(searchText) ||
+                            incident.machine.toLowerCase().includes(searchText);
+        const matchesSeverity = !severityFilter || incident.severity === severityFilter;
+        return matchesSearch && matchesSeverity;
+    });
+
+    renderIncidentTable(filtered);
+}
+
+function renderIncidentTable(incidents) {
+    const container = document.getElementById('incidents-container');
+
+    if (incidents.length === 0) {
+        container.innerHTML = '<div class="loading">No incidents found</div>';
+        return;
+    }
+
+    let html = `
+        <table class="incident-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Time</th>
+                    <th>Severity</th>
+                    <th>Type</th>
+                    <th>Machine</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Users</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    incidents.forEach(incident => {
+        const time = new Date(incident.timestamp).toLocaleTimeString();
+        const severityClass = `severity-${incident.severity.toLowerCase()}`;
+        const statusClass = `status-badge-small status-${incident.status}`;
+
+        html += `
+            <tr>
+                <td>${incident.id}</td>
+                <td>${time}</td>
+                <td><span class="${severityClass}">${incident.severity}</span></td>
+                <td>${incident.type}</td>
+                <td>${incident.machine}</td>
+                <td>${incident.anomaly_score.toFixed(2)}</td>
+                <td><span class="${statusClass}">${incident.status.replace(/_/g, ' ')}</span></td>
+                <td>${incident.affected_users}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = html;
+}
+</script>
+{% endblock %}
