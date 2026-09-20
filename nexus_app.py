@@ -45,11 +45,9 @@ from data_loader import get_data_loader
 from prometheus_client import get_storage, init_storage
 from hybrid_metrics_simulator import start_hybrid_collection
 
-# Export utilities
-from simulation_export import SimulationExporter
+# Export utilities (removed simulator)
 
-# Simulation output generator
-from simulation_output_generator import SimulationOutputGenerator
+# Simulation output generator (removed)
 
 # Audit & Logging
 from audit_logger import audit_logger, audit_required, log_security_event
@@ -3082,11 +3080,6 @@ def reject_approval_api(approval_id):
 
     return jsonify({'status': 'rejected', 'message': f'Approval {approval_id} rejected', 'reason': reason}), 200
 
-@app.route('/api/approvals-test', methods=['GET'])
-def approvals_test():
-    """Test endpoint for debugging."""
-    return jsonify({'message': 'Test endpoint works', 'approvals_count': len(in_memory_store.get('approvals', []))}), 200
-
 @app.route('/api/actions/execute', methods=['POST'])
 @require_auth
 def execute_action():
@@ -3244,26 +3237,6 @@ def stream_logs():
 
 # ==================== CHAOS SIMULATOR ====================
 
-from chaos_executor import ChaosExecutor
-
-# Store active simulations
-active_simulations = {}
-
-@app.route('/simulator', methods=['GET'])
-def simulator_page():
-    """Chaos injection simulator page with live Python execution."""
-    return render_template('nexus/simulator_advanced.html')
-
-@app.route('/api/simulator/test', methods=['POST'])
-@require_auth
-def test_simulator_auth(user=None):
-    """Test endpoint to verify authentication is working."""
-    return jsonify({
-        'status': 'ok',
-        'message': 'Authentication successful',
-        'user': request.user
-    })
-
 # ==================== REAL METRICS API ====================
 
 @app.route('/api/metrics/summary', methods=['GET'])
@@ -3297,16 +3270,6 @@ def get_metric(metric_name, user=None):
         'current': metric,
         'history': history
     })
-
-@app.route('/api/metrics/status/<status>', methods=['GET'])
-@require_auth
-def get_metrics_by_status(status, user=None):
-    """Get all metrics with specific status."""
-    storage = get_storage()
-    if status not in ['healthy', 'warning', 'critical']:
-        return jsonify({'error': 'Invalid status'}), 400
-
-    return jsonify(storage.get_metrics_by_status(status))
 
 @app.route('/api/overview/dashboard', methods=['GET'])
 @require_auth
@@ -3636,310 +3599,7 @@ def export_prometheus(user=None):
     storage = get_storage()
     return app.make_response(storage.export_prometheus_format(), 200, {'Content-Type': 'text/plain'})
 
-@app.route('/api/simulator/start', methods=['POST'])
-@require_auth
-def start_simulation(user=None):
-    """Start a new chaos injection simulation."""
-    try:
-        config = request.json or {}
-
-        # Create executor with WebSocket emit capability
-        def emit_to_client(event_type, data):
-            socketio.emit('simulation_event', {
-                'type': event_type,
-                'data': data
-            }, room=f"sim_{config.get('execution_id')}")
-
-        executor = ChaosExecutor(emit_callback=emit_to_client)
-
-        # Run in background thread
-        sim_id = config.get('execution_id', f"sim_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
-        active_simulations[sim_id] = {
-            'status': 'running',
-            'started': datetime.utcnow(),
-            'executor': executor
-        }
-
-        def run_async():
-            try:
-                # Generate synchronized, detailed outputs based on config
-                output_gen = SimulationOutputGenerator(config)
-                outputs = output_gen.generate_all()
-
-                # Try to run actual executor if available, otherwise use generated outputs
-                try:
-                    executor_result = executor.run_simulation(config)
-                    if executor_result.get('status') == 'success':
-                        # Merge executor results with generated outputs
-                        result = {
-                            'status': 'success',
-                            'execution_id': sim_id,
-                            'results': executor_result.get('results', {}),
-                            'outputs': outputs
-                        }
-                    else:
-                        raise Exception("Executor failed")
-                except Exception as executor_error:
-                    print(f"Executor error, using generated outputs: {executor_error}")
-                    # Use generated outputs
-                    result = {
-                        'status': 'success',
-                        'execution_id': sim_id,
-                        'results': {
-                            'console': outputs['console'],
-                            'metrics': outputs['metrics'],
-                            'analysis': outputs['analysis'],
-                            'anomalies': outputs['anomalies']
-                        },
-                        'outputs': outputs
-                    }
-
-                active_simulations[sim_id]['status'] = 'completed'
-                active_simulations[sim_id]['result'] = result
-            except Exception as e:
-                print(f"Simulation exception: {e}")
-                # Fallback: generate default outputs
-                output_gen = SimulationOutputGenerator(config)
-                outputs = output_gen.generate_all()
-
-                active_simulations[sim_id]['status'] = 'completed'
-                active_simulations[sim_id]['result'] = {
-                    'status': 'success',
-                    'execution_id': sim_id,
-                    'results': {
-                        'console': outputs['console'],
-                        'metrics': outputs['metrics'],
-                        'analysis': outputs['analysis'],
-                        'anomalies': outputs['anomalies']
-                    },
-                    'outputs': outputs
-                }
-
-        thread = threading.Thread(target=run_async, daemon=True)
-        thread.start()
-
-        return jsonify({
-            'status': 'started',
-            'simulation_id': sim_id
-        }), 202
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@app.route('/api/simulator/<sim_id>/status', methods=['GET'])
-@require_auth
-def get_simulation_status(sim_id, user=None):
-    """Get simulation status."""
-    if sim_id not in active_simulations:
-        return jsonify({'error': 'Simulation not found'}), 404
-
-    sim = active_simulations[sim_id]
-    return jsonify({
-        'simulation_id': sim_id,
-        'status': sim['status'],
-        'started': sim['started'].isoformat(),
-        'result': sim.get('result'),
-        'error': sim.get('error')
-    })
-
-@app.route('/api/simulator/<sim_id>/result', methods=['GET'])
-@require_auth
-def get_simulation_result(sim_id, user=None):
-    """Get complete simulation result."""
-    if sim_id not in active_simulations:
-        return jsonify({'error': 'Simulation not found'}), 404
-
-    sim = active_simulations[sim_id]
-    if sim['status'] != 'completed':
-        return jsonify({'error': f'Simulation {sim["status"]}'}), 400
-
-    return jsonify(sim.get('result', {}))
-
-# ==================== SIMULATION EXPORTS ====================
-
-@app.route('/api/simulator/<sim_id>/export', methods=['POST'])
-@require_auth
-def export_simulation(sim_id, user=None):
-    """Export simulation results in PNG and CSV formats"""
-    if sim_id not in active_simulations:
-        return jsonify({'error': 'Simulation not found'}), 404
-
-    sim = active_simulations[sim_id]
-    if sim['status'] != 'completed':
-        return jsonify({'error': 'Simulation not completed'}), 400
-
-    try:
-        # Generate demo exports (simplified approach)
-        exporter = SimulationExporter(f'simulation_exports/{sim_id}')
-
-        # Create simple demo data
-        demo_metrics_df = pd.DataFrame({
-            'timestamp': pd.date_range('2026-08-26', periods=100, freq='1S'),
-            'cpu': __import__('numpy').random.rand(100) * 100,
-            'memory': __import__('numpy').random.rand(100) * 100,
-            'disk': __import__('numpy').random.rand(100) * 100
-        })
-
-        # Export simple files
-        exports = {}
-
-        # CSV exports
-        exports['chaos_simulation_csv'] = exporter.export_chaos_simulation_csv(demo_metrics_df)
-        exports['classification_results_csv'] = exporter.export_classification_results_csv(
-            [0, 1] * 50, [0, 1, 0, 1] * 25
-        )
-        exports['incident_log_csv'] = exporter.export_incident_log_csv([
-            {'timestamp': '2026-08-26T12:00:00', 'type': 'cpu_spike', 'severity': 'high'}
-        ])
-        exports['response_log_csv'] = exporter.export_response_log_csv([
-            {'timestamp': '2026-08-26T12:00:01', 'action': 'scale_up', 'result': 'success'}
-        ])
-        exports['remediation_results_csv'] = exporter.export_remediation_results_csv([])
-        exports['threshold_calibration_csv'] = exporter.export_threshold_calibration_csv({
-            'cpu': {'threshold': 0.85, 'precision': 0.92, 'recall': 0.88, 'f1_score': 0.90}
-        })
-        exports['metrics_comparison_csv'] = exporter.export_metrics_comparison_csv([
-            {'model': 'baseline', 'accuracy': 0.82, 'precision': 0.80, 'recall': 0.78}
-        ])
-        exports['dos_simulation_analysis_csv'] = exporter.export_dos_simulation_analysis_csv({})
-
-        # PNG exports
-        exports['confusion_matrix_mvp_png'] = exporter.export_confusion_matrix_png(
-            [0, 1] * 50, [0, 1, 0, 1] * 25
-        )
-        exports['confusion_matrix_supervised_png'] = exporter.export_confusion_matrix_supervised_png(
-            [0, 1] * 50, [0, 1, 0, 1] * 25
-        )
-        exports['feature_importance_png'] = exporter.export_feature_importance_png({
-            'cpu_usage': 0.95, 'memory_usage': 0.87, 'disk_usage': 0.76
-        })
-        exports['feature_importance_mvp_png'] = exporter.export_feature_importance_mvp_png({
-            'cpu_usage': 0.95, 'memory_usage': 0.87
-        })
-        exports['dos_simulation_analysis_png'] = exporter.export_dos_simulation_analysis_png({})
-        exports['threshold_calibration_png'] = exporter.export_threshold_calibration_png({
-            'cpu': {'precision': 0.92, 'recall': 0.88, 'f1_score': 0.90}
-        })
-        exports['metrics_comparison_png'] = exporter.export_metrics_comparison_png([
-            {'accuracy': 0.82, 'precision': 0.80, 'recall': 0.78, 'f1_score': 0.79}
-        ])
-
-        # Create manifest
-        manifest = exporter.create_export_manifest(exports)
-
-        return jsonify({
-            'status': 'success',
-            'simulation_id': sim_id,
-            'exports': exports,
-            'manifest': manifest,
-            'export_count': len(exports)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/simulator/<sim_id>/export/<filename>', methods=['GET'])
-@require_auth
-def download_export(sim_id, filename, user=None):
-    """Download specific export file"""
-    try:
-        filepath = os.path.join('simulation_exports', sim_id, filename)
-
-        if not os.path.exists(filepath):
-            return jsonify({'error': 'Export file not found'}), 404
-
-        # Return file
-        if filename.endswith('.csv'):
-            return send_file(filepath, mimetype='text/csv',
-                           as_attachment=True, download_name=filename)
-        elif filename.endswith('.png'):
-            return send_file(filepath, mimetype='image/png',
-                           as_attachment=True, download_name=filename)
-        else:
-            return send_file(filepath, as_attachment=True, download_name=filename)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/simulator/<sim_id>/export/all', methods=['GET'])
-@require_auth
-def download_all_exports(sim_id, user=None):
-    """Download all exports as zip"""
-    try:
-        import zipfile
-        from io import BytesIO
-
-        export_dir = os.path.join('simulation_exports', sim_id)
-        if not os.path.exists(export_dir):
-            return jsonify({'error': 'Export directory not found'}), 404
-
-        # Create zip file in memory
-        zip_buffer = BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for filename in os.listdir(export_dir):
-                filepath = os.path.join(export_dir, filename)
-                if os.path.isfile(filepath):
-                    zip_file.write(filepath, arcname=filename)
-
-        zip_buffer.seek(0)
-        return send_file(
-            zip_buffer,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name=f'simulation_{sim_id}_exports.zip'
-        )
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/simulator/<sim_id>/export/list', methods=['GET'])
-@require_auth
-def list_exports(sim_id, user=None):
-    """List all available exports"""
-    try:
-        export_dir = os.path.join('simulation_exports', sim_id)
-
-        if not os.path.exists(export_dir):
-            return jsonify({'exports': [], 'count': 0})
-
-        exports = {
-            'csv_files': [],
-            'png_files': [],
-            'manifest': None
-        }
-
-        for filename in os.listdir(export_dir):
-            if filename.endswith('.csv'):
-                exports['csv_files'].append(filename)
-            elif filename.endswith('.png'):
-                exports['png_files'].append(filename)
-            elif filename == 'MANIFEST.json':
-                exports['manifest'] = filename
-
-        return jsonify({
-            'status': 'success',
-            'simulation_id': sim_id,
-            'exports': exports,
-            'total_files': len(os.listdir(export_dir))
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ==================== WEBSOCKET: SIMULATOR ====================
-
-@socketio.on('join_simulation')
-def on_join_simulation(data):
-    """Join simulation room for updates."""
-    sim_id = data.get('simulation_id')
-    if sim_id:
-        join_room(f"sim_{sim_id}")
-        emit('status', {'data': f'Joined simulation {sim_id}'})
-
-@socketio.on('leave_simulation')
-def on_leave_simulation(data):
-    """Leave simulation room."""
-    sim_id = data.get('simulation_id')
-    if sim_id:
-        leave_room(f"sim_{sim_id}")
-        emit('status', {'data': f'Left simulation {sim_id}'})
-
+# Simulator endpoints removed (P2 cleanup)
 # ==================== HEALTH CHECK ====================
 
 @app.route('/health', methods=['GET'])
