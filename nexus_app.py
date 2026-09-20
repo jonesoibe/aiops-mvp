@@ -22,7 +22,7 @@ import pandas as pd
 from flask import Flask, render_template, jsonify, request, send_file, send_from_directory, session, redirect
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
-from functools import wraps, lru_cache
+from functools import wraps
 
 # Swagger/OpenAPI Documentation
 from flasgger import Flasgger
@@ -792,35 +792,6 @@ def generate_token(user_id, username, role, expires_in_days=7):
         'exp': datetime.utcnow() + timedelta(days=expires_in_days)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-
-# Simple response caching
-_response_cache = {}
-_cache_times = {}
-CACHE_DURATION = 60  # seconds
-
-def cached(duration=60):
-    """Simple response caching decorator for GET endpoints"""
-    def decorator(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            cache_key = f"{request.path}:{request.query_string.decode()}"
-            now = time.time()
-
-            # Check cache
-            if cache_key in _response_cache:
-                if now - _cache_times[cache_key] < duration:
-                    return _response_cache[cache_key]
-                else:
-                    del _response_cache[cache_key]
-                    del _cache_times[cache_key]
-
-            # Execute function and cache result
-            result = f(*args, **kwargs)
-            _response_cache[cache_key] = result
-            _cache_times[cache_key] = now
-            return result
-        return decorated
-    return decorator
 
 def require_auth(f):
     """Decorator for API authentication - requires Bearer token."""
@@ -2586,7 +2557,6 @@ def user_management_page():
 
 @app.route('/api/telemetry/current', methods=['GET'])
 @require_auth
-@cached(duration=10)
 def get_current_telemetry():
     """Get current system telemetry."""
     return jsonify({
@@ -2602,24 +2572,17 @@ def get_current_telemetry():
 
 @app.route('/api/incidents', methods=['GET'])
 @require_auth
-@cached(duration=20)
 def get_incidents():
-    """Get active incidents with pagination (from CSV data or MongoDB)."""
-    page = max(1, int(request.args.get('page', 1)))
-    limit = min(50, max(1, int(request.args.get('limit', 20))))
-    offset = (page - 1) * limit
+    """Get active incidents (from CSV data or MongoDB)."""
 
     # Try to get from MongoDB first
     if db is not None:
         try:
-            total = db['incidents'].count_documents({})
-            incidents = list(db['incidents'].find({}, {'_id': 0}).sort('timestamp', -1).skip(offset).limit(limit))
+            incidents = list(db['incidents'].find({}, {'_id': 0}).sort('timestamp', -1).limit(100))
             if incidents:
                 print(f"✅ Retrieved {len(incidents)} incidents from MongoDB")
                 return jsonify({
-                    'total': total,
-                    'page': page,
-                    'limit': limit,
+                    'total': len(incidents),
                     'incidents': incidents
                 }), 200
         except Exception as e:
@@ -2631,8 +2594,6 @@ def get_incidents():
 
     # Sort by timestamp descending
     active.sort(key=lambda x: x['timestamp'], reverse=True)
-    total = len(active)
-    paginated = active[offset:offset + limit]
 
     # Try to save to MongoDB for future use
     if db is not None:
@@ -2644,10 +2605,8 @@ def get_incidents():
             print(f"⚠️ MongoDB save error: {e}")
 
     return jsonify({
-        'total': total,
-        'page': page,
-        'limit': limit,
-        'incidents': paginated
+        'total': len(active),
+        'incidents': active
     }), 200
 
 @app.route('/api/incidents/<incident_id>', methods=['GET'])
@@ -2899,9 +2858,8 @@ def get_statistics():
 
 @app.route('/api/audit-log', methods=['GET'])
 @require_auth
-@cached(duration=15)
 def get_audit_log():
-    """Get audit log entries with filtering and pagination."""
+    """Get audit log entries with filtering."""
     limit = request.args.get('limit', 100, type=int)
     user_id = request.args.get('user_id', None)
     action = request.args.get('action', None)
@@ -3038,7 +2996,6 @@ def get_actions():
 # ==================== APPROVALS ENDPOINTS ====================
 
 @app.route('/api/approvals', methods=['GET'])
-@cached(duration=20)
 def get_approvals_api():
     """Get approval requests by status."""
     status = request.args.get('status', 'pending')
@@ -3353,7 +3310,6 @@ def get_metrics_by_status(status, user=None):
 
 @app.route('/api/overview/dashboard', methods=['GET'])
 @require_auth
-@cached(duration=30)
 def get_dashboard_overview(user=None):
     """
     Get dashboard overview with system health metrics.
