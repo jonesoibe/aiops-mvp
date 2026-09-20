@@ -906,8 +906,9 @@
 </div>
 
 <script>
-// WebSocket connection (socket defined in base.html)
+// WebSocket connection (socket defined in base.html, machine socket for namespace)
 let machineData = {};
+let machineSocket = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -962,7 +963,7 @@ function connectWebSocket() {
     }
 
     // Connect to /ws/machine-analyzer namespace using Socket.IO
-    socket = io('/ws/machine-analyzer', {
+    machineSocket = io('/ws/machine-analyzer', {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
@@ -970,35 +971,35 @@ function connectWebSocket() {
         transports: ['websocket', 'polling']
     });
 
-    socket.on('connect', function() {
+    machineSocket.on('connect', function() {
         if (document.getElementById('status-badge')) {
             document.getElementById('status-badge').style.background = '#0f0';
         }
     });
 
-    socket.on('connected', function(data) {
+    machineSocket.on('connected', function(data) {
         if (document.getElementById('status-badge')) {
             document.getElementById('status-badge').innerHTML = 'WS: READY';
         }
     });
 
-    socket.on('data_update', function(data) {
+    machineSocket.on('data_update', function(data) {
         updateDashboard(data);
     });
 
-    socket.on('error', function(error) {
+    machineSocket.on('error', function(error) {
         if (document.getElementById('status-badge')) {
             document.getElementById('status-badge').style.background = '#f00';
         }
     });
 
-    socket.on('disconnect', function() {
+    machineSocket.on('disconnect', function() {
         if (document.getElementById('status-badge')) {
             document.getElementById('status-badge').style.background = '#f80';
         }
     });
 
-    socket.on('connect_error', function(error) {
+    machineSocket.on('connect_error', function(error) {
         if (document.getElementById('status-badge')) {
             document.getElementById('status-badge').style.background = '#f00';
         }
