@@ -1,8 +1,8 @@
 # ==================== NEXUS AIOPS DEPENDENCIES ====================
 
 # Build Requirements (CRITICAL for Python 3.14+)
-setuptools
-wheel
+setuptools>=65.0.0
+wheel>=0.41.0
 
 # Core Web Framework
 Flask>=3.0.0
@@ -10,7 +10,8 @@ Flask-CORS>=4.0.0
 Flask-SocketIO>=5.3.0
 python-socketio>=5.9.0
 python-engineio>=4.7.0
-Flasgger>=0.9.0  # Swagger/OpenAPI documentation
+Werkzeug>=3.0.0
+Flasgger>=0.9.5  # Swagger/OpenAPI documentation
 
 # Authentication & Security
 PyJWT>=2.8.0
@@ -43,6 +44,9 @@ joblib>=1.3.0
 # Production WSGI Server
 gunicorn>=21.0.0
 
-# Optional: Logging & Monitoring
-# python-json-logger>=2.0.0
-# sentry-sdk>=1.38.0
+# API Documentation
+apispec>=6.0.0
+marshmallow>=3.19.0
+
+# Logging & Monitoring
+python-json-logger>=2.0.0
