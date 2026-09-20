@@ -100,9 +100,18 @@ from machine_analyzer import analyzer
 # ==================== APP SETUP ====================
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-CORS(app)
+
+# SECURITY: Configure CORS with specific allowed origins
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:5000').split(',')
+CORS(app,
+     resources={r"/api/*": {"origins": ALLOWED_ORIGINS}},
+     supports_credentials=True,
+     allow_headers=['Content-Type', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+)
+
 socketio = SocketIO(app,
-                   cors_allowed_origins="*",
+                   cors_allowed_origins=ALLOWED_ORIGINS,
                    async_mode='threading',
                    ping_timeout=10,
                    ping_interval=5,
@@ -412,10 +421,24 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # XSS protection
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Force HTTPS (HSTS)
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
+    # Referrer Policy
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     return response
 
 # Configuration
-SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-in-production')
+# SECURITY: JWT secret MUST be set in environment - no default for security
+SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+if not SECRET_KEY:
+    if os.getenv('ENVIRONMENT', 'development') == 'production':
+        raise ValueError('CRITICAL: JWT_SECRET_KEY environment variable must be set in production!')
+    else:
+        logger.warning('⚠️  WARNING: JWT_SECRET_KEY not set, using development default. DO NOT use in production!')
+        SECRET_KEY = 'dev-secret-key-change-in-production'
+
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017')
 DATABASE_NAME = 'nexus_aiops'
 
@@ -805,41 +828,16 @@ def require_auth(f):
         try:
             token = auth_header[7:]
 
-            # Try to decode with main secret key
-            try:
-                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-                request.user = payload
-                kwargs['user'] = payload
-                return f(*args, **kwargs)
-            except jwt.InvalidTokenError:
-                # For demo/development: accept any bearer token with basic validation
-                # Extract user info from token if possible
-                try:
-                    # Try to decode without verification for demo
-                    import json
-                    import base64
-                    parts = token.split('.')
-                    if len(parts) == 3:
-                        payload_b64 = parts[1]
-                        # Add padding if needed
-                        padding = 4 - len(payload_b64) % 4
-                        if padding != 4:
-                            payload_b64 += '=' * padding
-                        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
-                        request.user = payload
-                        kwargs['user'] = payload
-                        logger.info(f"✅ Accepted demo token for user: {payload.get('username')}")
-                        return f(*args, **kwargs)
-                except:
-                    pass
+            # Decode JWT with proper verification
+            payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            request.user = payload
+            kwargs['user'] = payload
+            return f(*args, **kwargs)
 
-                # Last resort: create minimal user object
-                fallback_user = {'user_id': 'demo', 'username': 'demo', 'role': 'admin'}
-                request.user = fallback_user
-                kwargs['user'] = fallback_user
-                logger.info("✅ Using fallback demo user")
-                return f(*args, **kwargs)
-
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
         except Exception as e:
             logger.error(f"❌ Auth error: {e}")
             return jsonify({'error': 'Authorization failed'}), 401
@@ -1427,8 +1425,8 @@ def login():
 
         return jsonify({'error': 'Invalid credentials'}), 401
     except Exception as e:
-        logger.error(f'❌ Login error: {str(e)}')
-        return jsonify({'error': f'Login error: {str(e)}'}), 500
+        logger.error(f'❌ Login error: {str(e)}', exc_info=True)
+        return jsonify({'error': 'An error occurred during login. Please try again.'}), 500
 
 @app.route('/signup')
 def signup_page():
@@ -2412,20 +2410,6 @@ def setup_account_page():
 
     return render_template('nexus/setup_account.html')
 
-@app.route('/api/setup-account/debug-tokens', methods=['GET'])
-def debug_get_tokens():
-    """DEBUG: Get all invite tokens (development only)."""
-    tokens = []
-    for token, data in in_memory_store.get('invite_tokens', {}).items():
-        tokens.append({
-            'token': token,
-            'username': data['username'],
-            'email': data['email'],
-            'expires_at': str(data['expires_at']),
-            'setup_link': f"http://localhost:5000/setup-account?token={token}"
-        })
-    return jsonify({'tokens': tokens}), 200
-
 @app.route('/api/setup-account/info', methods=['GET'])
 def setup_account_info():
     """Get account info for a setup token."""
@@ -2506,10 +2490,8 @@ def setup_account_complete():
         return jsonify({'message': 'Account setup completed successfully'}), 200
 
     except Exception as e:
-        print(f"❌ Setup account error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': 'Failed to complete setup'}), 500
+        logger.error(f'❌ Setup account error: {e}', exc_info=True)
+        return jsonify({'error': 'Failed to complete account setup. Please try again.'}), 500
 
 @app.route('/user-management', methods=['GET'])
 def user_management_page():
@@ -3147,10 +3129,32 @@ def execute_action():
 
 # ==================== WEBSOCKET EVENTS ====================
 
+def verify_websocket_token():
+    """Verify JWT token for WebSocket connection."""
+    try:
+        # Token can be in query parameter or auth header
+        token = request.args.get('token') or request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not token:
+            logger.warning(f"❌ WebSocket connection attempt without token: {request.sid}")
+            return False
+
+        # Decode and verify JWT
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        request.user = payload
+        return True
+    except Exception as e:
+        logger.warning(f"❌ WebSocket authentication failed: {e}")
+        return False
+
 @socketio.on('connect')
 def handle_connect():
-    """Client connected."""
-    print(f"🔌 Client connected: {request.sid}")
+    """Client connected - must be authenticated with valid JWT token."""
+    if not verify_websocket_token():
+        logger.warning(f"🔌 Rejecting unauthenticated WebSocket connection: {request.sid}")
+        return False  # Reject connection
+
+    user = request.user.get('username', 'unknown')
+    print(f"🔌 Client connected (authenticated): {request.sid} ({user})")
     emit('connection_response', {'data': 'Connected to Nexus AIOps'})
 
 @socketio.on('disconnect')
@@ -3160,21 +3164,34 @@ def handle_disconnect():
 
 @socketio.on('subscribe_telemetry')
 def handle_subscribe_telemetry():
-    """Subscribe to real-time telemetry stream."""
+    """Subscribe to real-time telemetry stream - requires authentication."""
+    # Connection already verified by handle_connect
+    if not hasattr(request, 'user'):
+        logger.warning(f"❌ Unauthenticated telemetry subscription attempt: {request.sid}")
+        return False
+
     join_room('telemetry')
     emit('telemetry_subscribed', {'status': 'subscribed'})
     print(f"📡 Client subscribed to telemetry: {request.sid}")
 
 @socketio.on('subscribe_logs')
 def handle_subscribe_logs():
-    """Subscribe to real-time log stream."""
+    """Subscribe to real-time log stream - requires authentication."""
+    if not hasattr(request, 'user'):
+        logger.warning(f"❌ Unauthenticated logs subscription attempt: {request.sid}")
+        return False
+
     join_room('logs')
     emit('logs_subscribed', {'status': 'subscribed'})
     print(f"📡 Client subscribed to logs: {request.sid}")
 
 @socketio.on('subscribe_incidents')
 def handle_subscribe_incidents():
-    """Subscribe to incident stream."""
+    """Subscribe to incident stream - requires authentication."""
+    if not hasattr(request, 'user'):
+        logger.warning(f"❌ Unauthenticated incidents subscription attempt: {request.sid}")
+        return False
+
     join_room('incidents')
     emit('incidents_subscribed', {'status': 'subscribed'})
     print(f"📡 Client subscribed to incidents: {request.sid}")
@@ -4205,11 +4222,17 @@ def record_slo_metrics(slo_id, user=None):
 
 @socketio.on('connect', namespace='/alerts')
 def alert_connect(auth):
-    """Handle WebSocket connection for alerts"""
+    """Handle WebSocket connection for alerts - requires authentication"""
     try:
-        logger.info(f"Client connected to alerts namespace")
+        # Verify JWT token
+        if not verify_websocket_token():
+            logger.warning(f"❌ Rejecting unauthenticated alerts WebSocket: {request.sid}")
+            return False
+
+        logger.info(f"Client connected to alerts namespace (authenticated)")
     except Exception as e:
         logger.error(f"Error in alert_connect: {e}")
+        return False
 
 
 @socketio.on('disconnect', namespace='/alerts')
@@ -4220,7 +4243,11 @@ def alert_disconnect():
 
 @socketio.on('get_active_alerts', namespace='/alerts')
 def get_active_alerts_ws():
-    """Send active alerts to client"""
+    """Send active alerts to client - requires authentication"""
+    if not hasattr(request, 'user'):
+        logger.warning(f"❌ Unauthenticated alerts request: {request.sid}")
+        return False
+
     alerts = alerting_engine.get_active_alerts()
     return [a.to_dict() for a in alerts]
 
@@ -4229,9 +4256,14 @@ def get_active_alerts_ws():
 
 @socketio.on('connect', namespace='/ws/machine-analyzer')
 def handle_analyzer_connect():
-    """Handle WebSocket connection for machine analyzer"""
-    from flask import request
-    logger.info('[SOCKETIO] Client connected to /ws/machine-analyzer')
+    """Handle WebSocket connection for machine analyzer - requires authentication"""
+    # Verify JWT token
+    if not verify_websocket_token():
+        logger.warning(f'[SOCKETIO] Rejecting unauthenticated machine-analyzer connection: {request.sid}')
+        return False
+
+    user = request.user.get('username', 'unknown')
+    logger.info(f'[SOCKETIO] Client connected to /ws/machine-analyzer (authenticated): {user}')
 
     # Send connection confirmation
     emit('connected', {
