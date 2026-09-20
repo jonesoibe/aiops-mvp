@@ -1285,6 +1285,23 @@ def settings():
 
 # ==================== AUTH API ====================
 
+@app.route('/api/auth/logout', methods=['POST'])
+def logout():
+    """User logout endpoint."""
+    try:
+        audit_logger.log_action(
+            action='LOGOUT',
+            user_id=request.remote_addr,
+            resource='authentication',
+            status='success',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        return jsonify({'success': True, 'message': 'Logged out successfully'}), 200
+    except Exception as e:
+        logger.error(f"Logout error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     """

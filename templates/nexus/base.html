@@ -547,10 +547,19 @@
             socket.emit('subscribe_incidents');
         });
 
-        function logout() {
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+        async function logout() {
+            try {
+                // Call logout endpoint
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (e) {
+                console.error('Logout error:', e);
+            } finally {
+                // Clear local storage
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+                // Redirect to login
+                window.location.href = '/login';
+            }
         }
 
         // Real-time telemetry updates
