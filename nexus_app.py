@@ -3898,6 +3898,29 @@ def on_leave_simulation(data):
         leave_room(f"sim_{sim_id}")
         emit('status', {'data': f'Left simulation {sim_id}'})
 
+# ==================== HEALTH CHECK ====================
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Lightweight health check endpoint for monitoring and keeping app alive."""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'service': 'nexus-aiops',
+        'version': '1.0.0'
+    }), 200
+
+@app.route('/ready', methods=['GET'])
+def readiness_check():
+    """Readiness check - confirms app is fully initialized."""
+    global _initialized
+    if _initialized and db is not None:
+        return jsonify({'ready': True, 'db': 'connected'}), 200
+    elif _initialized:
+        return jsonify({'ready': True, 'db': 'disconnected'}), 200
+    else:
+        return jsonify({'ready': False}), 503
+
 # ==================== STARTUP ====================
 
 _initialized = False
