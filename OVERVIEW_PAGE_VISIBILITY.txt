@@ -1,0 +1,163 @@
+================================================================================
+NEXUS AIOPS - OVERVIEW PAGE VISIBILITY TEST
+================================================================================
+
+✅ FEATURE 1: AUTO-SCALING & INFRASTRUCTURE SECTION
+   Location: Overview Page - New Section
+   Display: ⚙️ Infrastructure & Scaling
+   
+   Displays:
+   ├─ AUTO-SCALING
+   │  ├─ Current Instances: 3/10 instances
+   │  ├─ CPU Threshold: 75%
+   │  └─ Memory Threshold: 75%
+   │
+   ├─ LOAD BALANCING
+   │  ├─ Algorithm: least_conn
+   │  ├─ Avg Load: 0.0%
+   │  └─ Healthy: 2 instances
+   │
+   └─ ALERT THRESHOLDS
+      ├─ CPU Warning: 75%
+      ├─ Memory Warning: 75%
+      └─ Error Rate: 5%
+
+✅ FEATURE 2: RESOURCE OPTIMIZATION RECOMMENDATIONS SECTION
+   Location: Overview Page - New Section
+   Display: 💡 Resource Optimization Recommendations
+   
+   Displays:
+   ├─ CPU Optimization (if needed)
+   ├─ Memory Optimization (if needed)
+   ├─ Error Rate Optimization (if needed)
+   └─ Scaling Recommendations (if needed)
+   
+   Each recommendation shows:
+   ├─ Type (cpu_optimization, memory_optimization, etc.)
+   ├─ Detailed recommendation text
+   ├─ Current metric value
+   └─ Severity level (High/Medium)
+
+================================================================================
+PAGE STRUCTURE
+================================================================================
+
+Overview Page (http://localhost:5000/)
+│
+├─ Executive Summary Metrics (existing)
+│  ├─ Healthy Metrics
+│  ├─ Critical Issues
+│  ├─ Warnings
+│  └─ Resolution Rate
+│
+├─ [NEW] ⚙️ Infrastructure & Scaling
+│  ├─ Auto-Scaling Status (3/10 instances)
+│  ├─ Load Balancing Status (least_conn algorithm)
+│  └─ Alert Thresholds (75% CPU/Memory, 5% error rate)
+│
+├─ [NEW] 💡 Resource Optimization
+│  └─ Dynamic recommendations based on metrics
+│
+├─ Active Incidents (existing)
+│
+├─ Key Metrics (existing)
+│
+├─ Service Topology (existing)
+│
+└─ Telemetry Stream (existing)
+
+================================================================================
+DATA FLOW
+================================================================================
+
+1. User visits /overview page
+   ↓
+2. Frontend JavaScript loads (loadRealData function)
+   ↓
+3. API calls: GET /api/overview/dashboard
+   ↓
+4. Backend returns dashboard data with:
+   - auto_scaling (current instances, thresholds)
+   - load_balancing (algorithm, instances, loads)
+   - resource_optimization (recommendations)
+   - alert_thresholds (75%, 75%, 5%)
+   ↓
+5. Frontend populates new sections:
+   - Shows auto-scaling status card
+   - Shows load-balancing status card
+   - Shows alert thresholds card
+   - Renders optimization recommendations
+   ↓
+6. User sees all features on dashboard
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+✅ Infrastructure & Scaling section created in HTML
+✅ Resource Optimization section created in HTML
+✅ JavaScript updated to fetch new data
+✅ JavaScript updated to populate sections
+✅ Auto-scaling data displays correctly (3/10 instances)
+✅ Alert thresholds display correctly (75%)
+✅ Load balancing data displays correctly (least_conn)
+✅ All sections styled consistently with existing design
+✅ Responsive grid layout (auto-fit, minmax)
+✅ Color-coded severity indicators (high/medium)
+✅ Metrics update dynamically from API
+
+================================================================================
+EXAMPLE OUTPUT
+================================================================================
+
+Dashboard API Response (GET /api/overview/dashboard):
+{
+  "auto_scaling": {
+    "current_instances": 3,
+    "min_instances": 2,
+    "max_instances": 10,
+    "thresholds": {
+      "cpu_scale_up": 75,
+      "cpu_scale_down": 40,
+      "memory_scale_up": 75,
+      "memory_scale_down": 40
+    }
+  },
+  "load_balancing": {
+    "algorithm": "least_conn",
+    "instances_count": 2,
+    "average_load": 0.0,
+    "healthy_instances": 2
+  },
+  "resource_optimization": {
+    "current_metrics": {
+      "cpu": 0.0,
+      "memory": 0.0,
+      "error_rate": 0.0
+    },
+    "recommendation_count": 0,
+    "critical_recommendations": []
+  },
+  "alert_thresholds": {
+    "cpu_warning": 75,
+    "memory_warning": 75,
+    "error_rate_warning": 5
+  }
+}
+
+Frontend Displays:
+┌─ Infrastructure & Scaling ────────────────────────┐
+│                                                    │
+│  AUTO-SCALING         LOAD BALANCING              │
+│  3/10 instances       least_conn algorithm        │
+│  CPU: 75%             Avg Load: 0.0%              │
+│  Memory: 75%          Healthy: 2/2                │
+│                                                    │
+│  ALERT THRESHOLDS                                 │
+│  CPU: 75% | Memory: 75% | Error Rate: 5%         │
+│                                                    │
+└────────────────────────────────────────────────────┘
+
+================================================================================
+STATUS: ALL FEATURES NOW VISIBLE ON OVERVIEW PAGE ✓
+================================================================================

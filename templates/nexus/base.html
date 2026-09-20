@@ -378,6 +378,10 @@
                 <span class="nav-icon">🤖</span>
                 <span>AI Operations</span>
             </a>
+            <a href="/command" class="nav-item {% if request.endpoint == 'command_center' %}active{% endif %}">
+                <span class="nav-icon">⌨️</span>
+                <span>Command Center</span>
+            </a>
         </div>
 
         <!-- Infrastructure -->
@@ -390,6 +394,10 @@
             <a href="/infrastructure" class="nav-item {% if request.endpoint == 'infrastructure' %}active{% endif %}">
                 <span class="nav-icon">🖥️</span>
                 <span>Infrastructure</span>
+            </a>
+            <a href="/machine-analyzer" class="nav-item {% if request.endpoint == 'machine_analyzer' %}active{% endif %}">
+                <span class="nav-icon">🔬</span>
+                <span>Machine Analyzer</span>
             </a>
         </div>
 

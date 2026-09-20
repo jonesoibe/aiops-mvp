@@ -1150,6 +1150,11 @@ def infrastructure():
     """Windows Infrastructure Monitoring"""
     return render_template('nexus/infrastructure.html')
 
+@app.route('/machine-analyzer')
+def machine_analyzer():
+    """Machine Analyzer Dashboard"""
+    return render_template('nexus/machine_analyzer.html')
+
 @app.route('/logs')
 def logs():
     """Logs Explorer"""

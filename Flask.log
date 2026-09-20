@@ -1,0 +1,56 @@
+﻿python : 2026-09-20 08:16:56 - INFO - Logging initialized for nexus_aiops
+At line:1 char:334
++ ... } }; cd "C:\Users\FAVOUR\aiops-mvp"; python nexus_app.py 2>&1 | Tee-O ...
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-09-20 08:1...for nexus_aiops:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+2026-09-20 08:16:56 - INFO - Log directory: C:\Users\FAVOUR\aiops-mvp\logs
+2026-09-20 08:16:56 - INFO - Log level: INFO
+2026-09-20 08:16:56 - INFO - Logging utils module loaded
+2026-09-20 08:16:56 - INFO - ============================================================
+2026-09-20 08:16:56 - INFO - Starting Nexus AIOps v1.0.0
+2026-09-20 08:16:56 - INFO - Timestamp: 2026-09-20 08:16:56
+2026-09-20 08:16:56 - INFO - Configuration: Environment: production
+2026-09-20 08:16:56 - INFO - ============================================================
+
+======================================================================
+  🚀 NEXUS AIOPS - Enterprise Autonomous Observability Platform
+======================================================================
+  🔄 Connecting to MongoDB...
+  ✅ MongoDB connection established
+✅ MongoDB connected successfully with collections initialized
+✅ Initialized 5 approval requests in MongoDB
+✅ Initialized 144 demo audit entries
+📡 Telemetry: 2 critical, 0 warning, 16 healthy
+
+📍 Access at: http://localhost:5000
+   Demo: admin / admin123
+   API Docs: http://localhost:5000/api/docs
+
+🚨 PRODUCTION MODE: Use reverse proxy (nginx/Caddy) with HTTPS/TLS
+
+ * Serving Flask app 'nexus_app'
+ * Debug mode: off
+SLO slo_api_availability already exists
+SLO slo_api_latency already exists
+SLO slo_database_availability already exists
+SLO slo_api_availability already exists
+SLO slo_api_latency already exists
+SLO slo_database_availability already exists
+SLO slo_api_availability already exists
+SLO slo_api_latency already exists
+SLO slo_database_availability already exists
+SLO slo_api_availability already exists
+SLO slo_api_latency already exists
+SLO slo_database_availability already exists
+SLO slo_api_availability already exists
+SLO slo_api_latency already exists
+SLO slo_database_availability already exists
+SLO slo_api_availability already exists
+SLO slo_api_latency already exists
+SLO slo_database_availability already exists
+❌ Auth error: 'current_metrics'
+❌ Auth error: 'current_metrics'
+❌ Auth error: 'current_metrics'
+❌ Auth error: 'current_metrics'

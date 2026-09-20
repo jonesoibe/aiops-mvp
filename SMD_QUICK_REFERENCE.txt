@@ -1,0 +1,184 @@
+================================================================================
+                    SMD DATASET - QUICK REFERENCE
+================================================================================
+
+All 38 features are NORMALIZED to 0.0 - 1.0 range
+0.0 = 0% or no activity | 1.0 = 100% or maximum
+
+================================================================================
+CPU METRICS (Features 1-4)
+================================================================================
+#1  CPU User %           0.50 = 50% of CPU spent on user applications
+#2  CPU System %         0.10 = 10% of CPU spent on kernel operations
+#3  CPU Wait I/O         0.05 = 5% of CPU waiting for disk/network
+#4  CPU Soft IRQ         0.02 = 2% of CPU in interrupt handling
+
+HEALTHY: 1+2+3+4 < 0.80 (80% CPU or less)
+ALERT:   Any feature > 0.85 (85%+)
+
+================================================================================
+MEMORY METRICS (Features 5-9)
+================================================================================
+#5  Swap In              0.00 = no swap (good) | 0.50+ = memory pressure
+#6  Memory Util %        0.70 = 70% of RAM in use (healthy)
+#7  Buffer Cache %       0.30 = 30% of RAM used for caching
+#8  Swap Out             0.00 = no swapping out (good)
+#9  Shared Memory        0.05 = 5% memory shared between processes
+
+HEALTHY: #6 < 0.80 (under 80% memory usage)
+WARNING: #6 > 0.85 (memory pressure, possible slowdown)
+CRITICAL: #6 > 0.95 (out of memory!)
+
+================================================================================
+DISK I/O METRICS (Features 10-18)
+================================================================================
+#10 Disk Reads          0.40 = moderate read activity
+#11 Disk Writes         0.60 = high write activity
+#12 Disk Time %         0.45 = disk busy 45% of the time
+#13 Disk Queue          0.10 = 1 I/O request waiting
+#14 Read Size Avg       0.80 = large sequential reads
+#15 Write Size Avg      0.70 = large sequential writes
+#16 Read Latency        0.15 = fast disk response times
+#17 Write Latency       0.20 = acceptable write response
+#18 Disk Errors         0.00 = no disk errors
+
+HEALTHY: #12 < 0.60 (disk not bottleneck)
+WARNING: #12 > 0.80 (disk becoming bottleneck)
+CRITICAL: #18 > 0.00 (hardware failure detected!)
+
+================================================================================
+NETWORK METRICS (Features 19-24)
+================================================================================
+#19 Net Bytes In        0.30 = receiving 30% of max bandwidth
+#20 Net Bytes Out       0.40 = transmitting 40% of max bandwidth
+#21 Net Packets In      0.50 = receiving at moderate packet rate
+#22 Net Packets Out     0.55 = transmitting at moderate rate
+#23 Net Errors In       0.00 = no receive errors
+#24 Net Errors Out      0.00 = no transmit errors
+
+HEALTHY: #23 = 0.00 and #24 = 0.00 (no errors)
+WARNING: bytes in/out > 0.80 (network near capacity)
+CRITICAL: #23 or #24 > 0.00 (network interface problems!)
+
+================================================================================
+PROCESS METRICS (Features 25-30)
+================================================================================
+#25 Processes Running   0.15 = ~15% of max runnable processes
+#26 Processes Sleeping  0.60 = ~60% of processes waiting
+#27 Context Switches    0.25 = moderate CPU context switching
+#28 Interrupts          0.30 = moderate interrupt rate
+#29 System Calls        0.40 = 40% utilization of kernel calls
+#30 Load Avg 1m         0.50 = system load 50% of max
+
+HEALTHY: #30 < 0.80 (system not overloaded)
+WARNING: #30 > 0.80 (system under stress)
+CRITICAL: #30 > 1.0 (system overloaded, queuing!)
+
+================================================================================
+SERVICE METRICS (Features 31-38)
+================================================================================
+#31 Apache Requests     0.65 = web server at 65% capacity
+#32 Apache Errors       0.02 = 2% of requests resulting in errors
+#33 MySQL Queries       0.55 = database at 55% query load
+#34 MySQL Slow Queries  0.05 = 5% of queries are slow
+#35 MySQL Connections   0.40 = 40% of max database connections
+#36 SSH Connections     0.10 = 1 remote SSH session (estimated)
+#37 FTP Transfers       0.00 = no FTP activity
+#38 Cron Jobs           0.15 = ~15% cron job activity
+
+HEALTHY: #32 < 0.10 (errors < 10%)
+WARNING: #34 > 0.10 (slow queries > 10%)
+CRITICAL: #32 > 0.20 (error rate > 20%!)
+
+================================================================================
+INTERPRETATION EXAMPLES
+================================================================================
+
+Example 1: Normal Operation
+Feature values:    0.45, 0.08, 0.03, 0.02, 0.00, 0.65, 0.25, 0.00, 0.02, ...
+Interpretation:    - CPU: 45% user, 8% system (OK)
+                   - Memory: 65% utilized (OK)
+                   - No swapping, no I/O errors
+Status:            HEALTHY - System operating normally
+
+Example 2: High Memory Pressure
+Feature value #6:  0.92 (92% of RAM in use!)
+Interpretation:    - Almost out of memory
+                   - System may start swapping to disk
+                   - Performance will degrade soon
+Status:            WARNING - Consider scaling or investigating memory leak
+
+Example 3: I/O Bottleneck
+Feature #12:       0.85 (disk busy 85% of the time)
+Feature #13:       0.60 (many I/O requests queued)
+Interpretation:    - Disk is saturated
+                   - Applications waiting for disk access
+                   - Slow response times expected
+Status:            CRITICAL - Add faster disk or optimize I/O
+
+Example 4: Network Issues
+Feature #23:       0.05 (5% network receive errors!)
+Interpretation:    - Network interface problems detected
+                   - Packet loss occurring
+                   - Data integrity at risk
+Status:            CRITICAL - Check network hardware/cables
+
+Example 5: Database Overload
+Feature #33:       0.95 (database at max capacity)
+Feature #34:       0.30 (30% of queries are slow)
+Interpretation:    - Database struggling to keep up
+                   - Many slow queries
+                   - Need more database resources
+Status:            CRITICAL - Scale database or optimize queries
+
+================================================================================
+TYPICAL MINUTE-BY-MINUTE PATTERN (ONE ROW)
+================================================================================
+
+Time: 10:00 AM
+
+0.35,0.08,0.02,0.01,  <- CPU: 35% user, 8% system, low wait, low IRQ
+0.00,0.68,0.30,0.00,0.01,  <- Memory: 68% used, 30% cached, no swap
+0.25,0.20,0.40,0.05,0.75,0.60,0.10,0.12,0.00,  <- Disk: moderate activity
+0.20,0.15,0.30,0.25,0.00,0.00,  <- Network: light traffic, no errors
+0.10,0.25,0.20,0.15,0.10,0.50,  <- Processes: moderate activity, load 50%
+0.60,0.05,0.45,0.10,0.30,0.05,0.00,0.20  <- Services: web/DB moderate activity
+
+Status: HEALTHY - Normal operation
+
+================================================================================
+QUICK DECISION TREE
+================================================================================
+
+Is Feature #6 (Memory) > 0.90?  -> CRITICAL: Memory pressure
+Is Feature #12 (Disk Time) > 0.80?  -> WARNING: Disk bottleneck
+Is Feature #18 (Disk Errors) > 0.0?  -> CRITICAL: Hardware failure
+Is Feature #23 or #24 (Net Errors) > 0.0?  -> CRITICAL: Network problem
+Is Feature #30 (Load Avg) > 0.90?  -> WARNING: System overloaded
+Is Feature #32 (Errors) > 0.15?  -> WARNING: High error rate
+
+All features normal?  -> HEALTHY: System operating normally
+
+================================================================================
+CORRELATION PATTERNS
+================================================================================
+
+High CPU (#1-2) + High Load (#30) + High Disk (#12-13)
+  → System under heavy workload, near capacity
+
+High Memory (#6) + High Swap In (#5) + Low Speed (#16-17)
+  → Memory pressure causing performance degradation
+
+High Network (#19-20) + Errors (#23-24) + Latency (#16-17)
+  → Network issue affecting application performance
+
+High Database (#33) + Slow Queries (#34) + High Load (#30)
+  → Database overload, need to scale or optimize
+
+================================================================================
+
+For detailed explanations, see: SMD_DATASET_EXPLAINED.md
+To load data: python load_sample_metrics.py --mode smd --limit 1000
+To view: http://localhost:5000
+
+================================================================================
