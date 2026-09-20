@@ -3842,6 +3842,16 @@ def setup():
 def initialize_on_startup():
     """Initialize app on first request (for production servers)"""
     try:
+        # Seed sample data if needed (for Render/production without local data)
+        try:
+            from seed_sample_data import create_sample_data
+            data_dir = os.path.join(os.path.dirname(__file__), 'data', 'raw', 'smd')
+            if not os.path.exists(data_dir) or not os.listdir(data_dir):
+                print("📊 Seeding sample machine data...")
+                create_sample_data(data_dir, num_machines=10)
+        except Exception as seed_err:
+            print(f"⚠️  Could not seed data: {seed_err}")
+
         connect_mongodb()
         initialize_users()
         initialize_approvals()
