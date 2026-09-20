@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Fixes Test Suite</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 { color: #00d4ff; margin-bottom: 10px; }
+        .subtitle { color: #888; margin-bottom: 30px; }
+        .test-section {
+            background: #16213e;
+            border-left: 4px solid #00d4ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: #1a1f3a;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-name { flex: 1; }
+        .result {
+            padding: 5px 15px;
+            border-radius: 3px;
+            font-weight: bold;
+            min-width: 150px;
+            text-align: center;
+        }
+        .pass { background: #2d5a2d; color: #90ee90; }
+        .fail { background: #5a2d2d; color: #ff9999; }
+        .pending { background: #5a5a2d; color: #ffff99; }
+        .output-area {
+            background: #0f1419;
+            border: 1px solid #00d4ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #00d4ff;
+            border: none;
+            color: #0a0e27;
+            padding: 12px 24px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        button:hover { background: #00ffff; }
+        button:disabled { background: #666; color: #999; cursor: not-allowed; }
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .legend-item { display: flex; gap: 10px; align-items: center; }
+        .legend-box { width: 20px; height: 20px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Security Fixes Verification Test Suite</h1>
+        <p class="subtitle">Testing Authentication, WebSocket Auth, and Error Handling</p>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: #2d5a2d;"></div>
+                <span>PASSED</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #5a2d2d;"></div>
+                <span>FAILED</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #5a5a2d;"></div>
+                <span>PENDING</span>
+            </div>
+        </div>
+
+        <button onclick="runAllTests()" id="runBtn">Run All Tests</button>
+        <button onclick="clearResults()" id="clearBtn">Clear Results</button>
+
+        <div id="tests"></div>
+
+        <div class="output-area" id="output" style="display: none;">
+            <h3>Test Output</h3>
+            <div id="outputContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const tests = [
+            {
+                name: "Test 1: Valid Login Returns Token",
+                fn: testValidLogin,
+                category: "Authentication"
+            },
+            {
+                name: "Test 2: Invalid Credentials Rejected",
+                fn: testInvalidCredentials,
+                category: "Authentication"
+            },
+            {
+                name: "Test 3: Missing Token Rejected",
+                fn: testMissingToken,
+                category: "Authentication"
+            },
+            {
+                name: "Test 4: Invalid Token Rejected",
+                fn: testInvalidToken,
+                category: "Authentication"
+            },
+            {
+                name: "Test 5: Forged Token Rejected",
+                fn: testForgedToken,
+                category: "Authentication"
+            },
+            {
+                name: "Test 6: Valid Token Grants Access",
+                fn: testValidTokenAccess,
+                category: "Authentication"
+            },
+            {
+                name: "Test 7: Error Messages Are Generic",
+                fn: testErrorMessages,
+                category: "Security"
+            },
+            {
+                name: "Test 8: Security Headers Present",
+                fn: testSecurityHeaders,
+                category: "Security"
+            },
+            {
+                name: "Test 9: Debug Endpoint Removed",
+                fn: testDebugEndpointRemoved,
+                category: "Security"
+            },
+            {
+                name: "Test 10: CORS Headers Configured",
+                fn: testCORSHeaders,
+                category: "Security"
+            }
+        ];
+
+        let validToken = null;
+
+        function log(msg) {
+            const output = document.getElementById('outputContent');
+            output.innerHTML += msg + '<br>';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function testValidLogin() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+
+                if (response.status !== 200) {
+                    log(`ERROR: Expected 200, got ${response.status}`);
+                    return false;
+                }
+
+                const data = await response.json();
+                if (!data.token) {
+                    log('ERROR: No token in response');
+                    return false;
+                }
+
+                validToken = data.token;
+                log(`SUCCESS: Token obtained: ${validToken.substring(0, 30)}...`);
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testInvalidCredentials() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'wrong' })
+                });
+
+                if (response.status !== 401) {
+                    log(`ERROR: Expected 401, got ${response.status}`);
+                    return false;
+                }
+
+                const data = await response.json();
+                if (!data.error) {
+                    log('ERROR: No error message');
+                    return false;
+                }
+
+                log(`SUCCESS: Rejected with 401 - ${data.error}`);
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testMissingToken() {
+            try {
+                const response = await fetch('/api/command/machines');
+
+                if (response.status !== 401) {
+                    log(`ERROR: Expected 401, got ${response.status}`);
+                    return false;
+                }
+
+                log('SUCCESS: Missing token properly rejected with 401');
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testInvalidToken() {
+            try {
+                const response = await fetch('/api/command/machines', {
+                    headers: { 'Authorization': 'Bearer invalid.token.here' }
+                });
+
+                if (response.status !== 401) {
+                    log(`ERROR: Expected 401, got ${response.status}`);
+                    return false;
+                }
+
+                log('SUCCESS: Invalid token properly rejected with 401');
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testForgedToken() {
+            try {
+                // Create a forged token with wrong signature
+                const forgedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIn0.wrongsignature';
+
+                const response = await fetch('/api/command/machines', {
+                    headers: { 'Authorization': `Bearer ${forgedToken}` }
+                });
+
+                if (response.status !== 401) {
+                    log(`ERROR: Expected 401, got ${response.status}`);
+                    return false;
+                }
+
+                log('SUCCESS: Forged token properly rejected with 401');
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testValidTokenAccess() {
+            if (!validToken) {
+                log('SKIP: No valid token (run test 1 first)');
+                return null;
+            }
+
+            try {
+                const response = await fetch('/api/command/machines', {
+                    headers: { 'Authorization': `Bearer ${validToken}` }
+                });
+
+                if (response.status !== 200) {
+                    log(`ERROR: Expected 200, got ${response.status}`);
+                    return false;
+                }
+
+                const data = await response.json();
+                if (!data.machines) {
+                    log('ERROR: No machines data');
+                    return false;
+                }
+
+                log(`SUCCESS: Access granted, loaded ${data.machines.length} machines`);
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testErrorMessages() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: 'not valid json'
+                });
+
+                const data = await response.json();
+                const error = JSON.stringify(data);
+
+                // Check for information disclosure patterns
+                const badPatterns = ['File', 'path', 'traceback', 'Traceback', 'mongodb', 'connection'];
+                const hasDisclosure = badPatterns.some(p => error.toLowerCase().includes(p.toLowerCase()));
+
+                if (hasDisclosure) {
+                    log(`FAIL: Error message contains sensitive info`);
+                    return false;
+                }
+
+                log('SUCCESS: Error messages are generic (no internal details exposed)');
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testSecurityHeaders() {
+            try {
+                const response = await fetch('/api/command/machines');
+                const headers = response.headers;
+
+                const hasXFrame = headers.has('X-Frame-Options');
+                const hasContentType = headers.has('X-Content-Type-Options');
+                const hasHSTS = headers.has('Strict-Transport-Security');
+                const hasCSP = headers.has('Content-Security-Policy');
+
+                if (!hasXFrame || !hasContentType || !hasHSTS || !hasCSP) {
+                    log(`FAIL: Missing headers - X-Frame: ${hasXFrame}, Content-Type: ${hasContentType}, HSTS: ${hasHSTS}, CSP: ${hasCSP}`);
+                    return false;
+                }
+
+                log('SUCCESS: All security headers present');
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testDebugEndpointRemoved() {
+            try {
+                const response = await fetch('/api/setup-account/debug-tokens');
+
+                if (response.status === 404) {
+                    log('SUCCESS: Debug endpoint properly removed (404)');
+                    return true;
+                } else {
+                    log(`FAIL: Debug endpoint still exists (status ${response.status})`);
+                    return false;
+                }
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function testCORSHeaders() {
+            try {
+                const response = await fetch('/api/command/machines');
+                const headers = response.headers;
+
+                const corsHeader = headers.get('Access-Control-Allow-Origin');
+                if (corsHeader === '*') {
+                    log('FAIL: CORS allows all origins');
+                    return false;
+                }
+
+                log(`SUCCESS: CORS properly configured (origin: ${corsHeader || 'specific origin'})`);
+                return true;
+            } catch (e) {
+                log(`EXCEPTION: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            document.getElementById('output').style.display = 'block';
+            document.getElementById('outputContent').innerHTML = '';
+            document.getElementById('runBtn').disabled = true;
+
+            log('Starting security tests...\n');
+
+            const categories = {};
+
+            for (const test of tests) {
+                if (!categories[test.category]) {
+                    categories[test.category] = [];
+                    log(`\n=== ${test.category} ===\n`);
+                }
+
+                const testDiv = document.getElementById(`test-${test.name}`);
+                if (testDiv) {
+                    testDiv.classList.remove('pass', 'fail', 'pending');
+                    testDiv.classList.add('pending');
+                    testDiv.querySelector('.result').textContent = 'Running...';
+                }
+
+                log(`Running: ${test.name}...`);
+
+                try {
+                    const result = await test.fn();
+                    const passed = result === true;
+
+                    if (testDiv) {
+                        testDiv.classList.remove('pending');
+                        testDiv.classList.add(passed ? 'pass' : 'fail');
+                        testDiv.querySelector('.result').textContent = passed ? 'PASSED' : 'FAILED';
+                    }
+
+                    categories[test.category].push(passed);
+                    log(`${passed ? '[PASS]' : '[FAIL]'} ${test.name}\n`);
+                } catch (e) {
+                    log(`[ERROR] ${test.name} - ${e.message}\n`);
+                    if (testDiv) {
+                        testDiv.classList.remove('pending');
+                        testDiv.classList.add('fail');
+                        testDiv.querySelector('.result').textContent = 'ERROR';
+                    }
+                }
+            }
+
+            // Summary
+            log('\n=== SUMMARY ===\n');
+            for (const [category, results] of Object.entries(categories)) {
+                const passed = results.filter(r => r === true).length;
+                const total = results.length;
+                log(`${category}: ${passed}/${total} passed`);
+            }
+
+            document.getElementById('runBtn').disabled = false;
+        }
+
+        function clearResults() {
+            document.getElementById('output').style.display = 'none';
+            document.getElementById('outputContent').innerHTML = '';
+            document.querySelectorAll('.test-item').forEach(el => {
+                el.classList.remove('pass', 'fail');
+                el.classList.add('pending');
+                el.querySelector('.result').textContent = 'Not run';
+            });
+        }
+
+        // Initialize UI
+        function initUI() {
+            const testsDiv = document.getElementById('tests');
+            const currentCategory = null;
+
+            for (const test of tests) {
+                if (currentCategory !== test.category) {
+                    const section = document.createElement('div');
+                    section.className = 'test-section';
+                    const title = document.createElement('h2');
+                    title.textContent = test.category;
+                    title.style.color = '#00d4ff';
+                    title.style.marginBottom = '15px';
+                    section.appendChild(title);
+                    testsDiv.appendChild(section);
+                }
+
+                const item = document.createElement('div');
+                item.id = `test-${test.name}`;
+                item.className = 'test-item pending';
+                item.innerHTML = `
+                    <div class="test-name">${test.name}</div>
+                    <div class="result">Not run</div>
+                `;
+                testsDiv.appendChild(item);
+            }
+        }
+
+        initUI();
+    </script>
+</body>
+</html>

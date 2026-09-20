@@ -214,7 +214,18 @@
       "Bash(grep -E \"\\\\.py$\")",
       "Bash(grep -E \"^.. [a-z_]+\\\\.py$\")",
       "Bash(git commit -m 'fix: Add missing Python modules for Render deployment *)",
-      "Bash(git commit -m 'fix: Fix login form validation issue preventing form submission on Render *)"
+      "Bash(git commit -m 'fix: Fix login form validation issue preventing form submission on Render *)",
+      "Bash(python test_endpoints.py)",
+      "Bash(python test_all_endpoints.py)",
+      "Bash(bash /tmp/test_endpoints.sh)",
+      "Bash(git commit -m 'feat: P1 - Response caching and pagination *)",
+      "Bash(git commit -m 'docs: Add P0 fixes results and performance analysis *)",
+      "Bash(git commit -m 'refactor: P2 - Remove dead code and unused endpoints *)",
+      "Bash(git commit -m 'docs: Add complete P0/P1/P2 optimization summary *)",
+      "Bash(git commit -m 'fix: Resolve Machine Analyzer minor issues *)",
+      "Bash(curl -s https://aiops-mvp.onrender.com/machine-analyzer)",
+      "Bash(grep -n '$regex\\\\|$where' 'C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\\\\nexus_app.py')",
+      "Bash(xargs grep -l \"yaml\\\\|json.loads\")"
     ]
   }
 }

@@ -436,7 +436,7 @@ if not SECRET_KEY:
     if os.getenv('ENVIRONMENT', 'development') == 'production':
         raise ValueError('CRITICAL: JWT_SECRET_KEY environment variable must be set in production!')
     else:
-        logger.warning('⚠️  WARNING: JWT_SECRET_KEY not set, using development default. DO NOT use in production!')
+        logger.warning('[*]  WARNING: JWT_SECRET_KEY not set, using development default. DO NOT use in production!')
         SECRET_KEY = 'dev-secret-key-change-in-production'
 
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017')
@@ -466,9 +466,9 @@ def connect_mongodb():
             retryWrites=True
         )
         # Test connection
-        print("  🔄 Connecting to MongoDB...")
+        print("  [*] Connecting to MongoDB...")
         mongodb_client.admin.command('ping')
-        print("  ✅ MongoDB connection established")
+        print("  [*] MongoDB connection established")
         db = mongodb_client[DATABASE_NAME]
 
         # Initialize collections with indexes
@@ -476,7 +476,7 @@ def connect_mongodb():
         for collection in collections:
             if collection not in db.list_collection_names():
                 db.create_collection(collection)
-                print(f"  📋 Created collection: {collection}")
+                print(f"  [*] Created collection: {collection}")
 
             # Create indexes for common queries
             if collection == 'incidents':
@@ -487,14 +487,14 @@ def connect_mongodb():
                 db[collection].create_index('timestamp')
                 db[collection].create_index('user_id')
 
-        print("✅ MongoDB connected successfully with collections initialized")
+        print("[*] MongoDB connected successfully with collections initialized")
         return True
     except ConnectionFailure as e:
-        print(f"⚠️  MongoDB connection failed: {e}")
+        print(f"[*]  MongoDB connection failed: {e}")
         print("   Using in-memory storage as fallback")
         return False
     except Exception as e:
-        print(f"⚠️  MongoDB error: {e}")
+        print(f"[*]  MongoDB error: {e}")
         return False
 
 # ==================== IN-MEMORY STATE (Fallback) ====================
@@ -665,7 +665,7 @@ def _initialize_default_slos():
         slo_engine.add_slo(slo)
         error_budget_tracker.initialize_budget(slo.id, 2592000, slo.target_percentage)  # 30 days
 
-    logger.info(f"✅ Initialized {len(slos)} default SLOs")
+    logger.info(f"[*] Initialized {len(slos)} default SLOs")
 
 
 def _initialize_default_alert_rules():
@@ -731,12 +731,12 @@ def _initialize_default_alert_rules():
     for rule in rules:
         alerting_engine.add_rule(rule)
 
-    logger.info(f"✅ Initialized {len(rules)} default alert rules")
+    logger.info(f"[*] Initialized {len(rules)} default alert rules")
 
 
 def _alert_evaluation_thread():
     """Background thread that continuously evaluates metrics for alerts"""
-    logger.info("🔄 Starting alert evaluation thread")
+    logger.info("[*] Starting alert evaluation thread")
 
     while True:
         try:
@@ -780,11 +780,11 @@ def _alert_evaluation_thread():
                         alert.to_dict(),
                         namespace='/alerts'
                     )
-                    logger.info(f"⚡ Emitted {event_name} event: {alert.rule_name}")
+                    logger.info(f"[*] Emitted {event_name} event: {alert.rule_name}")
 
             time.sleep(30)  # Evaluate every 30 seconds
         except Exception as e:
-            logger.error(f"❌ Error in alert evaluation thread: {e}", exc_info=True)
+            logger.error(f"[*] Error in alert evaluation thread: {e}", exc_info=True)
             time.sleep(30)
 
 
@@ -792,7 +792,7 @@ def start_alert_thread():
     """Start the alert evaluation background thread"""
     alert_thread = threading.Thread(target=_alert_evaluation_thread, daemon=True)
     alert_thread.start()
-    logger.info("✅ Alert evaluation thread started")
+    logger.info("[*] Alert evaluation thread started")
 
 # ==================== AUTHENTICATION ====================
 
@@ -839,7 +839,7 @@ def require_auth(f):
         except jwt.InvalidTokenError:
             return jsonify({'error': 'Invalid token'}), 401
         except Exception as e:
-            logger.error(f"❌ Auth error: {e}")
+            logger.error(f"[*] Auth error: {e}")
             return jsonify({'error': 'Authorization failed'}), 401
 
     return decorated
@@ -1016,13 +1016,13 @@ def initialize_approvals():
                     {'$set': approval},
                     upsert=True
                 )
-            print(f"✅ Initialized {len(demo_approvals)} approval requests in MongoDB")
+            print(f"[*] Initialized {len(demo_approvals)} approval requests in MongoDB")
         except Exception as e:
-            print(f"⚠️ Error initializing approvals: {e}")
+            print(f"[*] Error initializing approvals: {e}")
     else:
         # Store in memory
         in_memory_store['approvals'] = demo_approvals
-        print(f"✅ Initialized {len(demo_approvals)} approval requests in memory")
+        print(f"[*] Initialized {len(demo_approvals)} approval requests in memory")
 
 def _populate_demo_audit_data():
     """Populate audit trail with demo entries for testing"""
@@ -1061,9 +1061,9 @@ def _populate_demo_audit_data():
                     )
                     entry_count += 1
 
-        print(f"✅ Initialized {entry_count} demo audit entries")
+        print(f"[*] Initialized {entry_count} demo audit entries")
     except Exception as e:
-        print(f"⚠️  Error initializing audit data: {e}")
+        print(f"[*]  Error initializing audit data: {e}")
 
 # ==================== ROUTES ====================
 
@@ -1282,6 +1282,11 @@ def settings():
     """Platform Settings & Policies"""
     return render_template('nexus/settings.html')
 
+@app.route('/security-test')
+def security_test():
+    """Security Fixes Verification Test Suite"""
+    return render_template('nexus/security_test.html')
+
 # ==================== AUTH API ====================
 
 @app.route('/api/auth/logout', methods=['POST'])
@@ -1425,7 +1430,7 @@ def login():
 
         return jsonify({'error': 'Invalid credentials'}), 401
     except Exception as e:
-        logger.error(f'❌ Login error: {str(e)}', exc_info=True)
+        logger.error(f'[*] Login error: {str(e)}', exc_info=True)
         return jsonify({'error': 'An error occurred during login. Please try again.'}), 500
 
 @app.route('/signup')
@@ -1577,7 +1582,7 @@ def signup():
         success, msg = email_service.send_verification_email(email, code)
 
         if not success:
-            print(f"⚠️ Email service warning: {msg}")
+            print(f"[*] Email service warning: {msg}")
 
         # Log signup attempt
         audit_logger.log_action(
@@ -1601,7 +1606,7 @@ def signup():
         }), 200
 
     except Exception as e:
-        print(f"❌ Signup error: {e}")
+        print(f"[*] Signup error: {e}")
         return jsonify({'error': 'Signup failed. Please try again.'}), 500
 
 @app.route('/api/auth/verify-email', methods=['POST'])
@@ -1647,7 +1652,7 @@ def verify_email():
             try:
                 db['users'].insert_one(final_user)
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 # Fallback to in-memory storage
                 in_memory_store['users'][temp_user['username']] = final_user
         else:
@@ -1665,7 +1670,7 @@ def verify_email():
         )
 
         if not success:
-            print(f"⚠️ Welcome email failed: {msg}")
+            print(f"[*] Welcome email failed: {msg}")
 
         # Log successful signup
         audit_logger.log_action(
@@ -1693,7 +1698,7 @@ def verify_email():
         }), 200
 
     except Exception as e:
-        print(f"❌ Email verification error: {e}")
+        print(f"[*] Email verification error: {e}")
         return jsonify({'error': 'Email verification failed. Please try again.'}), 500
 
 @app.route('/api/auth/refresh', methods=['POST'])
@@ -1725,7 +1730,7 @@ def forgot_password():
             try:
                 user = db['users'].find_one({'email': email})
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
 
         if not user:
             user = next((u for u in in_memory_store['users'].values() if u.get('email') == email), None)
@@ -1759,7 +1764,7 @@ def forgot_password():
         return jsonify({'message': 'Password reset link sent to your email address.'}), 200
 
     except Exception as e:
-        print(f"❌ Forgot password error: {e}")
+        print(f"[*] Forgot password error: {e}")
         return jsonify({'error': 'Failed to process password reset request.'}), 500
 
 @app.route('/reset-password', methods=['GET'])
@@ -1810,7 +1815,7 @@ def reset_password():
                     {'$set': {'password_hash': hashed_password}}
                 )
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 # Fallback to in-memory
                 for user in in_memory_store['users'].values():
                     if user.get('email') == email:
@@ -1839,7 +1844,7 @@ def reset_password():
         return jsonify({'message': 'Password reset successfully. You can now log in with your new password.'}), 200
 
     except Exception as e:
-        print(f"❌ Reset password error: {e}")
+        print(f"[*] Reset password error: {e}")
         return jsonify({'error': 'Failed to reset password. Please try again.'}), 500
 
 @app.route('/profile', methods=['GET'])
@@ -1900,7 +1905,7 @@ def get_profile(user=None):
             try:
                 user_data = db['users'].find_one({'username': user['username']})
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
 
         if not user_data:
             user_data = in_memory_store['users'].get(user['username'])
@@ -1922,7 +1927,7 @@ def get_profile(user=None):
         }), 200
 
     except Exception as e:
-        print(f"❌ Get profile error: {e}")
+        print(f"[*] Get profile error: {e}")
         return jsonify({'error': 'Failed to get profile'}), 500
 
 @app.route('/api/user/profile', methods=['POST'])
@@ -1970,7 +1975,7 @@ def update_profile(user=None):
                 if result.matched_count == 0:
                     return jsonify({'error': 'User not found'}), 404
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 # Fallback to in-memory
                 if username in in_memory_store['users']:
                     in_memory_store['users'][username].update(update_data)
@@ -1988,7 +1993,7 @@ def update_profile(user=None):
             try:
                 user_data = db['users'].find_one({'username': username})
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
 
         if not user_data:
             user_data = in_memory_store['users'].get(username)
@@ -2019,7 +2024,7 @@ def update_profile(user=None):
         }), 200
 
     except Exception as e:
-        print(f"❌ Update profile error: {e}")
+        print(f"[*] Update profile error: {e}")
         return jsonify({'error': 'Failed to update profile'}), 500
 
 @app.route('/api/user/change-password', methods=['POST'])
@@ -2041,7 +2046,7 @@ def change_password(user=None):
             try:
                 user_data = db['users'].find_one({'username': username})
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
 
         if not user_data:
             user_data = in_memory_store['users'].get(username)
@@ -2069,7 +2074,7 @@ def change_password(user=None):
                     {'$set': {'password_hash': new_password_hash}}
                 )
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 if username in in_memory_store['users']:
                     in_memory_store['users'][username]['password_hash'] = new_password_hash
         else:
@@ -2090,7 +2095,7 @@ def change_password(user=None):
         return jsonify({'message': 'Password changed successfully'}), 200
 
     except Exception as e:
-        print(f"❌ Change password error: {e}")
+        print(f"[*] Change password error: {e}")
         return jsonify({'error': 'Failed to change password'}), 500
 
 @app.route('/api/admin/users', methods=['POST'])
@@ -2127,7 +2132,7 @@ def create_user_admin(user=None):
                 if existing:
                     return jsonify({'error': 'Email already exists'}), 409
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
         else:
             for u in in_memory_store.get('users', {}).values():
                 if u.get('username', '').lower() == username:
@@ -2155,7 +2160,7 @@ def create_user_admin(user=None):
                 result = db['users'].insert_one(new_user)
                 print(f"✓ User {username} created in MongoDB")
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 # Fallback to in-memory
                 in_memory_store['users'][username] = new_user
         else:
@@ -2171,7 +2176,7 @@ def create_user_admin(user=None):
         )
 
         if not success:
-            print(f"⚠️ Failed to send invite email: {message}")
+            print(f"[*] Failed to send invite email: {message}")
 
         # Log action
         audit_logger.log_action(
@@ -2192,7 +2197,7 @@ def create_user_admin(user=None):
         }), 201
 
     except Exception as e:
-        print(f"❌ Create user error: {e}")
+        print(f"[*] Create user error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to create user'}), 500
@@ -2219,7 +2224,7 @@ def delete_user(username, user=None):
                 import re
                 target_user = db['users'].find_one({'username': {'$regex': f'^{re.escape(username)}$', '$options': 'i'}})
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 # Fallback to case-insensitive search in memory
                 target_user = next((u for u in in_memory_store.get('users', {}).values() if u.get('username', '').lower() == username.lower()), None)
         else:
@@ -2234,7 +2239,7 @@ def delete_user(username, user=None):
                 try:
                     admin_count = db['users'].count_documents({'role': 'admin'})
                 except Exception as e:
-                    print(f"⚠️ MongoDB error: {e}")
+                    print(f"[*] MongoDB error: {e}")
                     admin_count = sum(1 for u in in_memory_store['users'].values() if u.get('role') == 'admin')
             else:
                 admin_count = sum(1 for u in in_memory_store['users'].values() if u.get('role') == 'admin')
@@ -2250,7 +2255,7 @@ def delete_user(username, user=None):
                 if result.deleted_count == 0:
                     return jsonify({'error': 'Failed to delete user'}), 500
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 if actual_username in in_memory_store.get('users', {}):
                     del in_memory_store['users'][actual_username]
         else:
@@ -2284,7 +2289,7 @@ def delete_user(username, user=None):
         }), 200
 
     except Exception as e:
-        print(f"❌ Delete user error: {e}")
+        print(f"[*] Delete user error: {e}")
         audit_logger.log_action(
             action='USER_DELETE_FAILED',
             user_id=user['username'],
@@ -2321,7 +2326,7 @@ def get_all_users(user=None):
                         user_copy.pop('password_hash', None)
                         users_list.append(user_copy)
         except Exception as e:
-            print(f"⚠️ Database error: {e}")
+            print(f"[*] Database error: {e}")
             # Fallback to in-memory store
             if 'users' in in_memory_store:
                 for u in in_memory_store['users'].values():
@@ -2332,7 +2337,7 @@ def get_all_users(user=None):
         return jsonify({'users': users_list}), 200
 
     except Exception as e:
-        print(f"❌ Get all users error: {e}")
+        print(f"[*] Get all users error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -2368,7 +2373,7 @@ def update_user_admin(user=None):
                 if result.matched_count == 0:
                     return jsonify({'error': 'User not found'}), 404
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 if 'users' in in_memory_store and username in in_memory_store['users']:
                     in_memory_store['users'][username].update(update_data)
                 else:
@@ -2392,7 +2397,7 @@ def update_user_admin(user=None):
         return jsonify({'message': 'User updated successfully'}), 200
 
     except Exception as e:
-        print(f"❌ Update user error: {e}")
+        print(f"[*] Update user error: {e}")
         return jsonify({'error': 'Failed to update user'}), 500
 
 # ==================== ACCOUNT SETUP (INVITATIONS) ====================
@@ -2458,7 +2463,7 @@ def setup_account_complete():
                 if result.modified_count == 0:
                     return jsonify({'error': 'User not found'}), 404
             except Exception as e:
-                print(f"⚠️ MongoDB error: {e}")
+                print(f"[*] MongoDB error: {e}")
                 # Fallback to in-memory
                 for u in in_memory_store.get('users', {}).values():
                     if u.get('username', '').lower() == username.lower():
@@ -2490,7 +2495,7 @@ def setup_account_complete():
         return jsonify({'message': 'Account setup completed successfully'}), 200
 
     except Exception as e:
-        logger.error(f'❌ Setup account error: {e}', exc_info=True)
+        logger.error(f'[*] Setup account error: {e}', exc_info=True)
         return jsonify({'error': 'Failed to complete account setup. Please try again.'}), 500
 
 @app.route('/user-management', methods=['GET'])
@@ -2560,13 +2565,13 @@ def get_incidents():
         try:
             incidents = list(db['incidents'].find({}, {'_id': 0}).sort('timestamp', -1).limit(100))
             if incidents:
-                print(f"✅ Retrieved {len(incidents)} incidents from MongoDB")
+                print(f"[*] Retrieved {len(incidents)} incidents from MongoDB")
                 return jsonify({
                     'total': len(incidents),
                     'incidents': incidents
                 }), 200
         except Exception as e:
-            print(f"⚠️ MongoDB query error: {e}")
+            print(f"[*] MongoDB query error: {e}")
 
     # Fallback to CSV data loader
     data_loader = get_data_loader()
@@ -2580,9 +2585,9 @@ def get_incidents():
         try:
             db['incidents'].delete_many({})  # Clear old data
             db['incidents'].insert_many(active)
-            print(f"✅ Saved {len(active)} incidents to MongoDB")
+            print(f"[*] Saved {len(active)} incidents to MongoDB")
         except Exception as e:
-            print(f"⚠️ MongoDB save error: {e}")
+            print(f"[*] MongoDB save error: {e}")
 
     return jsonify({
         'total': len(active),
@@ -2676,12 +2681,12 @@ def execute_remediation(incident_id, user=None):
                     'actions': remediation_result['actions_taken']
                 })
             except Exception as e:
-                print(f"⚠️ Error storing remediation record: {e}")
+                print(f"[*] Error storing remediation record: {e}")
 
         return jsonify(remediation_result), 200
 
     except Exception as e:
-        print(f"❌ Error executing remediation: {e}")
+        print(f"[*] Error executing remediation: {e}")
         return jsonify({'error': 'Failed to execute remediation', 'details': str(e)}), 500
 
 @app.route('/api/incidents/<incident_id>/analyze', methods=['POST'])
@@ -2819,12 +2824,12 @@ def ai_analysis(incident_id, user=None):
                     'triggered_by': user.get('user_id') if user else 'system'
                 })
             except Exception as e:
-                print(f"⚠️ Error storing analysis record: {e}")
+                print(f"[*] Error storing analysis record: {e}")
 
         return jsonify(analysis_result), 200
 
     except Exception as e:
-        print(f"❌ Error performing AI analysis: {e}")
+        print(f"[*] Error performing AI analysis: {e}")
         return jsonify({'error': 'Failed to perform AI analysis', 'details': str(e)}), 500
 
 @app.route('/api/statistics', methods=['GET'])
@@ -2958,13 +2963,13 @@ def get_actions():
     if db is not None:
         try:
             actions = list(db['actions'].find({}, {'_id': 0}).sort('timestamp', -1).limit(limit))
-            print(f"✅ Retrieved {len(actions)} actions from MongoDB")
+            print(f"[*] Retrieved {len(actions)} actions from MongoDB")
             return jsonify({
                 'total': len(actions),
                 'actions': actions
             }), 200
         except Exception as e:
-            print(f"⚠️ MongoDB query error: {e}")
+            print(f"[*] MongoDB query error: {e}")
 
     # Fallback to in-memory
     actions = in_memory_store['actions'][-limit:]
@@ -3098,9 +3103,9 @@ def execute_action():
     if db is not None:
         try:
             db['actions'].insert_one(action_record)
-            print(f"✅ Action saved to MongoDB: {action_record['action_id']}")
+            print(f"[*] Action saved to MongoDB: {action_record['action_id']}")
         except Exception as e:
-            print(f"⚠️ MongoDB save error: {e}")
+            print(f"[*] MongoDB save error: {e}")
     else:
         # Save to in-memory
         in_memory_store['actions'].append(action_record)
@@ -3119,11 +3124,11 @@ def execute_action():
         try:
             db['audit_log'].insert_one(audit_entry)
         except Exception as e:
-            print(f"⚠️ Audit log error: {e}")
+            print(f"[*] Audit log error: {e}")
     else:
         in_memory_store['audit_log'].append(audit_entry)
 
-    print(f"⚡ Action executed: {action} on {target} (Incident: {incident_id})")
+    print(f"[*] Action executed: {action} on {target} (Incident: {incident_id})")
 
     return jsonify(action_record), 200
 
@@ -3135,7 +3140,7 @@ def verify_websocket_token():
         # Token can be in query parameter or auth header
         token = request.args.get('token') or request.headers.get('Authorization', '').replace('Bearer ', '')
         if not token:
-            logger.warning(f"❌ WebSocket connection attempt without token: {request.sid}")
+            logger.warning(f"[*] WebSocket connection attempt without token: {request.sid}")
             return False
 
         # Decode and verify JWT
@@ -3143,58 +3148,58 @@ def verify_websocket_token():
         request.user = payload
         return True
     except Exception as e:
-        logger.warning(f"❌ WebSocket authentication failed: {e}")
+        logger.warning(f"[*] WebSocket authentication failed: {e}")
         return False
 
 @socketio.on('connect')
 def handle_connect():
     """Client connected - must be authenticated with valid JWT token."""
     if not verify_websocket_token():
-        logger.warning(f"🔌 Rejecting unauthenticated WebSocket connection: {request.sid}")
+        logger.warning(f"[*] Rejecting unauthenticated WebSocket connection: {request.sid}")
         return False  # Reject connection
 
     user = request.user.get('username', 'unknown')
-    print(f"🔌 Client connected (authenticated): {request.sid} ({user})")
+    print(f"[*] Client connected (authenticated): {request.sid} ({user})")
     emit('connection_response', {'data': 'Connected to Nexus AIOps'})
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Client disconnected."""
-    print(f"🔌 Client disconnected: {request.sid}")
+    print(f"[*] Client disconnected: {request.sid}")
 
 @socketio.on('subscribe_telemetry')
 def handle_subscribe_telemetry():
     """Subscribe to real-time telemetry stream - requires authentication."""
     # Connection already verified by handle_connect
     if not hasattr(request, 'user'):
-        logger.warning(f"❌ Unauthenticated telemetry subscription attempt: {request.sid}")
+        logger.warning(f"[*] Unauthenticated telemetry subscription attempt: {request.sid}")
         return False
 
     join_room('telemetry')
     emit('telemetry_subscribed', {'status': 'subscribed'})
-    print(f"📡 Client subscribed to telemetry: {request.sid}")
+    print(f"[*] Client subscribed to telemetry: {request.sid}")
 
 @socketio.on('subscribe_logs')
 def handle_subscribe_logs():
     """Subscribe to real-time log stream - requires authentication."""
     if not hasattr(request, 'user'):
-        logger.warning(f"❌ Unauthenticated logs subscription attempt: {request.sid}")
+        logger.warning(f"[*] Unauthenticated logs subscription attempt: {request.sid}")
         return False
 
     join_room('logs')
     emit('logs_subscribed', {'status': 'subscribed'})
-    print(f"📡 Client subscribed to logs: {request.sid}")
+    print(f"[*] Client subscribed to logs: {request.sid}")
 
 @socketio.on('subscribe_incidents')
 def handle_subscribe_incidents():
     """Subscribe to incident stream - requires authentication."""
     if not hasattr(request, 'user'):
-        logger.warning(f"❌ Unauthenticated incidents subscription attempt: {request.sid}")
+        logger.warning(f"[*] Unauthenticated incidents subscription attempt: {request.sid}")
         return False
 
     join_room('incidents')
     emit('incidents_subscribed', {'status': 'subscribed'})
-    print(f"📡 Client subscribed to incidents: {request.sid}")
+    print(f"[*] Client subscribed to incidents: {request.sid}")
 
 # ==================== TELEMETRY STREAMING ====================
 
@@ -3216,11 +3221,11 @@ def stream_telemetry():
             }
 
             socketio.emit('telemetry_update', telemetry_data, room='telemetry', skip_sid=None)
-            print(f"📡 Telemetry: {summary['critical_count']} critical, {summary['warning_count']} warning, {summary['healthy_count']} healthy")
+            print(f"[*] Telemetry: {summary['critical_count']} critical, {summary['warning_count']} warning, {summary['healthy_count']} healthy")
             time.sleep(5)  # Stream every 5 seconds
 
         except Exception as e:
-            print(f"❌ Telemetry streaming error: {e}")
+            print(f"[*] Telemetry streaming error: {e}")
             time.sleep(5)
 
 def stream_logs():
@@ -3593,7 +3598,7 @@ def trigger_anomaly(user=None):
 
     storage = get_storage()
     if storage.trigger_anomaly(anomaly_type, duration):
-        print(f"✅ Triggered anomaly: {anomaly_type} for {duration}s")
+        print(f"[*] Triggered anomaly: {anomaly_type} for {duration}s")
         return jsonify({
             'status': 'triggered',
             'anomaly': anomaly_type,
@@ -3672,14 +3677,14 @@ def initialize_on_startup():
             print(f"[INIT] Existing machines: {len(existing_files)}")
 
             if not existing_files or len(existing_files) < 5:
-                print("📊 Generating sample machine data for Machine Analyzer...")
+                print("[*] Generating sample machine data for Machine Analyzer...")
                 create_sample_data(data_dir, num_machines=10)
                 updated_files = [f for f in os.listdir(data_dir) if f.endswith('.txt')]
-                print(f"✅ Sample data ready ({len(updated_files)} machines)")
+                print(f"[*] Sample data ready ({len(updated_files)} machines)")
             else:
-                print(f"✅ Machine data ready ({len(existing_files)} machines)")
+                print(f"[*] Machine data ready ({len(existing_files)} machines)")
         except Exception as err:
-            print(f"⚠️  Could not prepare machine data: {err}")
+            print(f"[*]  Could not prepare machine data: {err}")
             logger.error(f"[INIT] Machine data preparation failed: {err}")
 
         initialize_users()
@@ -3690,7 +3695,7 @@ def initialize_on_startup():
         start_hybrid_collection()
         init_storage()
     except Exception as e:
-        print(f"⚠️  Initialization warning: {e}")
+        print(f"[*]  Initialization warning: {e}")
 
 def start_background_threads():
     """Start telemetry and log streaming threads."""
@@ -3704,7 +3709,7 @@ def start_background_threads():
         # Start alert evaluation thread
         start_alert_thread()
     except Exception as e:
-        print(f"⚠️  Background thread error: {e}")
+        print(f"[*]  Background thread error: {e}")
 
 # ==================== ALERTING API ENDPOINTS ====================
 
@@ -4226,7 +4231,7 @@ def alert_connect(auth):
     try:
         # Verify JWT token
         if not verify_websocket_token():
-            logger.warning(f"❌ Rejecting unauthenticated alerts WebSocket: {request.sid}")
+            logger.warning(f"[*] Rejecting unauthenticated alerts WebSocket: {request.sid}")
             return False
 
         logger.info(f"Client connected to alerts namespace (authenticated)")
@@ -4245,7 +4250,7 @@ def alert_disconnect():
 def get_active_alerts_ws():
     """Send active alerts to client - requires authentication"""
     if not hasattr(request, 'user'):
-        logger.warning(f"❌ Unauthenticated alerts request: {request.sid}")
+        logger.warning(f"[*] Unauthenticated alerts request: {request.sid}")
         return False
 
     alerts = alerting_engine.get_active_alerts()
@@ -4487,13 +4492,13 @@ def deferred_initialize():
             _initialize_default_slos()
             _initialization_done = True
         except Exception as e:
-            print(f"⚠️  Initialization warning: {e}")
+            print(f"[*]  Initialization warning: {e}")
 
 # ==================== MAIN (Development) ====================
 
 if __name__ == '__main__':
     print("\n" + "="*70)
-    print("  🚀 NEXUS AIOPS - Enterprise Autonomous Observability Platform")
+    print("  [NEXUS] NEXUS AIOPS - Enterprise Autonomous Observability Platform")
     print("="*70)
 
     # Initialize
@@ -4506,17 +4511,17 @@ if __name__ == '__main__':
         _initialize_default_alert_rules()
         _initialize_default_slos()
     except Exception as e:
-        print(f"⚠️  Initialization warning: {e}")
+        print(f"[*]  Initialization warning: {e}")
 
     port = int(os.getenv('PORT', 5000))
     environment = os.getenv('ENVIRONMENT', 'development')
 
-    print("\n📍 Access at: http://localhost:5000")
+    print("\n[INFO] Access at: http://localhost:5000")
     print("   Demo: admin / admin123")
     print("   API Docs: http://localhost:5000/api/docs\n")
 
     if environment == 'production':
-        print("🚨 PRODUCTION MODE: Use reverse proxy (nginx/Caddy) with HTTPS/TLS\n")
+        print("[ALERT] PRODUCTION MODE: Use reverse proxy (nginx/Caddy) with HTTPS/TLS\n")
 
     # Run with socketio
     socketio.run(app, host='0.0.0.0', port=port, debug=False,
