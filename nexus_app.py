@@ -1107,15 +1107,38 @@ def _smd_findings(values):
 def command_center():
     return render_template('nexus/command_center.html')
 
+_machines_cache = {'data': None, 'timestamp': 0}
+
 @app.route('/api/command/machines', methods=['GET'])
 def command_machines():
+    """Get list of available SMD machines. Cached for performance."""
+    import time
+
+    # Cache for 60 seconds
+    now = time.time()
+    if _machines_cache['data'] and (now - _machines_cache['timestamp']) < 60:
+        return jsonify({'machines': _machines_cache['data'], 'source': 'data/raw/smd', 'cached': True})
+
     machines = []
     if os.path.isdir(SMD_DATA_DIR):
-        for filename in sorted(os.listdir(SMD_DATA_DIR)):
+        files = sorted([f for f in os.listdir(SMD_DATA_DIR) if f.endswith('.txt')])
+        for filename in files:
             path = _smd_file(filename)
             if path:
-                machines.append({'id': filename, 'label': filename.replace('.txt', '').replace('-', ' ').title(), 'bytes': os.path.getsize(path)})
-    return jsonify({'machines': machines, 'source': 'data/raw/smd'})
+                try:
+                    machines.append({
+                        'id': filename,
+                        'label': filename.replace('.txt', '').replace('-', ' ').title(),
+                        'bytes': os.path.getsize(path)
+                    })
+                except OSError:
+                    pass  # Skip files that can't be accessed
+
+    # Update cache
+    _machines_cache['data'] = machines
+    _machines_cache['timestamp'] = now
+
+    return jsonify({'machines': machines, 'source': 'data/raw/smd', 'cached': False})
 
 @app.route('/api/command/stream', methods=['GET'])
 def command_stream():
