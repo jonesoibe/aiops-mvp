@@ -3,12 +3,19 @@ Flask routes for Machine Analyzer
 Integrates with Flask-SocketIO for real-time WebSocket updates
 """
 
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, send_file
 from flask_socketio import emit, disconnect
 import threading
 import time
 from machine_analyzer import analyzer
 from analysis_visualizations import AnalysisVisualizations, EvaluationReports, IncidentLog
+from io import BytesIO
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from datetime import datetime
 
 bp = Blueprint('machine_analyzer', __name__, url_prefix='/api/machine-analyzer')
 
@@ -234,4 +241,94 @@ def get_incident_log():
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+# ==================== PDF EXPORT ====================
+
+@bp.route('/analysis/reports/export-pdf', methods=['GET'])
+def export_reports_pdf():
+    """Export all analysis reports as PDF"""
+    try:
+        # Create PDF in memory
+        pdf_buffer = BytesIO()
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+
+        # Define styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            textColor=colors.HexColor('#00ff41'),
+            spaceAfter=30,
+            alignment=1  # Center
+        )
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=16,
+            textColor=colors.HexColor('#00d4ff'),
+            spaceAfter=12,
+            spaceBefore=12
+        )
+        body_style = ParagraphStyle(
+            'CustomBody',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.black,
+            spaceAfter=6,
+            leading=12
+        )
+
+        # Build document content
+        story = []
+
+        # Title page
+        story.append(Spacer(1, 2*inch))
+        story.append(Paragraph("Machine Analyzer", title_style))
+        story.append(Paragraph("Comprehensive Analysis Report", heading_style))
+        story.append(Spacer(1, 0.3*inch))
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", body_style))
+        story.append(PageBreak())
+
+        # Add all reports
+        reports = EvaluationReports.get_all_reports()
+
+        for report_key, report_data in reports.items():
+            # Report title
+            story.append(Paragraph(report_data['title'], heading_style))
+
+            # Report description
+            story.append(Paragraph(report_data['description'], body_style))
+            story.append(Spacer(1, 0.2*inch))
+
+            # Report content (convert markdown to basic text)
+            content_text = report_data['content'].strip()
+            # Remove markdown formatting for simplicity
+            content_text = content_text.replace('##', '').replace('**', '').replace('###', '')
+
+            for line in content_text.split('\n'):
+                line = line.strip()
+                if line:
+                    story.append(Paragraph(line, body_style))
+
+            story.append(Spacer(1, 0.3*inch))
+            story.append(PageBreak())
+
+        # Build PDF
+        doc.build(story)
+
+        # Reset buffer position
+        pdf_buffer.seek(0)
+
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'machine_analyzer_reports_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        )
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate PDF: {str(e)}'
         }), 500

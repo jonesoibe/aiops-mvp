@@ -225,7 +225,13 @@
       "Bash(git commit -m 'fix: Resolve Machine Analyzer minor issues *)",
       "Bash(curl -s https://aiops-mvp.onrender.com/machine-analyzer)",
       "Bash(grep -n '$regex\\\\|$where' 'C:\\\\Users\\\\FAVOUR\\\\aiops-mvp\\\\nexus_app.py')",
-      "Bash(xargs grep -l \"yaml\\\\|json.loads\")"
+      "Bash(xargs grep -l \"yaml\\\\|json.loads\")",
+      "Bash(python verify_render_deployment.py)",
+      "Bash(curl -s -i -X GET \"https://aiops-mvp.onrender.com/api/command/machines\" --max-time 15)",
+      "Bash(python test_rate_limiting_render.py)",
+      "Bash(git commit -m 'docs: Add deployment fix verification report *)",
+      "Bash(git commit -m 'test: Add Machine Analyzer test report for Render deployment *)",
+      "Bash(git commit -m 'test: Add login flow security test report for Render deployment *)"
     ]
   }
 }

@@ -879,7 +879,12 @@
         </div>
 
         <div style="margin-top: 40px;">
-            <h2 style="color: #00ff41; margin-bottom: 20px;">📊 Detailed Evaluation Reports</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #00ff41; margin: 0;">📊 Detailed Evaluation Reports</h2>
+                <button class="btn" onclick="exportReportsPDF()" style="background: #00d4ff; color: #0a0e27;">
+                    [PDF] Export All Reports
+                </button>
+            </div>
             <div id="reports-container">
                 <div class="loading">Loading reports...</div>
             </div>
@@ -1466,11 +1471,25 @@ async function loadAnalysisReports() {
     const container = document.getElementById('reports-container');
 
     try {
+        console.log('Fetching reports from /api/machine-analyzer/analysis/reports');
         const response = await fetch('/api/machine-analyzer/analysis/reports');
+
+        if (!response.ok) {
+            console.error('Response not OK:', response.status);
+            container.innerHTML = `<div class="loading">Error loading reports (HTTP ${response.status})</div>`;
+            return;
+        }
+
         const result = await response.json();
+        console.log('Reports received:', result);
 
         if (!result.success) {
-            container.innerHTML = '<div class="loading">Error loading reports</div>';
+            container.innerHTML = `<div class="loading">Error loading reports: ${result.error || 'Unknown error'}</div>`;
+            return;
+        }
+
+        if (!result.reports || Object.keys(result.reports).length === 0) {
+            container.innerHTML = '<div class="loading">No reports available</div>';
             return;
         }
 
@@ -1482,22 +1501,26 @@ async function loadAnalysisReports() {
                 <div class="report-section">
                     <div class="report-header" onclick="toggleReport('${reportId}')">
                         <div>
-                            <h3>${report.title}</h3>
-                            <div style="font-size: 11px; color: #888;">${report.description}</div>
+                            <h3>${report.title || 'Untitled Report'}</h3>
+                            <div style="font-size: 11px; color: #888;">${report.description || 'No description'}</div>
                         </div>
                         <div class="report-toggle">▼</div>
                     </div>
                     <div class="report-content" id="${reportId}">
-                        ${markdownToHtml(report.content)}
+                        ${markdownToHtml(report.content || '')}
                     </div>
                 </div>
             `;
         });
 
-        container.innerHTML = html;
+        if (html) {
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<div class="loading">No reports to display</div>';
+        }
     } catch (error) {
-        container.innerHTML = '<div class="loading">Error loading reports</div>';
         console.error('Report loading error:', error);
+        container.innerHTML = `<div class="loading">Error loading reports: ${error.message}</div>`;
     }
 }
 
@@ -1505,6 +1528,26 @@ function toggleReport(reportId) {
     const content = document.getElementById(reportId);
     if (content) {
         content.classList.toggle('active');
+    }
+}
+
+function exportReportsPDF() {
+    try {
+        console.log('Exporting reports to PDF...');
+        const url = '/api/machine-analyzer/analysis/reports/export-pdf';
+
+        // Create a temporary link and click it
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `machine_analyzer_reports_${new Date().toISOString().slice(0, 10)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log('PDF export initiated');
+    } catch (error) {
+        console.error('PDF export error:', error);
+        alert('Failed to export reports as PDF: ' + error.message);
     }
 }
 
