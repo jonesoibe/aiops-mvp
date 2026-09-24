@@ -1,0 +1,1038 @@
+[
+  {
+    "row": 3205,
+    "anomaly_score": 0.5454,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 3206,
+    "anomaly_score": 0.5237,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 3211,
+    "anomaly_score": 0.5333,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 3221,
+    "anomaly_score": 0.5269,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 3230,
+    "anomaly_score": 0.5211,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4660,
+    "anomaly_score": 0.5279,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4671,
+    "anomaly_score": 0.5232,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 13276,
+    "anomaly_score": 0.531,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 13276,
+    "anomaly_score": 0.531,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 13306,
+    "anomaly_score": 0.5411,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 13306,
+    "anomaly_score": 0.5411,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14723,
+    "anomaly_score": 0.5237,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 14723,
+    "anomaly_score": 0.5237,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14726,
+    "anomaly_score": 0.5415,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 14726,
+    "anomaly_score": 0.5415,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14740,
+    "anomaly_score": 0.5232,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 14740,
+    "anomaly_score": 0.5232,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14742,
+    "anomaly_score": 0.5247,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 14742,
+    "anomaly_score": 0.5247,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14751,
+    "anomaly_score": 0.5361,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 14751,
+    "anomaly_score": 0.5361,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14756,
+    "anomaly_score": 0.5304,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 14756,
+    "anomaly_score": 0.5304,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20951,
+    "anomaly_score": 0.5891,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20951,
+    "anomaly_score": 0.5891,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20952,
+    "anomaly_score": 0.5354,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20952,
+    "anomaly_score": 0.5354,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20953,
+    "anomaly_score": 0.5328,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20953,
+    "anomaly_score": 0.5328,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20954,
+    "anomaly_score": 0.5635,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20954,
+    "anomaly_score": 0.5635,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20955,
+    "anomaly_score": 0.5374,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20955,
+    "anomaly_score": 0.5374,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20956,
+    "anomaly_score": 0.5994,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20956,
+    "anomaly_score": 0.5994,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20957,
+    "anomaly_score": 0.554,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20957,
+    "anomaly_score": 0.554,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20958,
+    "anomaly_score": 0.5533,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20958,
+    "anomaly_score": 0.5533,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20959,
+    "anomaly_score": 0.5839,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20959,
+    "anomaly_score": 0.5839,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20960,
+    "anomaly_score": 0.5671,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20960,
+    "anomaly_score": 0.5671,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20961,
+    "anomaly_score": 0.5434,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20961,
+    "anomaly_score": 0.5434,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20962,
+    "anomaly_score": 0.5319,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20962,
+    "anomaly_score": 0.5319,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20963,
+    "anomaly_score": 0.5349,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20963,
+    "anomaly_score": 0.5349,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20964,
+    "anomaly_score": 0.5491,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 20964,
+    "anomaly_score": 0.5491,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 21302,
+    "anomaly_score": 0.5793,
+    "fault_id": "cpu_exhaustion",
+    "fault_name": "CPU Exhaustion",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #1",
+      "Feature #30"
+    ],
+    "recommendations": [
+      "Scale horizontally (add more instances)",
+      "Check for runaway processes",
+      "Optimize application code"
+    ]
+  },
+  {
+    "row": 21302,
+    "anomaly_score": 0.5793,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 21302,
+    "anomaly_score": 0.5793,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 21303,
+    "anomaly_score": 0.5518,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 21303,
+    "anomaly_score": 0.5518,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 21337,
+    "anomaly_score": 0.5247,
+    "fault_id": "memory_pressure",
+    "fault_name": "Memory Pressure",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #6",
+      "Feature #5"
+    ],
+    "recommendations": [
+      "Increase available memory",
+      "Check for memory leaks",
+      "Restart memory-heavy service",
+      "Enable swap monitoring"
+    ]
+  },
+  {
+    "row": 21337,
+    "anomaly_score": 0.5247,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 23375,
+    "anomaly_score": 0.522,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 23412,
+    "anomaly_score": 0.5825,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 23412,
+    "anomaly_score": 0.5825,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  }
+]

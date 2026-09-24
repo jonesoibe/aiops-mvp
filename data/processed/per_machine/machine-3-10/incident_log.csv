@@ -1,0 +1,3 @@
+row,anomaly_score,fault_id,fault_name,severity,affected_features,recommendations
+1267,0.5765,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1268,0.5486,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate

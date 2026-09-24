@@ -1,0 +1,53 @@
+[
+  {
+    "row": 288,
+    "anomaly_score": 0.5201,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 312,
+    "anomaly_score": 0.5201,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 314,
+    "anomaly_score": 0.5272,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  }
+]

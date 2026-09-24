@@ -1,0 +1,313 @@
+row,anomaly_score,fault_id,fault_name,severity,affected_features,recommendations
+322,0.5469,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+322,0.5469,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+330,0.5346,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+330,0.5346,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+331,0.5477,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+331,0.5477,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1720,0.5246,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+1720,0.5246,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1724,0.54,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+1724,0.54,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1732,0.5266,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+1732,0.5266,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1735,0.5494,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+1735,0.5494,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1738,0.521,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+1738,0.521,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3140,0.53,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3140,0.53,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3144,0.5317,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3144,0.5317,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3145,0.5366,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3145,0.5366,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3147,0.5531,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3147,0.5531,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3148,0.5249,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3148,0.5249,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3149,0.5508,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3149,0.5508,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3150,0.5389,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3150,0.5389,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3151,0.5377,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3151,0.5377,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3153,0.5423,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3153,0.5423,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3154,0.5327,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3154,0.5327,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3155,0.5475,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3155,0.5475,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3158,0.5228,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3158,0.5228,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3160,0.5342,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3160,0.5342,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3165,0.5336,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3165,0.5336,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3181,0.5219,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3181,0.5219,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+3184,0.5237,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+3184,0.5237,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4580,0.5287,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+4580,0.5287,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4585,0.5251,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+4585,0.5251,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+6043,0.5206,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+6043,0.5206,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+6055,0.528,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+6055,0.528,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+7459,0.5291,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+7459,0.5291,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+7469,0.5244,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+7469,0.5244,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+7512,0.5216,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+7512,0.5216,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8921,0.5205,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8921,0.5205,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8922,0.5358,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8922,0.5358,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8923,0.5458,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8923,0.5458,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8931,0.5282,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8931,0.5282,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8934,0.5272,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8934,0.5272,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8935,0.5283,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8935,0.5283,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8943,0.521,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+8943,0.521,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10351,0.526,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10351,0.526,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10353,0.5402,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10353,0.5402,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10358,0.5436,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10358,0.5436,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10360,0.5276,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10360,0.5276,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10361,0.5311,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10361,0.5311,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10362,0.5368,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10362,0.5368,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+10385,0.5212,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+10385,0.5212,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+11814,0.521,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+11814,0.521,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+11819,0.5334,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+11819,0.5334,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+11829,0.5286,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+11829,0.5286,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+11832,0.5373,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+11832,0.5373,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13225,0.5492,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13225,0.5492,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13226,0.5258,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13226,0.5258,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13227,0.5359,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13227,0.5359,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13228,0.5323,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13228,0.5323,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13229,0.5495,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13229,0.5495,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13230,0.53,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13230,0.53,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13231,0.5298,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13231,0.5298,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13235,0.5385,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13235,0.5385,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13239,0.5435,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13239,0.5435,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13240,0.5375,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13240,0.5375,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13242,0.5305,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13242,0.5305,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13249,0.5305,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13249,0.5305,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13254,0.535,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13254,0.535,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13265,0.5203,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13265,0.5203,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13270,0.5206,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13270,0.5206,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13271,0.5281,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13271,0.5281,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13272,0.5264,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13272,0.5264,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13274,0.5278,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13274,0.5278,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13275,0.5247,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13275,0.5247,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13279,0.5215,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+13279,0.5215,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14679,0.5354,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14679,0.5354,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14682,0.5209,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14682,0.5209,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14685,0.531,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14685,0.531,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14688,0.5393,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14688,0.5393,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14699,0.5267,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14699,0.5267,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14705,0.5204,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14705,0.5204,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14717,0.5211,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14717,0.5211,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14719,0.5257,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14719,0.5257,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14723,0.5254,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+14723,0.5254,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+16109,0.5249,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+16109,0.5249,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+16115,0.5249,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+16115,0.5249,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+16117,0.5319,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+16117,0.5319,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17559,0.5353,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17559,0.5353,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17565,0.5444,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17565,0.5444,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17572,0.5223,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17572,0.5223,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17578,0.5249,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17578,0.5249,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17579,0.5459,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17579,0.5459,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17581,0.5279,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17581,0.5279,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17585,0.5397,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17585,0.5397,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17587,0.5386,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17587,0.5386,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17589,0.5334,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+17589,0.5334,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19015,0.5407,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19015,0.5407,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19016,0.5433,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19016,0.5433,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19019,0.55,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19019,0.55,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19025,0.5334,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19025,0.5334,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19029,0.5245,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19029,0.5245,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19031,0.5264,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19031,0.5264,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19035,0.5217,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19035,0.5217,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19628,0.5226,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19628,0.5226,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19642,0.5218,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19642,0.5218,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19644,0.5939,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19644,0.5939,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19645,0.5527,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19645,0.5527,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19646,0.5335,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19646,0.5335,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19647,0.5488,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19647,0.5488,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19648,0.5423,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19648,0.5423,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19649,0.5408,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19649,0.5408,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19655,0.5316,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19655,0.5316,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19659,0.5252,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19659,0.5252,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19662,0.5205,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19662,0.5205,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19663,0.5331,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19663,0.5331,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+19664,0.5253,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+19664,0.5253,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20426,0.5344,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+20426,0.5344,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20451,0.5485,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+20451,0.5485,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20454,0.5479,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+20454,0.5479,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20455,0.5536,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+20455,0.5536,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20471,0.5247,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+20471,0.5247,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20475,0.5215,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+20475,0.5215,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21859,0.5258,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21859,0.5258,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21863,0.5473,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21863,0.5473,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21864,0.5357,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21864,0.5357,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21869,0.5347,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21869,0.5347,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21885,0.5363,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21885,0.5363,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21886,0.5511,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21886,0.5511,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21887,0.5576,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21887,0.5576,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21888,0.5518,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21888,0.5518,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21889,0.559,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21889,0.559,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21896,0.5207,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21896,0.5207,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21897,0.5301,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+21897,0.5301,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23287,0.5396,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23287,0.5396,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23288,0.5242,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23288,0.5242,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23299,0.5537,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23299,0.5537,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23301,0.523,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23301,0.523,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23302,0.5442,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23302,0.5442,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23303,0.5278,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23303,0.5278,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23304,0.5518,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23304,0.5518,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23305,0.5438,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23305,0.5438,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23306,0.535,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23306,0.535,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23310,0.525,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23310,0.525,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23314,0.5318,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23314,0.5318,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23318,0.5777,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23318,0.5777,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23319,0.5345,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23319,0.5345,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23320,0.5603,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23320,0.5603,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23321,0.5565,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23321,0.5565,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23322,0.5425,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23322,0.5425,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23323,0.5527,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23323,0.5527,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23326,0.5205,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23326,0.5205,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23327,0.522,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23327,0.522,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23328,0.5248,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23328,0.5248,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23329,0.5449,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23329,0.5449,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23330,0.5319,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23330,0.5319,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23331,0.5379,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23331,0.5379,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23367,0.5378,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23367,0.5378,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23383,0.5201,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23383,0.5201,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23389,0.5423,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23389,0.5423,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23390,0.5457,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23390,0.5457,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23391,0.5495,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23391,0.5495,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+23395,0.5468,memory_pressure,Memory Pressure,critical,Feature #6;Feature #5,Increase available memory;Check for memory leaks;Restart memory-heavy service;Enable swap monitoring
+23395,0.5468,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate

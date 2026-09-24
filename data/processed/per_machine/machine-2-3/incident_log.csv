@@ -1,0 +1,71 @@
+row,anomaly_score,fault_id,fault_name,severity,affected_features,recommendations
+1317,0.5326,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1673,0.5453,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1679,0.5261,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1684,0.5348,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1686,0.5608,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1692,0.5708,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+1699,0.5401,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4192,0.5564,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4193,0.5512,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4193,0.5512,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4194,0.5621,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4194,0.5621,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4195,0.5648,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4195,0.5648,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4196,0.5598,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4196,0.5598,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4197,0.5507,cpu_exhaustion,CPU Exhaustion,critical,Feature #1;Feature #30,Scale horizontally (add more instances);Check for runaway processes;Optimize application code
+4197,0.5507,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4197,0.5507,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4198,0.5474,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4198,0.5474,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4199,0.617,cpu_exhaustion,CPU Exhaustion,critical,Feature #1;Feature #30,Scale horizontally (add more instances);Check for runaway processes;Optimize application code
+4199,0.617,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4199,0.617,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+4200,0.5347,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4563,0.5613,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4569,0.5375,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+4578,0.5276,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+6210,0.5398,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+6213,0.5237,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+6216,0.5217,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+6217,0.5254,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+7448,0.5549,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+7450,0.5312,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8521,0.5621,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8521,0.5621,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8522,0.6234,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8522,0.6234,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8523,0.6042,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8523,0.6042,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8525,0.5472,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8525,0.5472,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8526,0.5884,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8526,0.5884,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8530,0.5954,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8530,0.5954,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8531,0.608,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8531,0.608,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8532,0.5826,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8532,0.5826,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8533,0.6247,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8533,0.6247,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8533,0.6247,slow_queries,Database Performance Degradation,medium,Feature #34;Feature #33,Analyze slow query log;Add database indexes;Optimize query patterns;Scale database resources
+8533,0.6247,connection_limit,Connection Limit Approaching,medium,Feature #35;Feature #33,Increase connection pool size;Implement connection pooling;Close idle connections
+8534,0.6184,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8534,0.6184,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+8535,0.5492,cpu_exhaustion,CPU Exhaustion,critical,Feature #1;Feature #30,Scale horizontally (add more instances);Check for runaway processes;Optimize application code
+8535,0.5492,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+8535,0.5492,error_rate_spike,Application Error Rate Spike,high,Feature #32;Feature #31,Review application logs;Check database connectivity;Restart application service;Rollback recent changes
+11774,0.5457,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+11857,0.5342,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+12145,0.5483,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+12451,0.5326,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+13207,0.5467,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+14678,0.5224,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17170,0.5305,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+17549,0.5441,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20025,0.5242,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+20027,0.5672,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate
+21880,0.5214,network_errors,Network Interface Issues,high,Feature #23;Feature #24,Check network hardware;Inspect cable connections;Review network driver logs;Monitor packet loss rate

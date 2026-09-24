@@ -1,0 +1,27 @@
+{
+  "machine": "machine-3-3",
+  "generated_at": "2026-09-24T04:55:56.623332",
+  "readings_analyzed": 23703,
+  "anomaly_threshold": 0.52,
+  "avg_anomaly_score": 0.1949,
+  "max_anomaly_score": 0.6315,
+  "readings_above_threshold": 167,
+  "total_incidents_triggered": 168,
+  "incidents_by_severity": {
+    "high": 168
+  },
+  "top_fault_types": [
+    {
+      "fault_name": "Network Interface Issues",
+      "severity": "high",
+      "count": 166
+    },
+    {
+      "fault_name": "Application Error Rate Spike",
+      "severity": "high",
+      "count": 2
+    }
+  ],
+  "incident_clusters": 29,
+  "note": "Real replay through the live AnomalyDetector/BaselineCalculator pipeline (unsupervised, rolling median baseline). Confusion matrix and classification metrics are intentionally NOT included here -- no ground-truth anomaly labels exist for this dataset, so those numbers would be fabricated."
+}

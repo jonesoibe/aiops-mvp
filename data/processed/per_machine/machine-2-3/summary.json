@@ -1,0 +1,44 @@
+{
+  "machine": "machine-2-3",
+  "generated_at": "2026-09-24T04:53:11.214197",
+  "readings_analyzed": 23688,
+  "anomaly_threshold": 0.52,
+  "avg_anomaly_score": 0.1902,
+  "max_anomaly_score": 0.6247,
+  "readings_above_threshold": 47,
+  "total_incidents_triggered": 70,
+  "incidents_by_severity": {
+    "high": 65,
+    "critical": 3,
+    "medium": 2
+  },
+  "top_fault_types": [
+    {
+      "fault_name": "Network Interface Issues",
+      "severity": "high",
+      "count": 47
+    },
+    {
+      "fault_name": "Application Error Rate Spike",
+      "severity": "high",
+      "count": 18
+    },
+    {
+      "fault_name": "CPU Exhaustion",
+      "severity": "critical",
+      "count": 3
+    },
+    {
+      "fault_name": "Database Performance Degradation",
+      "severity": "medium",
+      "count": 1
+    },
+    {
+      "fault_name": "Connection Limit Approaching",
+      "severity": "medium",
+      "count": 1
+    }
+  ],
+  "incident_clusters": 17,
+  "note": "Real replay through the live AnomalyDetector/BaselineCalculator pipeline (unsupervised, rolling median baseline). Confusion matrix and classification metrics are intentionally NOT included here -- no ground-truth anomaly labels exist for this dataset, so those numbers would be fabricated."
+}

@@ -1,0 +1,28 @@
+{
+  "machine": "machine-1-8",
+  "generated_at": "2026-09-24T04:52:04.499391",
+  "readings_analyzed": 23698,
+  "anomaly_threshold": 0.52,
+  "avg_anomaly_score": 0.2171,
+  "max_anomaly_score": 0.6707,
+  "readings_above_threshold": 1208,
+  "total_incidents_triggered": 1211,
+  "incidents_by_severity": {
+    "high": 1208,
+    "medium": 3
+  },
+  "top_fault_types": [
+    {
+      "fault_name": "Network Interface Issues",
+      "severity": "high",
+      "count": 1208
+    },
+    {
+      "fault_name": "Database Performance Degradation",
+      "severity": "medium",
+      "count": 3
+    }
+  ],
+  "incident_clusters": 31,
+  "note": "Real replay through the live AnomalyDetector/BaselineCalculator pipeline (unsupervised, rolling median baseline). Confusion matrix and classification metrics are intentionally NOT included here -- no ground-truth anomaly labels exist for this dataset, so those numbers would be fabricated."
+}

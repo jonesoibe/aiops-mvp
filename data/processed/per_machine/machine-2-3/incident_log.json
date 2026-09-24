@@ -1,0 +1,1188 @@
+[
+  {
+    "row": 1317,
+    "anomaly_score": 0.5326,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 1673,
+    "anomaly_score": 0.5453,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 1679,
+    "anomaly_score": 0.5261,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 1684,
+    "anomaly_score": 0.5348,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 1686,
+    "anomaly_score": 0.5608,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 1692,
+    "anomaly_score": 0.5708,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 1699,
+    "anomaly_score": 0.5401,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4192,
+    "anomaly_score": 0.5564,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4193,
+    "anomaly_score": 0.5512,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4193,
+    "anomaly_score": 0.5512,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4194,
+    "anomaly_score": 0.5621,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4194,
+    "anomaly_score": 0.5621,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4195,
+    "anomaly_score": 0.5648,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4195,
+    "anomaly_score": 0.5648,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4196,
+    "anomaly_score": 0.5598,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4196,
+    "anomaly_score": 0.5598,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4197,
+    "anomaly_score": 0.5507,
+    "fault_id": "cpu_exhaustion",
+    "fault_name": "CPU Exhaustion",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #1",
+      "Feature #30"
+    ],
+    "recommendations": [
+      "Scale horizontally (add more instances)",
+      "Check for runaway processes",
+      "Optimize application code"
+    ]
+  },
+  {
+    "row": 4197,
+    "anomaly_score": 0.5507,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4197,
+    "anomaly_score": 0.5507,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4198,
+    "anomaly_score": 0.5474,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4198,
+    "anomaly_score": 0.5474,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4199,
+    "anomaly_score": 0.617,
+    "fault_id": "cpu_exhaustion",
+    "fault_name": "CPU Exhaustion",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #1",
+      "Feature #30"
+    ],
+    "recommendations": [
+      "Scale horizontally (add more instances)",
+      "Check for runaway processes",
+      "Optimize application code"
+    ]
+  },
+  {
+    "row": 4199,
+    "anomaly_score": 0.617,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4199,
+    "anomaly_score": 0.617,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 4200,
+    "anomaly_score": 0.5347,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4563,
+    "anomaly_score": 0.5613,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4569,
+    "anomaly_score": 0.5375,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 4578,
+    "anomaly_score": 0.5276,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 6210,
+    "anomaly_score": 0.5398,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 6213,
+    "anomaly_score": 0.5237,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 6216,
+    "anomaly_score": 0.5217,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 6217,
+    "anomaly_score": 0.5254,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 7448,
+    "anomaly_score": 0.5549,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 7450,
+    "anomaly_score": 0.5312,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8521,
+    "anomaly_score": 0.5621,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8521,
+    "anomaly_score": 0.5621,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8522,
+    "anomaly_score": 0.6234,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8522,
+    "anomaly_score": 0.6234,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8523,
+    "anomaly_score": 0.6042,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8523,
+    "anomaly_score": 0.6042,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8525,
+    "anomaly_score": 0.5472,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8525,
+    "anomaly_score": 0.5472,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8526,
+    "anomaly_score": 0.5884,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8526,
+    "anomaly_score": 0.5884,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8530,
+    "anomaly_score": 0.5954,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8530,
+    "anomaly_score": 0.5954,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8531,
+    "anomaly_score": 0.608,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8531,
+    "anomaly_score": 0.608,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8532,
+    "anomaly_score": 0.5826,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8532,
+    "anomaly_score": 0.5826,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8533,
+    "anomaly_score": 0.6247,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8533,
+    "anomaly_score": 0.6247,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8533,
+    "anomaly_score": 0.6247,
+    "fault_id": "slow_queries",
+    "fault_name": "Database Performance Degradation",
+    "severity": "medium",
+    "affected_features": [
+      "Feature #34",
+      "Feature #33"
+    ],
+    "recommendations": [
+      "Analyze slow query log",
+      "Add database indexes",
+      "Optimize query patterns",
+      "Scale database resources"
+    ]
+  },
+  {
+    "row": 8533,
+    "anomaly_score": 0.6247,
+    "fault_id": "connection_limit",
+    "fault_name": "Connection Limit Approaching",
+    "severity": "medium",
+    "affected_features": [
+      "Feature #35",
+      "Feature #33"
+    ],
+    "recommendations": [
+      "Increase connection pool size",
+      "Implement connection pooling",
+      "Close idle connections"
+    ]
+  },
+  {
+    "row": 8534,
+    "anomaly_score": 0.6184,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8534,
+    "anomaly_score": 0.6184,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 8535,
+    "anomaly_score": 0.5492,
+    "fault_id": "cpu_exhaustion",
+    "fault_name": "CPU Exhaustion",
+    "severity": "critical",
+    "affected_features": [
+      "Feature #1",
+      "Feature #30"
+    ],
+    "recommendations": [
+      "Scale horizontally (add more instances)",
+      "Check for runaway processes",
+      "Optimize application code"
+    ]
+  },
+  {
+    "row": 8535,
+    "anomaly_score": 0.5492,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 8535,
+    "anomaly_score": 0.5492,
+    "fault_id": "error_rate_spike",
+    "fault_name": "Application Error Rate Spike",
+    "severity": "high",
+    "affected_features": [
+      "Feature #32",
+      "Feature #31"
+    ],
+    "recommendations": [
+      "Review application logs",
+      "Check database connectivity",
+      "Restart application service",
+      "Rollback recent changes"
+    ]
+  },
+  {
+    "row": 11774,
+    "anomaly_score": 0.5457,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 11857,
+    "anomaly_score": 0.5342,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 12145,
+    "anomaly_score": 0.5483,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 12451,
+    "anomaly_score": 0.5326,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 13207,
+    "anomaly_score": 0.5467,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 14678,
+    "anomaly_score": 0.5224,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 17170,
+    "anomaly_score": 0.5305,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 17549,
+    "anomaly_score": 0.5441,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20025,
+    "anomaly_score": 0.5242,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 20027,
+    "anomaly_score": 0.5672,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  },
+  {
+    "row": 21880,
+    "anomaly_score": 0.5214,
+    "fault_id": "network_errors",
+    "fault_name": "Network Interface Issues",
+    "severity": "high",
+    "affected_features": [
+      "Feature #23",
+      "Feature #24"
+    ],
+    "recommendations": [
+      "Check network hardware",
+      "Inspect cable connections",
+      "Review network driver logs",
+      "Monitor packet loss rate"
+    ]
+  }
+]

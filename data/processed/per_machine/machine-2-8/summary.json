@@ -1,0 +1,28 @@
+{
+  "machine": "machine-2-8",
+  "generated_at": "2026-09-24T04:54:53.510011",
+  "readings_analyzed": 23702,
+  "anomaly_threshold": 0.52,
+  "avg_anomaly_score": 0.1984,
+  "max_anomaly_score": 0.5939,
+  "readings_above_threshold": 156,
+  "total_incidents_triggered": 312,
+  "incidents_by_severity": {
+    "critical": 156,
+    "high": 156
+  },
+  "top_fault_types": [
+    {
+      "fault_name": "Memory Pressure",
+      "severity": "critical",
+      "count": 156
+    },
+    {
+      "fault_name": "Network Interface Issues",
+      "severity": "high",
+      "count": 156
+    }
+  ],
+  "incident_clusters": 18,
+  "note": "Real replay through the live AnomalyDetector/BaselineCalculator pipeline (unsupervised, rolling median baseline). Confusion matrix and classification metrics are intentionally NOT included here -- no ground-truth anomaly labels exist for this dataset, so those numbers would be fabricated."
+}

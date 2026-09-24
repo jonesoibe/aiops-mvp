@@ -1,0 +1,22 @@
+{
+  "machine": "machine-3-8",
+  "generated_at": "2026-09-24T04:57:06.437668",
+  "readings_analyzed": 28703,
+  "anomaly_threshold": 0.52,
+  "avg_anomaly_score": 0.2246,
+  "max_anomaly_score": 0.6268,
+  "readings_above_threshold": 231,
+  "total_incidents_triggered": 231,
+  "incidents_by_severity": {
+    "high": 231
+  },
+  "top_fault_types": [
+    {
+      "fault_name": "Network Interface Issues",
+      "severity": "high",
+      "count": 231
+    }
+  ],
+  "incident_clusters": 37,
+  "note": "Real replay through the live AnomalyDetector/BaselineCalculator pipeline (unsupervised, rolling median baseline). Confusion matrix and classification metrics are intentionally NOT included here -- no ground-truth anomaly labels exist for this dataset, so those numbers would be fabricated."
+}
