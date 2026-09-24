@@ -893,7 +893,12 @@
 
     <!-- INCIDENT LOG TAB -->
     <div class="tab-content" id="incidents-tab">
-        <h2 style="color: #00ff41; margin-bottom: 20px;">📋 Incident Log</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: #00ff41; margin: 0;">📋 Incident Log</h2>
+            <button class="btn" onclick="exportIncidentDashboard()" style="background: #00d4ff; color: #0a0e27;">
+                [PNG] Export Incident Dashboard
+            </button>
+        </div>
         <div style="margin-bottom: 20px; display: flex; gap: 10px;">
             <input type="text" id="incident-search" placeholder="Search incidents..." style="flex: 1; padding: 10px; background: #0f1419; border: 1px solid #00d4ff; color: #00d4ff; border-radius: 4px; font-size: 12px;">
             <select id="severity-filter" style="padding: 10px; background: #0f1419; border: 1px solid #00d4ff; color: #00d4ff; border-radius: 4px; font-size: 12px;">
@@ -1548,6 +1553,25 @@ function exportReportsPDF() {
     } catch (error) {
         console.error('PDF export error:', error);
         alert('Failed to export reports as PDF: ' + error.message);
+    }
+}
+
+function exportIncidentDashboard() {
+    try {
+        console.log('Exporting incident dashboard to PNG...');
+        const url = '/api/machine-analyzer/analysis/incident-log/export-png';
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `incident_dashboard_${new Date().toISOString().slice(0, 10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log('PNG export initiated');
+    } catch (error) {
+        console.error('PNG export error:', error);
+        alert('Failed to export incident dashboard as PNG: ' + error.message);
     }
 }
 

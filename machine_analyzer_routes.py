@@ -243,6 +243,26 @@ def get_incident_log():
             'error': str(e)
         }), 500
 
+@bp.route('/analysis/incident-log/export-png', methods=['GET'])
+def export_incident_dashboard_png():
+    """Export an aesthetically-designed incident dashboard as a PNG image"""
+    try:
+        incidents = IncidentLog.get_incident_log()
+        fig = IncidentLog.generate_incident_dashboard(incidents)
+        png_bytes = IncidentLog.fig_to_png_bytes(fig)
+
+        return send_file(
+            BytesIO(png_bytes),
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=f'incident_dashboard_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png'
+        )
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate incident dashboard: {str(e)}'
+        }), 500
+
 # ==================== PDF EXPORT ====================
 
 @bp.route('/analysis/reports/export-pdf', methods=['GET'])
@@ -279,6 +299,14 @@ def export_reports_pdf():
             spaceAfter=6,
             leading=12
         )
+        summary_intro_style = ParagraphStyle(
+            'SummaryIntro',
+            parent=styles['Normal'],
+            fontSize=10.5,
+            textColor=colors.HexColor('#333333'),
+            spaceAfter=14,
+            leading=15
+        )
 
         # Build document content
         story = []
@@ -293,6 +321,61 @@ def export_reports_pdf():
 
         # Add all reports
         reports = EvaluationReports.get_all_reports()
+
+        # ---- Executive Summary Page ----
+        story.append(Paragraph("Executive Summary", heading_style))
+        story.append(Paragraph(
+            "This report captures the Machine Analyzer's full evaluation cycle: chaos-engineering "
+            "resilience testing, anomaly-classification model performance, DoS attack simulation, "
+            "threshold calibration, and automated incident remediation. The table below summarizes "
+            "the headline result from each of the {0} detailed reports that follow.".format(len(reports)),
+            summary_intro_style
+        ))
+        story.append(Spacer(1, 0.15*inch))
+
+        summary_highlights = {
+            'chaos_simulation': '96.5% average detection rate across 6 chaos scenarios; 1.18s average response time',
+            'classification_results': '94% overall accuracy, 0.95 F1-score, 0.96 ROC-AUC',
+            'confusion_matrix_mvp': '96.9% accuracy for the real-time MVP anomaly detector',
+            'confusion_matrix_supervised': '97.9% accuracy, a +1.0% improvement over the MVP model',
+            'dos_simulation_analysis': '99.3% attack prevention rate across 5 DoS attack vectors',
+            'threshold_calibration': 'Optimal threshold of 0.52 balancing 94.5% precision and 96.2% recall',
+            'remediation_results': '98.6% remediation success rate, 87.6% automation rate, ~$21,000/month savings',
+        }
+
+        table_header_style = ParagraphStyle(
+            'TableHeader', parent=styles['Normal'], fontSize=9.5,
+            textColor=colors.white, fontName='Helvetica-Bold'
+        )
+        table_cell_style = ParagraphStyle(
+            'TableCell', parent=styles['Normal'], fontSize=9, leading=12,
+            textColor=colors.HexColor('#222222')
+        )
+
+        table_data = [[
+            Paragraph('Report', table_header_style),
+            Paragraph('Key Result', table_header_style)
+        ]]
+        for report_key, report_data in reports.items():
+            highlight = summary_highlights.get(report_key, report_data.get('description', ''))
+            table_data.append([
+                Paragraph(report_data['title'], table_cell_style),
+                Paragraph(highlight, table_cell_style)
+            ])
+
+        summary_table = Table(table_data, colWidths=[2.1*inch, 4.4*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0a0e27')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f2f7fa')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        story.append(summary_table)
+        story.append(PageBreak())
 
         for report_key, report_data in reports.items():
             # Report title

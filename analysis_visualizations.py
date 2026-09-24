@@ -1079,6 +1079,176 @@ class IncidentLog:
 
         return incidents
 
+    # Severity color palette shared across the dashboard
+    SEVERITY_COLORS = {
+        'Critical': '#ff006e',
+        'High': '#ffbe0b',
+        'Medium': '#00d9ff',
+        'Low': '#00ff41',
+    }
+
+    STATUS_LABELS = {
+        'remediation_applied': 'Auto-Remediated',
+        'escalated': 'Escalated',
+        'acknowledged': 'Acknowledged',
+    }
+
+    @classmethod
+    def generate_incident_dashboard(cls, incidents=None):
+        """Generate an aesthetically-pleasing infographic-style dashboard
+        summarizing all incidents (severity mix, status breakdown, timeline)."""
+        import matplotlib.gridspec as gridspec
+        from matplotlib.patches import FancyBboxPatch
+
+        if incidents is None:
+            incidents = cls.get_incident_log()
+
+        severities = [i['severity'] for i in incidents]
+        statuses = [i['status'] for i in incidents]
+        scores = [i['anomaly_score'] for i in incidents]
+        timestamps = [datetime.fromisoformat(i['timestamp']) for i in incidents]
+
+        total = len(incidents)
+        critical_count = severities.count('Critical')
+        avg_score = sum(scores) / total if total else 0
+        auto_count = statuses.count('remediation_applied')
+        automation_rate = (auto_count / total * 100) if total else 0
+
+        panel_bg = '#0f1729'
+        fig = plt.figure(figsize=(13, 11), facecolor='#0a0e27')
+        gs = gridspec.GridSpec(
+            3, 4, figure=fig,
+            height_ratios=[0.6, 1.6, 1.5],
+            hspace=0.55, wspace=0.45,
+            left=0.06, right=0.96, top=0.90, bottom=0.07
+        )
+
+        # ---- Header ----
+        fig.suptitle('Incident Response Dashboard', fontsize=22, fontweight='bold',
+                     color='#00ff41', y=0.975)
+        fig.text(0.5, 0.935,
+                 f"Generated {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  |  {total} incidents analyzed",
+                 ha='center', fontsize=10, color='#8899aa')
+
+        # ---- Row 1: Stat cards ----
+        stat_cards = [
+            ('TOTAL INCIDENTS', f'{total}', '#00d9ff'),
+            ('CRITICAL', f'{critical_count}', '#ff006e'),
+            ('AVG ANOMALY SCORE', f'{avg_score:.2f}', '#ffbe0b'),
+            ('AUTOMATION RATE', f'{automation_rate:.0f}%', '#00ff41'),
+        ]
+
+        for idx, (label, value, color) in enumerate(stat_cards):
+            ax = fig.add_subplot(gs[0, idx])
+            ax.axis('off')
+            box = FancyBboxPatch((0.03, 0.05), 0.94, 0.9,
+                                  boxstyle="round,pad=0.02,rounding_size=0.08",
+                                  linewidth=1.5, edgecolor=color, facecolor='#131a35',
+                                  transform=ax.transAxes)
+            ax.add_patch(box)
+            ax.text(0.5, 0.62, value, ha='center', va='center', fontsize=22,
+                    fontweight='bold', color=color, transform=ax.transAxes)
+            ax.text(0.5, 0.22, label, ha='center', va='center', fontsize=8.5,
+                    color='#8899aa', transform=ax.transAxes, fontweight='bold')
+
+        # ---- Row 2: Severity donut + Status breakdown ----
+        ax_severity = fig.add_subplot(gs[1, 0:2])
+        ax_severity.set_facecolor(panel_bg)
+        severity_order = ['Critical', 'High', 'Medium', 'Low']
+        severity_counts = [severities.count(s) for s in severity_order]
+        colors = [cls.SEVERITY_COLORS[s] for s in severity_order]
+        nonzero = [(s, c, col) for s, c, col in zip(severity_order, severity_counts, colors) if c > 0]
+
+        if nonzero:
+            labels_nz, counts_nz, colors_nz = zip(*nonzero)
+            wedges, texts, autotexts = ax_severity.pie(
+                counts_nz, colors=colors_nz, autopct='%1.0f%%', pctdistance=0.8,
+                startangle=90, wedgeprops=dict(width=0.42, edgecolor='#0a0e27', linewidth=2)
+            )
+            for autotext in autotexts:
+                autotext.set_color('#0a0e27')
+                autotext.set_fontweight('bold')
+                autotext.set_fontsize(10)
+            ax_severity.text(0, 0, f'{total}\nincidents', ha='center', va='center',
+                             fontsize=12, fontweight='bold', color='white')
+            ax_severity.legend(labels_nz, loc='center left', bbox_to_anchor=(1.02, 0.5),
+                               frameon=False, labelcolor='#cccccc', fontsize=9)
+        ax_severity.set_title('Severity Breakdown', fontsize=12, fontweight='bold',
+                              color='white', pad=10)
+
+        ax_status = fig.add_subplot(gs[1, 2:4])
+        ax_status.set_facecolor(panel_bg)
+        status_order = ['remediation_applied', 'escalated', 'acknowledged']
+        status_counts = [statuses.count(s) for s in status_order]
+        status_display = [cls.STATUS_LABELS.get(s, s) for s in status_order]
+        status_colors = ['#00ff41', '#ff006e', '#ffbe0b']
+
+        bars = ax_status.barh(status_display, status_counts, color=status_colors, alpha=0.9,
+                              height=0.5)
+        for bar, count in zip(bars, status_counts):
+            width = bar.get_width()
+            ax_status.text(width + max(status_counts) * 0.03, bar.get_y() + bar.get_height()/2,
+                           str(count), va='center', fontsize=11, fontweight='bold', color='white')
+        ax_status.set_xlim(0, max(status_counts) * 1.3 if status_counts else 1)
+        ax_status.set_title('Resolution Status', fontsize=12, fontweight='bold',
+                            color='white', pad=10)
+        ax_status.tick_params(colors='#cccccc')
+        ax_status.spines[['top', 'right']].set_visible(False)
+        ax_status.spines[['bottom', 'left']].set_color('#444')
+        ax_status.grid(axis='x', alpha=0.15)
+
+        # ---- Row 3: Timeline ----
+        ax_timeline = fig.add_subplot(gs[2, :])
+        ax_timeline.set_facecolor(panel_bg)
+        for sev in severity_order:
+            idxs = [i for i, s in enumerate(severities) if s == sev]
+            if not idxs:
+                continue
+            ax_timeline.scatter(
+                [timestamps[i] for i in idxs], [scores[i] for i in idxs],
+                s=180, color=cls.SEVERITY_COLORS[sev], edgecolor='#0a0e27', linewidth=1.5,
+                label=sev, zorder=3, alpha=0.9
+            )
+
+        # Connect points chronologically with a faint line for readability
+        order = sorted(range(total), key=lambda i: timestamps[i])
+        ax_timeline.plot([timestamps[i] for i in order], [scores[i] for i in order],
+                         color='#334466', linewidth=1, zorder=1, alpha=0.6)
+
+        for i in order:
+            ax_timeline.annotate(
+                incidents[i]['machine'], (timestamps[i], scores[i]),
+                textcoords="offset points", xytext=(0, 12), ha='center',
+                fontsize=7.5, color='#8899aa'
+            )
+
+        ax_timeline.axhline(0.7, color='#ff006e', linestyle='--', linewidth=1, alpha=0.5)
+        ax_timeline.text(timestamps[order[0]], 0.72, 'critical threshold', fontsize=7.5,
+                         color='#ff006e', alpha=0.8)
+
+        ax_timeline.set_ylim(0.3, 1.0)
+        ax_timeline.set_ylabel('Anomaly Score', fontsize=10, color='#cccccc')
+        ax_timeline.set_title('Incident Timeline', fontsize=12, fontweight='bold',
+                              color='white', pad=10)
+        ax_timeline.legend(loc='upper left', frameon=False, labelcolor='#cccccc', fontsize=9, ncol=4)
+        ax_timeline.tick_params(colors='#cccccc', labelsize=8.5)
+        ax_timeline.spines[['top', 'right']].set_visible(False)
+        ax_timeline.spines[['bottom', 'left']].set_color('#444')
+        ax_timeline.grid(alpha=0.15)
+        fig.autofmt_xdate(rotation=20)
+
+        return fig
+
+    @staticmethod
+    def fig_to_png_bytes(fig):
+        """Convert matplotlib figure to raw PNG bytes"""
+        buffer = BytesIO()
+        fig.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                    facecolor=fig.get_facecolor())
+        buffer.seek(0)
+        plt.close(fig)
+        return buffer.getvalue()
+
 
 if __name__ == '__main__':
     # Generate all visualizations
