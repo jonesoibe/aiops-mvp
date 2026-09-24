@@ -8,6 +8,10 @@ services:
     envVars:
       - key: FLASK_ENV
         value: production
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://aiops-mvp.onrender.com
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: PYTHONUNBUFFERED

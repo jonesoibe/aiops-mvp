@@ -389,8 +389,8 @@
     <div style="display: grid; grid-template-columns: 1fr 400px; gap: var(--space-6); height: 100%;">
         <div class="queue-panel">
             <div class="queue-header">
-                <div class="queue-title">📋 Pending Approvals</div>
-                <div class="queue-count">7 items</div>
+                <div class="queue-title" id="queueTitle">📋 Pending Approvals</div>
+                <div class="queue-count" id="queueCount">Loading…</div>
             </div>
 
             <div class="approval-list">
@@ -416,85 +416,41 @@
 
 {% block extra_scripts %}
 <script>
-// Sample approval data with different statuses
-let allApprovalsData = {
-    pending: [
-        {
-            approval_id: 'APP-001',
-            title: 'Rollback Production Deployment',
-            description: 'Revert SERVICE_C v2.1.4 due to critical memory leak',
-            priority: 'CRITICAL',
-            type: 'remediation',
-            requested_by: 'aiops_engine',
-            requested_at: new Date(Date.now() - 5*60000).toISOString(),
-            status: 'pending',
-            impact: { users_affected: '~2,847 concurrent', estimated_downtime: '45-60 seconds', data_loss_risk: 'None' }
-        },
-        {
-            approval_id: 'APP-002',
-            title: 'Scale Up Database Connections',
-            description: 'Increase connection pool from 500 to 1000 on SQL Server',
-            priority: 'HIGH',
-            type: 'configuration',
-            requested_by: 'auto_scaler',
-            requested_at: new Date(Date.now() - 12*60000).toISOString(),
-            status: 'pending',
-            impact: { users_affected: 'All', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
-        }
-    ],
-    approved: [
-        {
-            approval_id: 'APP-003',
-            title: 'Enable Debug Logging for SERVICE_A',
-            description: 'Temporarily increase log verbosity for issue diagnosis',
-            priority: 'MEDIUM',
-            type: 'debugging',
-            requested_by: 'investigation_team',
-            requested_at: new Date(Date.now() - 25*60000).toISOString(),
-            approved_by: 'admin',
-            approved_at: new Date(Date.now() - 20*60000).toISOString(),
-            status: 'approved',
-            impact: { users_affected: 'None', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
-        },
-        {
-            approval_id: 'APP-005',
-            title: 'Cache Invalidation - Redis Cluster',
-            description: 'Clear stale cache entries to free up 2.5GB memory',
-            priority: 'MEDIUM',
-            type: 'maintenance',
-            requested_by: 'cache_manager',
-            requested_at: new Date(Date.now() - 2*60*60000).toISOString(),
-            approved_by: 'operator',
-            approved_at: new Date(Date.now() - 115*60000).toISOString(),
-            status: 'approved',
-            impact: { users_affected: 'Minimal', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
-        }
-    ],
-    rejected: [
-        {
-            approval_id: 'APP-004',
-            title: 'Update Security Policy Configuration',
-            description: 'Apply new WAF rules for DDoS protection',
-            priority: 'HIGH',
-            type: 'security',
-            requested_by: 'security_team',
-            requested_at: new Date(Date.now() - 45*60000).toISOString(),
-            rejected_by: 'admin',
-            rejected_at: new Date(Date.now() - 40*60000).toISOString(),
-            rejection_reason: 'Needs further testing in staging environment',
-            status: 'rejected',
-            impact: { users_affected: 'None', estimated_downtime: '0 seconds', data_loss_risk: 'None' }
-        }
-    ]
-};
-
+const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'expired'];
+let allApprovalsData = { pending: [], approved: [], rejected: [], expired: [] };
 let allApprovals = [];
 let currentStatus = 'pending';
 let currentPriority = 'all';
 let selectedApproval = null;
 
-function loadApprovals(status = 'pending') {
+function authHeaders() {
+    const token = localStorage.getItem('token');
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+}
+
+async function fetchAllApprovals() {
+    const results = await Promise.all(APPROVAL_STATUSES.map(async status => {
+        try {
+            const res = await fetch(`/api/approvals?status=${status}&limit=100`, { headers: authHeaders() });
+            if (res.status === 401) {
+                window.location.href = '/login';
+                return [status, []];
+            }
+            const data = await res.json();
+            return [status, data.approvals || []];
+        } catch (e) {
+            console.error(`Failed to load ${status} approvals:`, e);
+            return [status, []];
+        }
+    }));
+    results.forEach(([status, approvals]) => { allApprovalsData[status] = approvals; });
+}
+
+async function loadApprovals(status = 'pending', refetch = true) {
     currentStatus = status;
+    if (refetch) {
+        await fetchAllApprovals();
+    }
     allApprovals = allApprovalsData[status] || [];
     console.log(`Loaded ${allApprovals.length} ${status} approvals`);
     displayApprovals();
@@ -504,14 +460,18 @@ function loadApprovals(status = 'pending') {
 function displayApprovals() {
     const list = document.querySelector('.approval-list');
 
-    if (!allApprovals || allApprovals.length === 0) {
-        list.innerHTML = '<div style="padding: var(--space-4); color: var(--text-secondary); text-align: center;">No approvals found</div>';
-        return;
-    }
-
-    let filteredApprovals = allApprovals;
+    let filteredApprovals = allApprovals || [];
     if (currentPriority !== 'all') {
         filteredApprovals = filteredApprovals.filter(a => a.priority.toLowerCase() === currentPriority.toLowerCase());
+    }
+
+    const statusLabel = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+    document.getElementById('queueTitle').textContent = `📋 ${statusLabel} Approvals`;
+    document.getElementById('queueCount').textContent = `${filteredApprovals.length} item${filteredApprovals.length === 1 ? '' : 's'}`;
+
+    if (filteredApprovals.length === 0) {
+        list.innerHTML = '<div style="padding: var(--space-4); color: var(--text-secondary); text-align: center;">No approvals found</div>';
+        return;
     }
 
     list.innerHTML = '';
@@ -652,69 +612,50 @@ function selectApproval(approval) {
     `;
 }
 
-function approveRequest(approvalId) {
-    // Find and update the approval
-    const approval = selectedApproval;
-    if (!approval) return;
-
-    // Move from pending to approved
-    const idx = allApprovalsData.pending.findIndex(a => a.approval_id === approvalId);
-    if (idx !== -1) {
-        const app = allApprovalsData.pending[idx];
-        app.status = 'approved';
-        app.approved_by = 'admin';
-        app.approved_at = new Date().toISOString();
-
-        allApprovalsData.approved.unshift(app);
-        allApprovalsData.pending.splice(idx, 1);
-
-        alert('Approval granted! Request has been approved.');
-
-        // Reload current view
-        loadApprovals(currentStatus);
-
-        // Clear detail view
-        document.getElementById('detailView').innerHTML = `
-            <div class="detail-empty">
-                <div>
-                    <div style="font-size: 2em; margin-bottom: 12px;">📄</div>
-                    <div>Select an approval to view details</div>
-                </div>
+function clearDetailView() {
+    document.getElementById('detailView').innerHTML = `
+        <div class="detail-empty">
+            <div>
+                <div style="font-size: 2em; margin-bottom: 12px;">📄</div>
+                <div>Select an approval to view details</div>
             </div>
-        `;
+        </div>
+    `;
+}
+
+async function approveRequest(approvalId) {
+    try {
+        const res = await fetch(`/api/approvals/${approvalId}/approve`, {
+            method: 'POST',
+            headers: authHeaders()
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (!res.ok) throw new Error((await res.json()).error || 'Approve failed');
+
+        await loadApprovals(currentStatus);
+        clearDetailView();
+    } catch (e) {
+        alert('Failed to approve request: ' + e.message);
     }
 }
 
-function rejectRequest(approvalId) {
+async function rejectRequest(approvalId) {
     const reason = prompt('Enter rejection reason:');
     if (!reason) return;
 
-    // Find and update the approval
-    const idx = allApprovalsData.pending.findIndex(a => a.approval_id === approvalId);
-    if (idx !== -1) {
-        const app = allApprovalsData.pending[idx];
-        app.status = 'rejected';
-        app.rejected_by = 'admin';
-        app.rejected_at = new Date().toISOString();
-        app.rejection_reason = reason;
+    try {
+        const res = await fetch(`/api/approvals/${approvalId}/reject`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ reason })
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (!res.ok) throw new Error((await res.json()).error || 'Reject failed');
 
-        allApprovalsData.rejected.unshift(app);
-        allApprovalsData.pending.splice(idx, 1);
-
-        alert('Request has been rejected.');
-
-        // Reload current view
-        loadApprovals(currentStatus);
-
-        // Clear detail view
-        document.getElementById('detailView').innerHTML = `
-            <div class="detail-empty">
-                <div>
-                    <div style="font-size: 2em; margin-bottom: 12px;">📄</div>
-                    <div>Select an approval to view details</div>
-                </div>
-            </div>
-        `;
+        await loadApprovals(currentStatus);
+        clearDetailView();
+    } catch (e) {
+        alert('Failed to reject request: ' + e.message);
     }
 }
 
@@ -729,8 +670,7 @@ function rejectAction(event, approvalId) {
 }
 
 function updateStatusCounts() {
-    const statuses = ['pending', 'approved', 'rejected'];
-    statuses.forEach(status => {
+    APPROVAL_STATUSES.forEach(status => {
         const count = allApprovalsData[status].length;
         const btn = document.querySelector(`button[onclick*="filterByStatus(this, '${status}')"]`);
         if (btn) {
@@ -750,7 +690,7 @@ function filterByStatus(element, status) {
         tab.classList.remove('active');
     });
     element.classList.add('active');
-    loadApprovals(status);
+    loadApprovals(status, false);
 }
 
 function filterByPriority(element, priority) {
@@ -764,8 +704,7 @@ function filterByPriority(element, priority) {
 
 // Load on page load
 document.addEventListener('DOMContentLoaded', () => {
-    loadApprovals('pending');
-    updateStatusCounts();
+    loadApprovals('pending', true);
 });
 </script>
 {% endblock %}

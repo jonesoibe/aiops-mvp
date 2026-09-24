@@ -495,7 +495,7 @@ def get_users():
 
 ### **Add New Roles**
 
-Edit `dashboard_app.py`:
+Edit `nexus_app.py`:
 
 ```python
 # Add new role

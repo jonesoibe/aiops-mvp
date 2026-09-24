@@ -87,16 +87,18 @@ print(f"✅ Execution time: {results['execution_time_seconds']:.2f}s")
 
 ```bash
 # Start Flask server
-python src/dashboard_app.py
+python nexus_app.py
 
 # Open browser to http://localhost:5000
+# Demo login: admin / admin123
 ```
 
 ## 📁 Project Structure
 
 ```
 aiops-mvp/
-├── src/                          # Core modules (8 modules)
+├── nexus_app.py                  # Flask web dashboard (main entry point)
+├── src/                          # Core ML modules
 │   ├── __init__.py              # Package exports
 │   ├── ingest.py                # Data ingestion (SMD, AIOps)
 │   ├── preprocess.py            # Feature engineering
@@ -104,8 +106,7 @@ aiops-mvp/
 │   ├── classify.py              # Issue classification (Random Forest)
 │   ├── respond.py               # Remediation & alerting
 │   ├── evaluate.py              # Metrics & evaluation
-│   ├── pipeline.py              # End-to-end orchestration
-│   └── dashboard_app.py         # Flask web dashboard
+│   └── pipeline.py              # End-to-end orchestration
 │
 ├── config/
 │   └── settings.yaml            # Tunable parameters
@@ -166,10 +167,10 @@ aiops-mvp/
 - Includes all preprocessing, training, detection, classification
 - Returns structured results
 
-### **dashboard_app.py** - Web Dashboard
+### **nexus_app.py** - Web Dashboard
 - Flask-based real-time visualization
-- API endpoints for incident data
-- Model performance metrics
+- Authentication & RBAC (admin/operator/viewer roles)
+- API endpoints for incidents, remediation, audit trail, and SLOs
 - Live analysis execution
 
 ## 🔧 Configuration
@@ -264,7 +265,7 @@ git clone https://github.com/yourusername/aiops-mvp.git
 cd aiops-mvp
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-gunicorn -b 0.0.0.0:5000 src.dashboard_app:app
+gunicorn --worker-class=eventlet -w 1 -b 0.0.0.0:5000 nexus_app:app
 ```
 
 ### Google Cloud Run

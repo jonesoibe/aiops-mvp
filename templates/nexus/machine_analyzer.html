@@ -973,12 +973,15 @@ function connectWebSocket() {
     }
 
     // Connect to /ws/machine-analyzer namespace using Socket.IO
+    // Token goes in `query` (not `auth`) because the server's verify_websocket_token()
+    // reads request.args, not the Socket.IO auth handshake payload.
     machineSocket = io('/ws/machine-analyzer', {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5,
-        transports: ['websocket', 'polling']
+        transports: ['polling'],  // server's async_mode='threading' can't upgrade to websocket
+        query: { token: localStorage.getItem('token') || '' }
     });
 
     machineSocket.on('connect', function() {

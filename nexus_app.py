@@ -19,7 +19,7 @@ import random
 import pandas as pd
 
 # Flask & WebSocket
-from flask import Flask, render_template, jsonify, request, send_file, send_from_directory, session, redirect
+from flask import Flask, render_template, jsonify, request, send_file, send_from_directory, session, redirect, make_response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 from functools import wraps
@@ -506,6 +506,8 @@ in_memory_store = {
     'audit_log': [],
     'remediation_queue': [],
     'approvals': [],
+    'actions': [],
+    'playbooks': [],
     'invite_tokens': {}  # For storing invitation tokens
 }
 
@@ -844,6 +846,38 @@ def require_auth(f):
 
     return decorated
 
+def require_page_auth(role=None):
+    """
+    Decorator for HTML page routes.
+
+    Page routes are loaded via a plain browser navigation, which never carries
+    the Authorization header the API's @require_auth expects - that header is
+    only ever added by client-side fetch() calls. Session state for pages is
+    read from the HttpOnly 'token' cookie set at login instead, and failures
+    redirect to /login rather than returning a raw JSON error to a full-page
+    navigation.
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = request.cookies.get('token')
+            if not token:
+                return redirect(f'/login?next={request.path}')
+
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+                return redirect(f'/login?next={request.path}')
+
+            if role and payload.get('role') != role:
+                return jsonify({'error': f'Forbidden: {role} role required'}), 403
+
+            request.user = payload
+            kwargs['user'] = payload
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
 # ==================== INITIALIZATION ====================
 
 def initialize_users():
@@ -894,7 +928,7 @@ def initialize_approvals():
 
     demo_approvals = [
         {
-            'approval_id': f"APP-{(now - timedelta(minutes=5)).strftime('%Y%m%d%H%M%S')}-001",
+            'approval_id': 'APP-DEMO-001',
             'type': 'remediation',
             'title': 'Rollback Production Deployment',
             'description': 'Revert SERVICE_C v2.1.4 due to critical memory leak',
@@ -915,7 +949,7 @@ def initialize_approvals():
             }
         },
         {
-            'approval_id': f"APP-{(now - timedelta(minutes=12)).strftime('%Y%m%d%H%M%S')}-002",
+            'approval_id': 'APP-DEMO-002',
             'type': 'configuration',
             'title': 'Scale Up Database Connections',
             'description': 'Increase connection pool from 500 to 1000 on SQL Server',
@@ -936,7 +970,7 @@ def initialize_approvals():
             }
         },
         {
-            'approval_id': f"APP-{(now - timedelta(minutes=25)).strftime('%Y%m%d%H%M%S')}-003",
+            'approval_id': 'APP-DEMO-003',
             'type': 'debugging',
             'title': 'Enable Debug Logging for SERVICE_A',
             'description': 'Temporarily increase log verbosity for issue diagnosis',
@@ -959,7 +993,7 @@ def initialize_approvals():
             }
         },
         {
-            'approval_id': f"APP-{(now - timedelta(minutes=45)).strftime('%Y%m%d%H%M%S')}-004",
+            'approval_id': 'APP-DEMO-004',
             'type': 'security',
             'title': 'Update Security Policy Configuration',
             'description': 'Apply new WAF rules for DDoS protection',
@@ -982,7 +1016,7 @@ def initialize_approvals():
             }
         },
         {
-            'approval_id': f"APP-{(now - timedelta(hours=2)).strftime('%Y%m%d%H%M%S')}-005",
+            'approval_id': 'APP-DEMO-005',
             'type': 'maintenance',
             'title': 'Cache Invalidation - Redis Cluster',
             'description': 'Clear stale cache entries to free up 2.5GB memory',
@@ -1023,6 +1057,120 @@ def initialize_approvals():
         # Store in memory
         in_memory_store['approvals'] = demo_approvals
         print(f"[*] Initialized {len(demo_approvals)} approval requests in memory")
+
+def initialize_playbooks():
+    """Initialize remediation playbooks in MongoDB or in-memory storage."""
+    demo_playbooks = [
+        {
+            'playbook_id': 'pb-001',
+            'name': 'Restart IIS Application Pool',
+            'description': 'Gracefully restart w3wp.exe and clear memory leaks',
+            'icon': '🔄',
+            'priority': 'CRITICAL',
+            'target': 'Service B',
+            'action': 'restart',
+            'steps': [
+                'Verify service health and dependencies',
+                'Notify on-call team',
+                'Drain in-flight connections',
+                'Stop w3wp.exe process',
+                'Clear memory cache',
+                'Start application pool',
+                'Run health verification'
+            ]
+        },
+        {
+            'playbook_id': 'pb-002',
+            'name': 'Scale Up Instances',
+            'description': 'Add 2-4 additional compute instances to distribute load',
+            'icon': '📈',
+            'priority': 'HIGH',
+            'target': 'Service A',
+            'action': 'scale',
+            'steps': [
+                'Check current load and capacity',
+                'Provision 2-4 additional instances',
+                'Register instances with load balancer',
+                'Verify traffic distribution'
+            ]
+        },
+        {
+            'playbook_id': 'pb-003',
+            'name': 'Clear Cache',
+            'description': 'Invalidate Redis cache and force refresh from database',
+            'icon': '🗑️',
+            'priority': 'MEDIUM',
+            'target': 'API Gateway',
+            'action': 'clear_cache',
+            'steps': [
+                'Flush Redis cache keys',
+                'Force refresh from database',
+                'Verify cache repopulation'
+            ]
+        },
+        {
+            'playbook_id': 'pb-004',
+            'name': 'Rollback Deployment',
+            'description': 'Revert to previous stable version and restart services',
+            'icon': '↩️',
+            'priority': 'CRITICAL',
+            'target': 'Service C',
+            'action': 'rollback',
+            'steps': [
+                'Identify last stable version',
+                'Revert deployment',
+                'Restart affected services',
+                'Run health verification'
+            ]
+        },
+        {
+            'playbook_id': 'pb-005',
+            'name': 'Drain Connections',
+            'description': 'Gracefully close existing connections and prevent new ones',
+            'icon': '🔌',
+            'priority': 'HIGH',
+            'target': 'SQL Server',
+            'action': 'drain',
+            'steps': [
+                'Stop accepting new connections',
+                'Wait for in-flight queries to complete',
+                'Close remaining connections gracefully'
+            ]
+        },
+        {
+            'playbook_id': 'pb-006',
+            'name': 'Enable Debug Logging',
+            'description': 'Increase log verbosity and capture detailed diagnostic data',
+            'icon': '📊',
+            'priority': 'INFO',
+            'target': 'All Services',
+            'action': 'debug_logging',
+            'steps': [
+                'Raise log verbosity to DEBUG',
+                'Capture diagnostic data',
+                'Schedule automatic revert to normal verbosity'
+            ]
+        }
+    ]
+
+    if db is not None:
+        try:
+            playbooks_collection = db['playbooks']
+            for playbook in demo_playbooks:
+                # Never overwrite a playbook that already exists (e.g. a user's edits) -
+                # only seed it the first time it's missing.
+                playbooks_collection.update_one(
+                    {'playbook_id': playbook['playbook_id']},
+                    {'$setOnInsert': playbook},
+                    upsert=True
+                )
+            print(f"[*] Initialized {len(demo_playbooks)} playbooks in MongoDB")
+        except Exception as e:
+            print(f"[*] Error initializing playbooks: {e}")
+    else:
+        if not in_memory_store['playbooks']:
+            in_memory_store['playbooks'] = demo_playbooks
+            print(f"[*] Initialized {len(demo_playbooks)} playbooks in memory")
 
 def _populate_demo_audit_data():
     """Populate audit trail with demo entries for testing"""
@@ -1073,17 +1221,20 @@ def login_page():
     return render_template('nexus/login.html')
 
 @app.route('/')
-def index():
+@require_page_auth()
+def index(user=None):
     """Executive Overview - Real-Time Metrics Dashboard"""
     return render_template('nexus/overview_realtime.html')
 
 @app.route('/live-operations')
-def live_operations():
+@require_page_auth()
+def live_operations(user=None):
     """Live Operations Center"""
     return render_template('nexus/live-operations.html')
 
 @app.route('/ai-operations')
-def ai_operations():
+@require_page_auth()
+def ai_operations(user=None):
     """AI Operations Center - Davis AI Style"""
     return render_template('nexus/ai-operations.html')
 
@@ -1103,7 +1254,8 @@ def _smd_findings(values):
     return [{'severity': severity, 'title': title, 'detail': detail, 'recommendation': recommendation, 'metric': SMD_METRICS[index], 'value': round(values[index] * 100, 1)} for index, threshold, severity, title, detail, recommendation in rules if index < len(values) and values[index] > threshold]
 
 @app.route('/command')
-def command_center():
+@require_page_auth()
+def command_center(user=None):
     return render_template('nexus/command_center.html')
 
 _machines_cache = {'data': None, 'timestamp': 0}
@@ -1228,62 +1380,74 @@ def command_stream():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/topology')
-def topology():
+@require_page_auth()
+def topology(user=None):
     """Smart Service Topology - Smartscape Inspired"""
     return render_template('nexus/topology.html')
 
 @app.route('/problems')
-def problems():
+@require_page_auth()
+def problems(user=None):
     """Problems & Incidents"""
     return render_template('nexus/problems.html')
 
 @app.route('/infrastructure')
-def infrastructure():
+@require_page_auth()
+def infrastructure(user=None):
     """Windows Infrastructure Monitoring"""
     return render_template('nexus/infrastructure.html')
 
 @app.route('/machine-analyzer')
-def machine_analyzer():
+@require_page_auth()
+def machine_analyzer(user=None):
     """Machine Analyzer Dashboard"""
     return render_template('nexus/machine_analyzer.html')
 
 @app.route('/logs')
-def logs():
+@require_page_auth()
+def logs(user=None):
     """Logs Explorer"""
     return render_template('nexus/logs.html')
 
 @app.route('/traces')
-def traces():
+@require_page_auth()
+def traces(user=None):
     """Distributed Trace Explorer"""
     return render_template('nexus/traces.html')
 
 @app.route('/remediation')
-def remediation():
+@require_page_auth()
+def remediation(user=None):
     """Autonomous Remediation Center"""
     return render_template('nexus/remediation.html')
 
 @app.route('/error-analysis')
-def error_analysis_page():
+@require_page_auth()
+def error_analysis_page(user=None):
     """Detailed Error Analysis & Diagnostics"""
     return render_template('nexus/error_analysis.html')
 
 @app.route('/approvals')
-def approvals():
+@require_page_auth()
+def approvals(user=None):
     """Approval Queue"""
     return render_template('nexus/approvals.html')
 
 @app.route('/audit')
-def audit():
+@require_page_auth(role='admin')
+def audit(user=None):
     """Audit Timeline & User Activity"""
     return render_template('nexus/audit_enhanced.html')
 
 @app.route('/settings')
-def settings():
+@require_page_auth(role='admin')
+def settings(user=None):
     """Platform Settings & Policies"""
     return render_template('nexus/settings.html')
 
 @app.route('/security-test')
-def security_test():
+@require_page_auth(role='admin')
+def security_test(user=None):
     """Security Fixes Verification Test Suite"""
     return render_template('nexus/security_test.html')
 
@@ -1298,10 +1462,13 @@ def logout():
             user_id=request.remote_addr,
             resource='authentication',
             status='success',
+            details={},
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
-        return jsonify({'success': True, 'message': 'Logged out successfully'}), 200
+        resp = make_response(jsonify({'success': True, 'message': 'Logged out successfully'}), 200)
+        resp.delete_cookie('token')
+        return resp
     except Exception as e:
         logger.error(f"Logout error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -1403,14 +1570,26 @@ def login():
                 user_agent=request.headers.get('User-Agent')
             )
 
-            return jsonify({
+            resp = make_response(jsonify({
                 'token': token,
                 'user': {
                     'username': username,
                     'email': user_data.get('email'),
                     'role': user_data.get('role')
                 }
-            }), 200
+            }), 200)
+            # Mirror the token into an HttpOnly cookie so server-rendered page
+            # routes (which never see the Authorization header a page GET
+            # doesn't carry) can verify the session without exposing the
+            # token to page JavaScript.
+            resp.set_cookie(
+                'token', token,
+                httponly=True,
+                samesite='Lax',
+                secure=(os.getenv('ENVIRONMENT', 'development') == 'production'),
+                max_age=7 * 24 * 3600
+            )
+            return resp
 
         # Log failed login
         audit_logger.log_action(
@@ -1703,11 +1882,19 @@ def verify_email():
 
 @app.route('/api/auth/refresh', methods=['POST'])
 @require_auth
-def refresh_token():
+def refresh_token(user=None):
     """Refresh JWT token."""
     user = request.user
     new_token = generate_token(user['user_id'], user['username'], user['role'])
-    return jsonify({'token': new_token}), 200
+    resp = make_response(jsonify({'token': new_token}), 200)
+    resp.set_cookie(
+        'token', new_token,
+        httponly=True,
+        samesite='Lax',
+        secure=(os.getenv('ENVIRONMENT', 'development') == 'production'),
+        max_age=7 * 24 * 3600
+    )
+    return resp
 
 @app.route('/forgot-password', methods=['GET'])
 def forgot_password_page():
@@ -1848,7 +2035,7 @@ def reset_password():
         return jsonify({'error': 'Failed to reset password. Please try again.'}), 500
 
 @app.route('/profile', methods=['GET'])
-@require_auth
+@require_page_auth()
 def profile_page(user=None):
     """Render user profile page."""
     return render_template('nexus/profile.html')
@@ -2499,8 +2686,9 @@ def setup_account_complete():
         return jsonify({'error': 'Failed to complete account setup. Please try again.'}), 500
 
 @app.route('/user-management', methods=['GET'])
-def user_management_page():
-    """Serve user management page. Auth handled by frontend with localStorage token."""
+@require_page_auth(role='admin')
+def user_management_page(user=None):
+    """Serve user management page (admin only)."""
     # Clear Flask's template cache and render
     app.jinja_env.cache = None
     html = render_template('nexus/user_management.html')
@@ -2542,7 +2730,7 @@ def user_management_page():
 
 @app.route('/api/telemetry/current', methods=['GET'])
 @require_auth
-def get_current_telemetry():
+def get_current_telemetry(user=None):
     """Get current system telemetry."""
     return jsonify({
         'healthy_entities': 1284,
@@ -2557,7 +2745,7 @@ def get_current_telemetry():
 
 @app.route('/api/incidents', methods=['GET'])
 @require_auth
-def get_incidents():
+def get_incidents(user=None):
     """Get active incidents (from CSV data or MongoDB)."""
 
     # Try to get from MongoDB first
@@ -2596,7 +2784,7 @@ def get_incidents():
 
 @app.route('/api/incidents/<incident_id>', methods=['GET'])
 @require_auth
-def get_incident_detail(incident_id):
+def get_incident_detail(incident_id, user=None):
     """Get detailed incident information."""
     data_loader = get_data_loader()
     incident = data_loader.get_incident_by_id(incident_id)
@@ -2834,7 +3022,7 @@ def ai_analysis(incident_id, user=None):
 
 @app.route('/api/statistics', methods=['GET'])
 @require_auth
-def get_statistics():
+def get_statistics(user=None):
     """Get real-time statistics from incident data."""
     data_loader = get_data_loader()
     stats = data_loader.get_statistics()
@@ -2843,7 +3031,7 @@ def get_statistics():
 
 @app.route('/api/audit-log', methods=['GET'])
 @require_auth
-def get_audit_log():
+def get_audit_log(user=None):
     """Get audit log entries with filtering."""
     limit = request.args.get('limit', 100, type=int)
     user_id = request.args.get('user_id', None)
@@ -2876,7 +3064,7 @@ def get_audit_log():
 
 @app.route('/api/audit-log/stats', methods=['GET'])
 @require_auth
-def get_audit_stats():
+def get_audit_stats(user=None):
     """Get audit log statistics."""
     entries = audit_logger.get_recent_audit_entries(limit=10000)
 
@@ -2917,7 +3105,7 @@ def get_audit_stats():
 
 @app.route('/api/audit-log/export', methods=['GET'])
 @require_auth
-def export_audit_log():
+def export_audit_log(user=None):
     """Export audit log as CSV."""
     import csv
     import io
@@ -2956,7 +3144,7 @@ def export_audit_log():
 
 @app.route('/api/actions', methods=['GET'])
 @require_auth
-def get_actions():
+def get_actions(user=None):
     """Get executed remediation actions."""
     limit = request.args.get('limit', 50, type=int)
 
@@ -2981,7 +3169,8 @@ def get_actions():
 # ==================== APPROVALS ENDPOINTS ====================
 
 @app.route('/api/approvals', methods=['GET'])
-def get_approvals_api():
+@require_auth
+def get_approvals_api(user=None):
     """Get approval requests by status."""
     status = request.args.get('status', 'pending')
     limit = request.args.get('limit', 50, type=int)
@@ -2998,7 +3187,8 @@ def get_approvals_api():
     return jsonify({'total': len(approvals), 'approvals': list(reversed(approvals))}), 200
 
 @app.route('/api/approvals/<approval_id>', methods=['GET'])
-def get_approval_api(approval_id):
+@require_auth
+def get_approval_api(approval_id, user=None):
     """Get specific approval request."""
     if db is not None:
         try:
@@ -3015,10 +3205,11 @@ def get_approval_api(approval_id):
     return jsonify({'error': 'Approval not found'}), 404
 
 @app.route('/api/approvals/<approval_id>/approve', methods=['POST'])
-def approve_approval_api(approval_id):
+@require_auth
+def approve_approval_api(approval_id, user=None):
     """Approve an approval request."""
     timestamp = datetime.utcnow().isoformat()
-    user = getattr(request, 'user', {'username': 'admin'})
+    user = user or {'username': 'admin'}
 
     update_data = {
         'status': 'approved',
@@ -3040,11 +3231,12 @@ def approve_approval_api(approval_id):
     return jsonify({'status': 'approved', 'message': f'Approval {approval_id} granted'}), 200
 
 @app.route('/api/approvals/<approval_id>/reject', methods=['POST'])
-def reject_approval_api(approval_id):
+@require_auth
+def reject_approval_api(approval_id, user=None):
     """Reject an approval request."""
     data = request.get_json() or {}
     timestamp = datetime.utcnow().isoformat()
-    user = getattr(request, 'user', {'username': 'admin'})
+    user = user or {'username': 'admin'}
     reason = data.get('reason', 'No reason provided')
 
     update_data = {
@@ -3067,9 +3259,84 @@ def reject_approval_api(approval_id):
 
     return jsonify({'status': 'rejected', 'message': f'Approval {approval_id} rejected', 'reason': reason}), 200
 
+# ==================== PLAYBOOKS ENDPOINTS ====================
+
+PLAYBOOK_EDITABLE_FIELDS = {'name', 'description', 'icon', 'priority', 'target', 'action', 'steps'}
+
+@app.route('/api/playbooks', methods=['GET'])
+@require_auth
+def get_playbooks(user=None):
+    """List all remediation playbooks."""
+    if db is not None:
+        try:
+            playbooks = list(db['playbooks'].find({}, {'_id': 0}).sort('playbook_id', 1))
+            return jsonify({'total': len(playbooks), 'playbooks': playbooks}), 200
+        except Exception as e:
+            print(f"[*] MongoDB error: {e}")
+
+    playbooks = in_memory_store.get('playbooks', [])
+    return jsonify({'total': len(playbooks), 'playbooks': playbooks}), 200
+
+@app.route('/api/playbooks/<playbook_id>', methods=['GET'])
+@require_auth
+def get_playbook(playbook_id, user=None):
+    """Get a single remediation playbook."""
+    if db is not None:
+        try:
+            playbook = db['playbooks'].find_one({'playbook_id': playbook_id}, {'_id': 0})
+            if playbook:
+                return jsonify(playbook), 200
+        except Exception as e:
+            print(f"[*] MongoDB error: {e}")
+    else:
+        for playbook in in_memory_store.get('playbooks', []):
+            if playbook.get('playbook_id') == playbook_id:
+                return jsonify(playbook), 200
+
+    return jsonify({'error': 'Playbook not found'}), 404
+
+@app.route('/api/playbooks/<playbook_id>', methods=['PUT'])
+@require_auth
+def update_playbook(playbook_id, user=None):
+    """Edit a remediation playbook's definition."""
+    data = request.get_json() or {}
+
+    updates = {k: v for k, v in data.items() if k in PLAYBOOK_EDITABLE_FIELDS}
+    if not updates:
+        return jsonify({'error': 'No editable fields provided'}), 400
+
+    if 'name' in updates and not str(updates['name']).strip():
+        return jsonify({'error': 'name cannot be empty'}), 400
+    if 'action' in updates and not str(updates['action']).strip():
+        return jsonify({'error': 'action cannot be empty'}), 400
+    if 'steps' in updates:
+        if not isinstance(updates['steps'], list) or not all(isinstance(s, str) for s in updates['steps']):
+            return jsonify({'error': 'steps must be a list of strings'}), 400
+        updates['steps'] = [s.strip() for s in updates['steps'] if s.strip()]
+
+    updates['updated_at'] = datetime.utcnow().isoformat()
+    updates['updated_by'] = (user or {}).get('username', 'system')
+
+    if db is not None:
+        try:
+            result = db['playbooks'].update_one({'playbook_id': playbook_id}, {'$set': updates})
+            if result.matched_count == 0:
+                return jsonify({'error': 'Playbook not found'}), 404
+            playbook = db['playbooks'].find_one({'playbook_id': playbook_id}, {'_id': 0})
+            return jsonify(playbook), 200
+        except Exception as e:
+            print(f"[*] MongoDB error: {e}")
+            return jsonify({'error': 'Failed to update playbook'}), 500
+    else:
+        for playbook in in_memory_store.get('playbooks', []):
+            if playbook.get('playbook_id') == playbook_id:
+                playbook.update(updates)
+                return jsonify(playbook), 200
+        return jsonify({'error': 'Playbook not found'}), 404
+
 @app.route('/api/actions/execute', methods=['POST'])
 @require_auth
-def execute_action():
+def execute_action(user=None):
     """Execute remediation action and save to database."""
     data = request.get_json()
     action = data.get('action')
@@ -3081,7 +3348,10 @@ def execute_action():
         'drain': f'Draining connections from {target}...',
         'scale': f'Scaling up instances for {target}...',
         'deploy': f'Deploying patch to {target}...',
-        'rollback': f'Rolling back deployment on {target}...'
+        'rollback': f'Rolling back deployment on {target}...',
+        'restart': f'Restarting application pool on {target}...',
+        'clear_cache': f'Invalidating cache on {target}...',
+        'debug_logging': f'Enabling debug logging on {target}...'
     }
 
     message = actions_map.get(action, 'Executing action...')
@@ -3102,7 +3372,7 @@ def execute_action():
     # Save to MongoDB
     if db is not None:
         try:
-            db['actions'].insert_one(action_record)
+            db['actions'].insert_one(dict(action_record))
             print(f"[*] Action saved to MongoDB: {action_record['action_id']}")
         except Exception as e:
             print(f"[*] MongoDB save error: {e}")
@@ -3170,8 +3440,11 @@ def handle_disconnect():
 @socketio.on('subscribe_telemetry')
 def handle_subscribe_telemetry():
     """Subscribe to real-time telemetry stream - requires authentication."""
-    # Connection already verified by handle_connect
-    if not hasattr(request, 'user'):
+    # request.user set during handle_connect() does NOT carry over here: each
+    # Engine.IO long-poll round-trip is a brand new Flask request, so it has to
+    # be re-derived from this request's own token (present in every poll's
+    # query string once the connection is authenticated).
+    if not verify_websocket_token():
         logger.warning(f"[*] Unauthenticated telemetry subscription attempt: {request.sid}")
         return False
 
@@ -3182,7 +3455,7 @@ def handle_subscribe_telemetry():
 @socketio.on('subscribe_logs')
 def handle_subscribe_logs():
     """Subscribe to real-time log stream - requires authentication."""
-    if not hasattr(request, 'user'):
+    if not verify_websocket_token():
         logger.warning(f"[*] Unauthenticated logs subscription attempt: {request.sid}")
         return False
 
@@ -3193,7 +3466,7 @@ def handle_subscribe_logs():
 @socketio.on('subscribe_incidents')
 def handle_subscribe_incidents():
     """Subscribe to incident stream - requires authentication."""
-    if not hasattr(request, 'user'):
+    if not verify_websocket_token():
         logger.warning(f"[*] Unauthenticated incidents subscription attempt: {request.sid}")
         return False
 
@@ -3689,6 +3962,7 @@ def initialize_on_startup():
 
         initialize_users()
         initialize_approvals()
+        initialize_playbooks()
         start_background_threads()
 
         # Initialize real metrics
@@ -4249,7 +4523,7 @@ def alert_disconnect():
 @socketio.on('get_active_alerts', namespace='/alerts')
 def get_active_alerts_ws():
     """Send active alerts to client - requires authentication"""
-    if not hasattr(request, 'user'):
+    if not verify_websocket_token():
         logger.warning(f"[*] Unauthenticated alerts request: {request.sid}")
         return False
 
@@ -4448,14 +4722,16 @@ def export_report(report_type, user=None):
 # ==================== ALERTS DASHBOARD ROUTE ====================
 
 @app.route('/alerts')
-def alerts_dashboard():
-    """Render alerts dashboard (no auth required - frontend handles API auth)"""
+@require_page_auth()
+def alerts_dashboard(user=None):
+    """Render alerts dashboard"""
     return render_template('nexus/alerts_dashboard.html')
 
 
 @app.route('/slos')
-def slo_dashboard():
-    """Render SLO dashboard (no auth required - frontend handles API auth)"""
+@require_page_auth()
+def slo_dashboard(user=None):
+    """Render SLO dashboard"""
     return render_template('nexus/slo_dashboard.html')
 
 
@@ -4487,6 +4763,7 @@ def deferred_initialize():
             connect_mongodb()
             initialize_users()
             initialize_approvals()
+            initialize_playbooks()
             start_background_threads()
             _initialize_default_alert_rules()
             _initialize_default_slos()
@@ -4506,6 +4783,7 @@ if __name__ == '__main__':
         connect_mongodb()
         initialize_users()
         initialize_approvals()
+        initialize_playbooks()
         _populate_demo_audit_data()
         start_background_threads()
         _initialize_default_alert_rules()

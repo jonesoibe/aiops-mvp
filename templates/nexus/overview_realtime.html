@@ -403,7 +403,7 @@
     let lastMetrics = {};
 
     // Initialize metric history
-    ['cpu_usage', 'memory_usage', 'disk_usage', 'request_rate', 'error_rate'].forEach(metric => {
+    ['cpu_usage', 'memory_usage', 'disk_usage', 'request_rate', 'error_rate', 'network'].forEach(metric => {
         metricHistory[metric] = [];
     });
 
@@ -599,7 +599,7 @@
         data.forEach((value, i) => {
             const x = (i / (data.length - 1)) * (width - 2 * padding) + padding;
             const y = height - padding - ((value - min) / range) * (height - 2 * padding);
-            path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+            path += (i === 0 ? '' : ' ') + x + ',' + y;
         });
 
         svg.innerHTML = `

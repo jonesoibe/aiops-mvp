@@ -543,9 +543,13 @@
         let alertSocket = null;
 
         // Initialize WebSocket for real-time updates
+        // Token goes in `query` (not `auth`) because the server's verify_websocket_token()
+        // reads request.args, not the Socket.IO auth handshake payload - the alerts
+        // namespace's connect handler accepts an `auth` argument but never actually reads it.
         function initSocket() {
             alertSocket = io(API_URL + '/alerts', {
-                auth: { token }
+                query: { token: token || '' },
+                transports: ['polling']  // server's async_mode='threading' can't upgrade to websocket
             });
 
             alertSocket.on('alert:fired', (alert) => {
