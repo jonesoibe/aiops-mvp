@@ -253,20 +253,40 @@ def test_rate_limit_recovery():
     if limited:
         data = response.json()
         wait_time = data.get('retry_after', 0)
-        print(f"Phase 3: Wait {wait_time}s for rate limit to recover")
-        time.sleep(min(wait_time + 1, 5))  # Cap at 5 seconds for testing
+        max_wait = min(wait_time + 1, 5)
+        print(f"Phase 3: Poll for rate limit recovery (max {max_wait}s)")
 
-        print("Phase 4: Verify rate limit recovered")
-        response = requests.post(
-            endpoint,
-            json={"username": "admin", "password": "admin123"},
-            timeout=10
-        )
-        recovered = response.status_code in [200, 401]
+        # Poll for recovery instead of blocking sleep
+        start_wait = time.time()
+        recovered = False
+        while time.time() - start_wait < max_wait:
+            try:
+                response = requests.post(
+                    endpoint,
+                    json={"username": "admin", "password": "admin123"},
+                    timeout=10
+                )
+                if response.status_code in [200, 401]:
+                    recovered = True
+                    elapsed = time.time() - start_wait
+                    print(f"  Rate limit recovered after {elapsed:.1f}s")
+                    break
+                elif response.status_code != 429:
+                    # Unexpected status, check it
+                    print(f"  Status {response.status_code}, waiting...")
+                time.sleep(0.1)  # Poll every 100ms
+            except Exception as e:
+                print(f"  Poll error: {str(e)[:40]}, retrying...")
+                time.sleep(0.1)
+
+        if not recovered:
+            print(f"  Rate limit did not recover after {max_wait}s")
+
+        print("Phase 4: Verify rate limit recovery")
         print(f"  Status: {'Recovered' if recovered else 'Still limited'}\n")
 
         print_result("Rate limit recovers after wait", recovered,
-                    f"Final status: {response.status_code}")
+                    f"Final status: {'200/401 (recovered)' if recovered else '429 (still limited)'}")
 
         return recovered
     else:
