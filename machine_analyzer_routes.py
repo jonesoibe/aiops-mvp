@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request, render_template, send_file
 from flask_socketio import emit, disconnect
 import threading
 import time
+import os
 from machine_analyzer import analyzer
 from analysis_visualizations import AnalysisVisualizations, EvaluationReports, IncidentLog
 from io import BytesIO
@@ -16,6 +17,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from datetime import datetime
+from PIL import Image as PILImage
 
 bp = Blueprint('machine_analyzer', __name__, url_prefix='/api/machine-analyzer')
 
@@ -397,6 +399,55 @@ def export_reports_pdf():
 
             story.append(Spacer(1, 0.3*inch))
             story.append(PageBreak())
+
+        # ---- Appendix: Screenshots ----
+        appendix_images = [
+            'chaos_simulation',
+            'classification_results',
+            'confusion_matrix_mvp',
+            'confusion_matrix_supervised',
+            'dos_simulation_analysis',
+            'feature_importance',
+            'remediation_results',
+            'sprint6_evaluation',
+            'threshold_calibration',
+        ]
+        screenshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'processed')
+
+        available_images = [
+            name for name in appendix_images
+            if os.path.exists(os.path.join(screenshots_dir, f'{name}.png'))
+        ]
+
+        if available_images:
+            story.append(Paragraph("Appendix: Screenshots", heading_style))
+            story.append(Paragraph(
+                "Supporting visualizations from the evaluation pipeline, included for reference.",
+                body_style
+            ))
+            story.append(PageBreak())
+
+            max_width = 7.0 * inch
+            max_height = 9.0 * inch
+
+            for name in available_images:
+                img_path = os.path.join(screenshots_dir, f'{name}.png')
+
+                with PILImage.open(img_path) as pil_img:
+                    img_w, img_h = pil_img.size
+
+                aspect = img_h / img_w
+                display_w = max_width
+                display_h = display_w * aspect
+                if display_h > max_height:
+                    display_h = max_height
+                    display_w = display_h / aspect
+
+                title = name.replace('_', ' ').title()
+                story.append(Paragraph(title, heading_style))
+                story.append(Spacer(1, 0.1*inch))
+                story.append(Image(img_path, width=display_w, height=display_h))
+                story.append(PageBreak())
 
         # Build PDF
         doc.build(story)
