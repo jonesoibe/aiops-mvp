@@ -37,6 +37,7 @@ scikit-learn>=1.3.0
 
 # PDF Generation (for Machine Analyzer PDF export)
 reportlab>=4.0.0
+Pillow>=10.0.0  # Used directly for image sizing when embedding PNGs into the PDF appendix
 
 # Configuration
 pyyaml>=6.0.0
