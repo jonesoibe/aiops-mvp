@@ -379,59 +379,77 @@ def export_reports_pdf():
         story.append(summary_table)
         story.append(PageBreak())
 
-        for report_key, report_data in reports.items():
-            # Report title
-            story.append(Paragraph(report_data['title'], heading_style))
+        # ---- Machine Analysis (real per-machine data, with charts) ----
+        import json as _json
 
-            # Report description
-            story.append(Paragraph(report_data['description'], body_style))
-            story.append(Spacer(1, 0.2*inch))
+        per_machine_root = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'data', 'processed', 'per_machine'
+        )
+        # analyzer.current_machine is the raw SMD filename (e.g. "machine-2-3.txt"),
+        # but per-machine report folders are named without the extension.
+        machine_name = analyzer.current_machine
+        if machine_name and machine_name.endswith('.txt'):
+            machine_name = machine_name[:-4]
+        if not machine_name or not os.path.isdir(os.path.join(per_machine_root, machine_name)):
+            available = sorted(
+                d for d in os.listdir(per_machine_root)
+                if os.path.isdir(os.path.join(per_machine_root, d))
+            ) if os.path.isdir(per_machine_root) else []
+            machine_name = available[0] if available else None
 
-            # Report content (convert markdown to basic text)
-            content_text = report_data['content'].strip()
-            # Remove markdown formatting for simplicity
-            content_text = content_text.replace('##', '').replace('**', '').replace('###', '')
+        if machine_name:
+            machine_dir = os.path.join(per_machine_root, machine_name)
+            summary_path = os.path.join(machine_dir, 'summary.json')
 
-            for line in content_text.split('\n'):
-                line = line.strip()
-                if line:
-                    story.append(Paragraph(line, body_style))
+            story.append(Paragraph(f"Machine Analysis: {machine_name}", heading_style))
 
-            story.append(Spacer(1, 0.3*inch))
-            story.append(PageBreak())
+            if os.path.exists(summary_path):
+                with open(summary_path, 'r') as f:
+                    summary = _json.load(f)
 
-        # ---- Appendix: Screenshots ----
-        appendix_images = [
-            'chaos_simulation',
-            'classification_results',
-            'confusion_matrix_mvp',
-            'confusion_matrix_supervised',
-            'dos_simulation_analysis',
-            'feature_importance',
-            'remediation_results',
-            'sprint6_evaluation',
-            'threshold_calibration',
-        ]
-        screenshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'processed')
+                severity_bits = ', '.join(
+                    f"{count} {sev}" for sev, count in summary.get('incidents_by_severity', {}).items()
+                ) or 'none'
+                top_faults = summary.get('top_fault_types', [])[:3]
 
-        available_images = [
-            name for name in appendix_images
-            if os.path.exists(os.path.join(screenshots_dir, f'{name}.png'))
-        ]
+                story.append(Paragraph(
+                    "Replayed {readings:,} real telemetry readings through the live anomaly-detection "
+                    "pipeline (threshold {threshold}). Average anomaly score was {avg}, peaking at {mx}. "
+                    "This triggered {incidents} incident(s) ({severity}) across {clusters} distinct burst(s)."
+                    .format(
+                        readings=summary.get('readings_analyzed', 0),
+                        threshold=summary.get('anomaly_threshold', '-'),
+                        avg=summary.get('avg_anomaly_score', '-'),
+                        mx=summary.get('max_anomaly_score', '-'),
+                        incidents=summary.get('total_incidents_triggered', 0),
+                        severity=severity_bits,
+                        clusters=summary.get('incident_clusters', 0),
+                    ),
+                    summary_intro_style
+                ))
 
-        if available_images:
-            story.append(Paragraph("Appendix: Screenshots", heading_style))
-            story.append(Paragraph(
-                "Supporting visualizations from the evaluation pipeline, included for reference.",
-                body_style
-            ))
-            story.append(PageBreak())
+                if top_faults:
+                    story.append(Paragraph("Top fault types:", body_style))
+                    for fault in top_faults:
+                        story.append(Paragraph(
+                            "- {name} ({severity}, {count}x)".format(
+                                name=fault.get('fault_name', 'Unknown'),
+                                severity=fault.get('severity', 'unknown'),
+                                count=fault.get('count', 0),
+                            ),
+                            body_style
+                        ))
+                story.append(Spacer(1, 0.2*inch))
 
+            # Embed the machine's own charts
+            chart_files = ['summary_dashboard.png', 'anomaly_timeline.png', 'threshold_sensitivity.png']
             max_width = 7.0 * inch
-            max_height = 9.0 * inch
+            max_height = 4.2 * inch
 
-            for name in available_images:
-                img_path = os.path.join(screenshots_dir, f'{name}.png')
+            for chart_file in chart_files:
+                img_path = os.path.join(machine_dir, chart_file)
+                if not os.path.exists(img_path):
+                    continue
 
                 with PILImage.open(img_path) as pil_img:
                     img_w, img_h = pil_img.size
@@ -443,11 +461,8 @@ def export_reports_pdf():
                     display_h = max_height
                     display_w = display_h / aspect
 
-                title = name.replace('_', ' ').title()
-                story.append(Paragraph(title, heading_style))
-                story.append(Spacer(1, 0.1*inch))
                 story.append(Image(img_path, width=display_w, height=display_h))
-                story.append(PageBreak())
+                story.append(Spacer(1, 0.15*inch))
 
         # Build PDF
         doc.build(story)
