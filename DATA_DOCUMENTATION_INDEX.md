@@ -16,7 +16,7 @@ You now have complete documentation explaining:
 | File | Purpose | Read Time |
 |------|---------|-----------|
 | [QUICK_START_METRICS.md](QUICK_START_METRICS.md) | Common commands and use cases | 2 min |
-| [METRICS_LOADING_SUMMARY.md](METRICS_LOADING_SUMMARY.md) | Complete solution overview | 3 min |
+| [METRICS_LOADING_SUMMARY.md](docs/archive/METRICS_LOADING_SUMMARY.md) | Complete solution overview (archived) | 3 min |
 
 ### 📊 Data Explanation (For Understanding)
 
@@ -352,8 +352,8 @@ Overall Status: SYSTEM MOSTLY IDLE, BUT MEMORY NEARLY FULL
 ├─ 🔄 CONVERTING_METRICS.md
 │  └─ How to convert values (8 min read)
 │
-├─ 💾 METRICS_LOADING_SUMMARY.md
-│  └─ Full solution overview (5 min read)
+├─ 💾 docs/archive/METRICS_LOADING_SUMMARY.md
+│  └─ Full solution overview (5 min read, archived)
 │
 ├─ 📖 SAMPLE_DATA_LOADING.md
 │  └─ Detailed usage guide (10 min read)

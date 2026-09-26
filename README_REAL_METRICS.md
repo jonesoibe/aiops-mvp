@@ -18,7 +18,7 @@ You now have a complete, battle-tested real telemetry system with 3 integration 
 - ✅ `QUICK_START_REAL_METRICS.md` - Get running in 2 minutes
 - ✅ `REAL_METRICS_INTEGRATION.md` - Detailed integration guide
 - ✅ `TELEMETRY_DATA_SOURCES.md` - Reference for all data source options
-- ✅ `TELEMETRY_SETUP_SUMMARY.md` - Complete overview
+- ✅ `docs/archive/TELEMETRY_SETUP_SUMMARY.md` - Complete overview (archived)
 
 ### **Testing Documentation**
 - ✅ `PHASE2_TESTING_GUIDE.md` - Comprehensive 8-scenario test plan
@@ -135,7 +135,7 @@ See `COPY_PASTE_COMMANDS.md` for complete step-by-step commands!
 | **COPY_PASTE_COMMANDS.md** | Getting started immediately | 2 min |
 | **QUICK_START_REAL_METRICS.md** | Understanding the 3 options | 2 min |
 | **REAL_METRICS_INTEGRATION.md** | Deep dive into integration | 10 min |
-| **TELEMETRY_SETUP_SUMMARY.md** | Complete overview | 5 min |
+| **docs/archive/TELEMETRY_SETUP_SUMMARY.md** | Complete overview (archived) | 5 min |
 | **TELEMETRY_DATA_SOURCES.md** | Exploring data sources | 15 min |
 
 ---
@@ -160,7 +160,7 @@ Real Metrics Package:
 ├── COPY_PASTE_COMMANDS.md           (Quick start)
 ├── QUICK_START_REAL_METRICS.md      (2 min guide)
 ├── REAL_METRICS_INTEGRATION.md      (Complete guide)
-├── TELEMETRY_SETUP_SUMMARY.md       (Overview)
+├── docs/archive/TELEMETRY_SETUP_SUMMARY.md (Overview, archived)
 └── TELEMETRY_DATA_SOURCES.md        (Reference)
 ```
 

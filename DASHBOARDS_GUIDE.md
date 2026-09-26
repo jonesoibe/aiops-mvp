@@ -212,7 +212,7 @@ All dashboards follow the **Dynatrace-inspired design** with:
    - Understand decision points
 
 4. **Review Documentation**
-   - Read INCIDENT_RESPONSE_DEMO.md
+   - Read docs/archive/INCIDENT_RESPONSE_DEMO.md
    - Understand detection algorithms
    - Learn security guidelines
 

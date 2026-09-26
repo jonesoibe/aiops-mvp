@@ -102,9 +102,9 @@ Login: admin / admin123
 
 ### Cloud Deployment
 
-- [Deploy to Railway](DEPLOY_RAILWAY.md)
-- [Deploy to Render](DEPLOY_RENDER.md)
-- [Deploy to Any Platform](DEPLOY_ALL_PLATFORMS.md)
+- [Deploy to Railway](docs/archive/DEPLOY_RAILWAY.md) _(archived — production deploys to Render only, see render.yaml)_
+- [Deploy to Render](docs/archive/DEPLOY_RENDER.md) _(archived)_
+- [Deploy to Any Platform](docs/archive/DEPLOY_ALL_PLATFORMS.md) _(archived)_
 
 ## Documentation
 
@@ -112,7 +112,7 @@ Login: admin / admin123
 - [Setup & Run](SETUP_AND_RUN.md)
 - [API Reference](API.md)
 - [Security Guide](SECURITY.md)
-- [Deployment Guide](DEPLOY_ALL_PLATFORMS.md)
+- [Deployment Guide](docs/archive/DEPLOY_ALL_PLATFORMS.md) _(archived — production deploys to Render only, see render.yaml)_
 
 ## API Endpoints
 

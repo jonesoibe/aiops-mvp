@@ -100,5 +100,5 @@ Next Steps:
 3. Login with: admin / admin123
 4. Credentials are encrypted in transit!
 
-See SECURITY_FIX_SUMMARY.md for complete details.
+See docs/archive/SECURITY_FIX_SUMMARY.md for complete details.
 """)

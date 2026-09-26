@@ -286,7 +286,7 @@ How alerts are delivered:
 
 ## 📚 Learn More
 
-- See `ALERTING_INTEGRATION_COMPLETE.md` for full feature documentation
+- See `docs/archive/ALERTING_INTEGRATION_COMPLETE.md` for full feature documentation
 - See `SLACK_INTEGRATION_SETUP.md` for detailed Slack setup
 - See `ALERT_API_ENDPOINTS.md` for complete API reference
 - See `REAL_TIME_ALERTING_IMPLEMENTATION.md` for implementation details
