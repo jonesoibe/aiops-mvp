@@ -416,6 +416,14 @@
                 <span class="nav-icon">🚨</span>
                 <span>Error Analysis</span>
             </a>
+            <a href="/alerts" class="nav-item {% if request.endpoint == 'alerts_dashboard' %}active{% endif %}">
+                <span class="nav-icon">🔔</span>
+                <span>Alerts</span>
+            </a>
+            <a href="/slos" class="nav-item {% if request.endpoint == 'slo_dashboard' %}active{% endif %}">
+                <span class="nav-icon">🎯</span>
+                <span>SLOs</span>
+            </a>
         </div>
 
         <!-- Remediation -->
@@ -442,6 +450,10 @@
                 <span class="nav-icon">⚙️</span>
                 <span>Settings</span>
             </a>
+            <a href="/user-management" class="nav-item {% if request.endpoint == 'user_management_page' %}active{% endif %}">
+                <span class="nav-icon">👥</span>
+                <span>User Management</span>
+            </a>
         </div>
     </aside>
 
@@ -457,11 +469,11 @@
             <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
                 🌙
             </button>
-            <div style="text-align: right; font-size: var(--fs-sm);">
+            <a href="/profile" style="text-align: right; font-size: var(--fs-sm); text-decoration: none;" title="View profile">
                 <div id="userName" style="color: var(--text-primary); font-weight: var(--fw-medium);">User</div>
                 <div id="userRole" style="color: var(--text-secondary);">Role</div>
-            </div>
-            <div class="user-avatar" onclick="logout()">👤</div>
+            </a>
+            <div class="user-avatar" onclick="logout()" title="Logout">👤</div>
         </div>
     </header>
 

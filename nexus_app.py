@@ -1445,12 +1445,6 @@ def settings(user=None):
     """Platform Settings & Policies"""
     return render_template('nexus/settings.html')
 
-@app.route('/security-test')
-@require_page_auth(role='admin')
-def security_test(user=None):
-    """Security Fixes Verification Test Suite"""
-    return render_template('nexus/security_test.html')
-
 # ==================== AUTH API ====================
 
 @app.route('/api/auth/logout', methods=['POST'])
