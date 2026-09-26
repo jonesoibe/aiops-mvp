@@ -4889,9 +4889,20 @@ def slo_dashboard(user=None):
 def not_found(error):
     return jsonify({'error': 'Not found'}), 404
 
-@app.errorhandler(500)
-def server_error(error):
-    return jsonify({'error': 'Server error'}), 500
+@app.errorhandler(Exception)
+def handle_unhandled_exception(error):
+    # Global safety net: any route without its own try/except previously
+    # either returned a bare, unlogged "Server error" (for a plain 500) or
+    # propagated an unhandled Python exception. This logs the real error
+    # (visible in logs for debugging) and always returns clean JSON instead
+    # of Flask's default HTML error page, so no endpoint can surface a raw
+    # traceback or crash the request handling. HTTPExceptions (404, 400,
+    # etc.) are returned as-is so their own status codes/handlers still work.
+    from werkzeug.exceptions import HTTPException
+    if isinstance(error, HTTPException):
+        return error
+    logger.error(f"Unhandled exception on {request.path}: {error}", exc_info=True)
+    return jsonify({'error': 'Server error', 'details': str(error)}), 500
 
 # ==================== INITIALIZATION FOR PRODUCTION ====================
 

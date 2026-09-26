@@ -2,6 +2,14 @@
 Analysis Visualizations - Generate charts, matrices, and reports for Machine Analyzer
 """
 
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend: this module renders charts inside
+# Flask request threads, and without forcing Agg, matplotlib defaults to the
+# TkAgg GUI backend on Windows. Tkinter is not thread-safe, so building a
+# figure off the main thread corrupts Tcl's interpreter state and crashes
+# later during garbage collection ("main thread is not in main loop",
+# "Tcl_AsyncDelete: async handler deleted by the wrong thread") -- often long
+# after the request that triggered it has already returned.
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np

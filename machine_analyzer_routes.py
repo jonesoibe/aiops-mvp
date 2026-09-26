@@ -30,127 +30,177 @@ streaming_threads = {}
 @bp.route('/machines', methods=['GET'])
 def get_machines():
     """Get list of all available machines grouped by server"""
-    grouped = analyzer.loader.get_machines()
-    return jsonify({
-        'machines': grouped,
-        'total_machines': len(analyzer.loader.available_machines)
-    })
+    try:
+        grouped = analyzer.loader.get_machines()
+        return jsonify({
+            'machines': grouped,
+            'total_machines': len(analyzer.loader.available_machines)
+        })
+    except Exception as e:
+        print(f"[*] Error listing machines: {e}")
+        return jsonify({'error': 'Failed to list machines', 'details': str(e)}), 500
 
 @bp.route('/status', methods=['GET'])
 def get_status():
     """Get current analyzer status"""
-    return jsonify({
-        'is_running': analyzer.is_running,
-        'is_paused': analyzer.is_paused,
-        'current_machine': analyzer.current_machine,
-        'anomaly_score': analyzer.current_anomaly_score,
-        'metrics_count': len(analyzer.metrics_buffer),
-        'alerts_count': len(analyzer.alerts_buffer),
-        'update_frequency': analyzer.update_frequency
-    })
+    try:
+        return jsonify({
+            'is_running': analyzer.is_running,
+            'is_paused': analyzer.is_paused,
+            'current_machine': analyzer.current_machine,
+            'anomaly_score': analyzer.current_anomaly_score,
+            'metrics_count': len(analyzer.metrics_buffer),
+            'alerts_count': len(analyzer.alerts_buffer),
+            'update_frequency': analyzer.update_frequency
+        })
+    except Exception as e:
+        print(f"[*] Error reading analyzer status: {e}")
+        return jsonify({'error': 'Failed to read status', 'details': str(e)}), 500
 
 @bp.route('/config', methods=['GET', 'POST'])
 def config():
     """Get/set analyzer configuration"""
-    if request.method == 'POST':
-        data = request.get_json()
+    try:
+        if request.method == 'POST':
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'Request body required'}), 400
 
-        if 'anomaly_threshold' in data:
-            analyzer.anomaly_detector.anomaly_threshold = data['anomaly_threshold']
+            if 'anomaly_threshold' in data:
+                analyzer.anomaly_detector.anomaly_threshold = data['anomaly_threshold']
 
-        if 'update_frequency' in data:
-            analyzer.update_frequency = data['update_frequency']
+            if 'update_frequency' in data:
+                analyzer.update_frequency = data['update_frequency']
 
-        if 'baseline_window' in data:
-            analyzer.baseline_calc.window_size = data['baseline_window']
+            if 'baseline_window' in data:
+                analyzer.baseline_calc.window_size = data['baseline_window']
 
-        if 'feature_weights' in data:
-            analyzer.anomaly_detector.weights = data['feature_weights']
+            if 'feature_weights' in data:
+                analyzer.anomaly_detector.weights = data['feature_weights']
 
-        return jsonify({'success': True, 'message': 'Configuration updated'})
+            return jsonify({'success': True, 'message': 'Configuration updated'})
 
-    else:  # GET
-        return jsonify({
-            'anomaly_threshold': analyzer.anomaly_detector.anomaly_threshold,
-            'update_frequency': analyzer.update_frequency,
-            'baseline_window': analyzer.baseline_calc.window_size,
-            'feature_weights': analyzer.anomaly_detector.weights
-        })
+        else:  # GET
+            return jsonify({
+                'anomaly_threshold': analyzer.anomaly_detector.anomaly_threshold,
+                'update_frequency': analyzer.update_frequency,
+                'baseline_window': analyzer.baseline_calc.window_size,
+                'feature_weights': analyzer.anomaly_detector.weights
+            })
+    except Exception as e:
+        print(f"[*] Error in analyzer config: {e}")
+        return jsonify({'error': 'Failed to get/set configuration', 'details': str(e)}), 500
 
 @bp.route('/metrics', methods=['GET'])
 def get_metrics():
     """Get current metrics buffer (60-second window)"""
-    return jsonify({
-        'metrics': list(analyzer.metrics_buffer),
-        'count': len(analyzer.metrics_buffer),
-        'anomaly_score': analyzer.current_anomaly_score
-    })
+    try:
+        return jsonify({
+            'metrics': list(analyzer.metrics_buffer),
+            'count': len(analyzer.metrics_buffer),
+            'anomaly_score': analyzer.current_anomaly_score
+        })
+    except Exception as e:
+        print(f"[*] Error reading metrics buffer: {e}")
+        return jsonify({'error': 'Failed to read metrics', 'details': str(e)}), 500
 
 @bp.route('/alerts', methods=['GET'])
 def get_alerts():
     """Get alert history"""
-    limit = request.args.get('limit', 20, type=int)
-    return jsonify({
-        'alerts': list(analyzer.alerts_buffer)[-limit:],
-        'count': len(analyzer.alerts_buffer)
-    })
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        return jsonify({
+            'alerts': list(analyzer.alerts_buffer)[-limit:],
+            'count': len(analyzer.alerts_buffer)
+        })
+    except Exception as e:
+        print(f"[*] Error reading alerts: {e}")
+        return jsonify({'error': 'Failed to read alerts', 'details': str(e)}), 500
 
 @bp.route('/start', methods=['POST'])
 def start_analysis():
     """Start analyzing a machine"""
-    data = request.get_json()
-    machine_name = data.get('machine')
-    update_freq = data.get('update_frequency', 1.0)
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Request body required'}), 400
 
-    if not machine_name:
-        return jsonify({'error': 'machine parameter required'}), 400
+        machine_name = data.get('machine')
+        update_freq = data.get('update_frequency', 1.0)
 
-    analyzer.reset()
+        if not machine_name:
+            return jsonify({'error': 'machine parameter required'}), 400
 
-    if analyzer.start_simulation(machine_name, update_freq):
-        # Start streaming in background thread
-        thread = threading.Thread(target=_run_stream, daemon=True)
-        thread.start()
-        streaming_threads[machine_name] = thread
+        analyzer.reset()
 
-        return jsonify({
-            'success': True,
-            'message': f'Analysis started for {machine_name}',
-            'machine': machine_name
-        })
-    else:
-        return jsonify({'error': 'Failed to load machine'}), 400
+        if analyzer.start_simulation(machine_name, update_freq):
+            # Start streaming in background thread
+            thread = threading.Thread(target=_run_stream, daemon=True)
+            thread.start()
+            streaming_threads[machine_name] = thread
+
+            return jsonify({
+                'success': True,
+                'message': f'Analysis started for {machine_name}',
+                'machine': machine_name
+            })
+        else:
+            return jsonify({'error': 'Failed to load machine'}), 400
+    except Exception as e:
+        print(f"[*] Error starting analysis: {e}")
+        return jsonify({'error': 'Failed to start analysis', 'details': str(e)}), 500
 
 @bp.route('/pause', methods=['POST'])
 def pause_analysis():
     """Pause current analysis"""
-    analyzer.pause()
-    return jsonify({'success': True, 'message': 'Analysis paused'})
+    try:
+        analyzer.pause()
+        return jsonify({'success': True, 'message': 'Analysis paused'})
+    except Exception as e:
+        print(f"[*] Error pausing analysis: {e}")
+        return jsonify({'error': 'Failed to pause analysis', 'details': str(e)}), 500
 
 @bp.route('/resume', methods=['POST'])
 def resume_analysis():
     """Resume paused analysis"""
-    analyzer.resume()
-    return jsonify({'success': True, 'message': 'Analysis resumed'})
+    try:
+        analyzer.resume()
+        return jsonify({'success': True, 'message': 'Analysis resumed'})
+    except Exception as e:
+        print(f"[*] Error resuming analysis: {e}")
+        return jsonify({'error': 'Failed to resume analysis', 'details': str(e)}), 500
 
 @bp.route('/reset', methods=['POST'])
 def reset_analysis():
     """Reset analysis"""
-    analyzer.reset()
-    return jsonify({'success': True, 'message': 'Analysis reset'})
+    try:
+        analyzer.reset()
+        return jsonify({'success': True, 'message': 'Analysis reset'})
+    except Exception as e:
+        print(f"[*] Error resetting analysis: {e}")
+        return jsonify({'error': 'Failed to reset analysis', 'details': str(e)}), 500
 
 # ==================== HELPER FUNCTIONS ====================
 
 def _run_stream():
-    """Run the analyzer stream"""
-    analyzer.run_stream()
+    """Run the analyzer stream (background thread -- has no HTTP response to
+    return errors through, so a failure here must be logged rather than left
+    to crash the thread silently)."""
+    try:
+        analyzer.run_stream()
+    except Exception as e:
+        print(f"[*] Error in analyzer stream thread: {e}")
 
 # ==================== PAGE ROUTE ====================
 
 @bp.route('/page', methods=['GET'])
 def machine_analyzer_page():
     """Render the machine analyzer page"""
-    return render_template('nexus/machine_analyzer.html')
+    try:
+        return render_template('nexus/machine_analyzer.html')
+    except Exception as e:
+        print(f"[*] Error rendering machine analyzer page: {e}")
+        return jsonify({'error': 'Failed to render page', 'details': str(e)}), 500
 
 # ==================== ANALYSIS VISUALIZATIONS ====================
 
