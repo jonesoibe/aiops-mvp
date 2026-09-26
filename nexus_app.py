@@ -2794,10 +2794,185 @@ def get_incident_detail(incident_id, user=None):
 
     return jsonify(incident), 200
 
+# ==================== REMEDIATION EXECUTION ENGINE ====================
+# Shared by /api/actions/execute, /api/incidents/<id>/remediate, and
+# /api/approvals/<id>/approve so all three paths gate and execute the
+# same way instead of duplicating the logic.
+
+APPROVAL_REQUIRED_PRIORITIES = {'CRITICAL', 'HIGH'}
+
+def _find_playbook(playbook_id=None, action=None, target=None):
+    """Look up a playbook by id, or by (action, target) as a fallback."""
+    if db is not None:
+        try:
+            if playbook_id:
+                return db['playbooks'].find_one({'playbook_id': playbook_id}, {'_id': 0})
+            if action and target:
+                return db['playbooks'].find_one({'action': action, 'target': target}, {'_id': 0})
+            if action:
+                return db['playbooks'].find_one({'action': action}, {'_id': 0})
+        except Exception as e:
+            print(f"[*] MongoDB playbook lookup error: {e}")
+
+    for playbook in in_memory_store.get('playbooks', []):
+        if playbook_id and playbook.get('playbook_id') == playbook_id:
+            return playbook
+        if action and target and playbook.get('action') == action and playbook.get('target') == target:
+            return playbook
+        if action and not target and playbook.get('action') == action:
+            return playbook
+    return None
+
+def _playbook_requires_approval(playbook):
+    """CRITICAL/HIGH-priority playbooks must be approved before they run;
+    MEDIUM/INFO (and anything with no matching playbook) auto-execute."""
+    if not playbook:
+        return False
+    return playbook.get('priority', '').upper() in APPROVAL_REQUIRED_PRIORITIES
+
+def _match_playbook_for_incident(incident):
+    """Best-effort playbook match for a real incident.
+
+    Playbooks were authored against a fictional topology (target values
+    like 'Service A', 'SQL Server') that has no correspondence to the real
+    incident data's `machine`/`issue_type` fields (SMD telemetry), so a
+    direct target match is never possible. Instead, match on keywords in
+    the incident's issue_type/message, with a severity-based fallback so
+    every incident still resolves to *some* playbook rather than silently
+    doing nothing.
+    """
+    text = f"{incident.get('issue_type', '')} {incident.get('message', '')}".lower()
+    playbooks = in_memory_store.get('playbooks', [])
+    if db is not None:
+        try:
+            playbooks = list(db['playbooks'].find({}, {'_id': 0}))
+        except Exception as e:
+            print(f"[*] MongoDB playbook list error: {e}")
+
+    keyword_to_action = [
+        (('memory', 'leak'), 'restart'),
+        (('cpu', 'load'), 'scale'),
+        (('latency', 'slow', 'degradation'), 'clear_cache'),
+        (('connection', 'timeout'), 'drain'),
+        (('error', 'crash', 'exception'), 'rollback'),
+    ]
+    for keywords, action in keyword_to_action:
+        if any(kw in text for kw in keywords):
+            match = next((p for p in playbooks if p.get('action') == action), None)
+            if match:
+                return match
+
+    # Fallback: pick a playbook whose priority matches the incident's severity
+    severity = incident.get('severity', '').upper()
+    severity_to_priority = {'CRITICAL': 'CRITICAL', 'HIGH': 'HIGH', 'MEDIUM': 'MEDIUM', 'LOW': 'INFO'}
+    target_priority = severity_to_priority.get(severity)
+    if target_priority:
+        match = next((p for p in playbooks if p.get('priority') == target_priority), None)
+        if match:
+            return match
+
+    return next((p for p in playbooks if p.get('action') == 'debug_logging'), None)
+
+def _create_pending_approval(action, target, playbook, incident_id, user):
+    """Create a real pending approval request, gating a risky action until
+    a human signs off (replaces the previous no-op approve/reject flow)."""
+    timestamp = datetime.utcnow()
+    approval = {
+        'approval_id': f"APP-{timestamp.strftime('%Y%m%d%H%M%S%f')}",
+        'type': 'remediation',
+        'title': playbook.get('name', action) if playbook else action,
+        'description': playbook.get('description', f'Execute {action} on {target}') if playbook else f'Execute {action} on {target}',
+        'priority': playbook.get('priority', 'HIGH') if playbook else 'HIGH',
+        'requested_by': (user.get('username') if user else None) or 'aiops_engine',
+        'requested_at': timestamp.isoformat(),
+        'status': 'pending',
+        'impact': {
+            'users_affected': 'Unknown',
+            'estimated_downtime': 'Unknown',
+            'data_loss_risk': 'None'
+        },
+        'details': {
+            'action': action,
+            'target': target,
+            'incident_id': incident_id,
+            'playbook_id': playbook.get('playbook_id') if playbook else None,
+            'steps': playbook.get('steps', []) if playbook else []
+        }
+    }
+
+    if db is not None:
+        try:
+            db['approvals'].insert_one(dict(approval))
+        except Exception as e:
+            print(f"[*] MongoDB approval insert error: {e}")
+    else:
+        in_memory_store.setdefault('approvals', []).append(approval)
+
+    return approval
+
+def _run_remediation_action(action, target, incident_id, user):
+    """Actually 'perform' the remediation action (simulated, as with the
+    rest of this demo's infra actions) and persist the record. This is the
+    single execution path used whether the action ran immediately or only
+    after an approval was granted."""
+    actions_map = {
+        'drain': f'Draining connections from {target}...',
+        'scale': f'Scaling up instances for {target}...',
+        'deploy': f'Deploying patch to {target}...',
+        'rollback': f'Rolling back deployment on {target}...',
+        'restart': f'Restarting application pool on {target}...',
+        'clear_cache': f'Invalidating cache on {target}...',
+        'debug_logging': f'Enabling debug logging on {target}...'
+    }
+
+    message = actions_map.get(action, 'Executing action...')
+    timestamp = datetime.utcnow().isoformat()
+
+    action_record = {
+        'action_id': f"ACT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{action[:3].upper()}",
+        'action': action,
+        'target': target,
+        'incident_id': incident_id,
+        'message': message,
+        'status': 'completed',
+        'timestamp': timestamp,
+        'executed_by': (user.get('username') if user else None) or 'system'
+    }
+
+    if db is not None:
+        try:
+            db['actions'].insert_one(dict(action_record))
+        except Exception as e:
+            print(f"[*] MongoDB save error: {e}")
+    else:
+        in_memory_store.setdefault('actions', []).append(action_record)
+
+    audit_entry = {
+        'timestamp': timestamp,
+        'user_id': (user.get('user_id') if user else None) or 'system',
+        'username': (user.get('username') if user else None) or 'system',
+        'action_type': 'execute_remediation',
+        'description': f"Executed {action} on {target}",
+        'incident_id': incident_id
+    }
+
+    if db is not None:
+        try:
+            db['audit_log'].insert_one(audit_entry)
+        except Exception as e:
+            print(f"[*] Audit log error: {e}")
+    else:
+        in_memory_store.setdefault('audit_log', []).append(audit_entry)
+
+    print(f"[*] Action executed: {action} on {target} (Incident: {incident_id})")
+    return action_record
+
 @app.route('/api/incidents/<incident_id>/remediate', methods=['POST'])
 @require_auth
 def execute_remediation(incident_id, user=None):
-    """Execute automatic remediation for an incident."""
+    """Execute automatic remediation for an incident, driven by whichever
+    playbook best matches the incident (see _match_playbook_for_incident),
+    gated behind an approval request for CRITICAL/HIGH-priority playbooks."""
     try:
         data_loader = get_data_loader()
         incident = data_loader.get_incident_by_id(incident_id)
@@ -2805,73 +2980,68 @@ def execute_remediation(incident_id, user=None):
         if not incident:
             return jsonify({'error': 'Incident not found'}), 404
 
-        # Log the remediation action
+        playbook = _match_playbook_for_incident(incident)
+        action = playbook.get('action') if playbook else 'investigate'
+        target = incident.get('machine', 'unknown')
+
+        if playbook and _playbook_requires_approval(playbook):
+            approval = _create_pending_approval(action, target, playbook, incident_id, user)
+
+            audit_logger.log_action(
+                user_id=user.get('user_id') if user else 'system',
+                action='REMEDIATION_APPROVAL_REQUESTED',
+                resource=f'incident:{incident_id}',
+                details={'playbook': playbook['name'], 'target': target},
+                status='success'
+            )
+
+            return jsonify({
+                'incident_id': incident_id,
+                'status': 'pending_approval',
+                'pending_approval': True,
+                'approval_id': approval['approval_id'],
+                'playbook': playbook['name'],
+                'actions_taken': [],
+                'message': f"'{playbook['name']}' is {playbook['priority']} priority and requires approval before running.",
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+
+        if not playbook:
+            audit_logger.log_action(
+                user_id=user.get('user_id') if user else 'system',
+                action='REMEDIATION_NO_PLAYBOOK',
+                resource=f'incident:{incident_id}',
+                details={'note': 'No matching playbook; manual investigation required'},
+                status='success'
+            )
+            return jsonify({
+                'incident_id': incident_id,
+                'status': 'success',
+                'actions_taken': [{
+                    'action': 'incident_investigation',
+                    'status': 'initiated',
+                    'note': 'No matching playbook found - manual investigation required'
+                }],
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+
+        action_record = _run_remediation_action(action, target, incident_id, user)
+
         audit_logger.log_action(
             user_id=user.get('user_id') if user else 'system',
             action='REMEDIATION_EXECUTED',
-            resource_type='incident',
-            resource_id=incident_id,
-            details=f"Automatic remediation executed for: {incident.get('name', incident_id)}",
+            resource=f'incident:{incident_id}',
+            details={'playbook': playbook['name'], 'target': target},
             status='success'
         )
 
-        # Execute remediation based on incident type
-        remediation_result = {
+        return jsonify({
             'incident_id': incident_id,
-            'status': 'executing',
-            'actions_taken': [],
+            'status': 'success',
+            'playbook': playbook['name'],
+            'actions_taken': [action_record],
             'timestamp': datetime.utcnow().isoformat()
-        }
-
-        # Example remediation actions based on incident type
-        incident_type = incident.get('incident_type', 'unknown').lower()
-
-        if 'memory' in incident_type or 'memory leak' in incident.get('name', '').lower():
-            remediation_result['actions_taken'].append({
-                'action': 'service_restart',
-                'service': incident.get('affected_service', 'unknown'),
-                'status': 'completed'
-            })
-        elif 'cpu' in incident_type or 'high cpu' in incident.get('name', '').lower():
-            remediation_result['actions_taken'].append({
-                'action': 'scaling_up',
-                'resource': 'compute_instances',
-                'count': 2,
-                'status': 'initiated'
-            })
-        elif 'latency' in incident_type or 'high latency' in incident.get('name', '').lower():
-            remediation_result['actions_taken'].append({
-                'action': 'cache_flush',
-                'service': 'cache_layer',
-                'status': 'completed'
-            })
-            remediation_result['actions_taken'].append({
-                'action': 'connection_pool_reset',
-                'service': 'database',
-                'status': 'completed'
-            })
-        else:
-            remediation_result['actions_taken'].append({
-                'action': 'incident_investigation',
-                'status': 'initiated',
-                'note': 'Manual investigation required'
-            })
-
-        remediation_result['status'] = 'success'
-
-        # Store remediation record in MongoDB if available
-        if db is not None:
-            try:
-                db['remediation_actions'].insert_one({
-                    'incident_id': incident_id,
-                    'timestamp': datetime.utcnow(),
-                    'executed_by': user.get('user_id') if user else 'system',
-                    'actions': remediation_result['actions_taken']
-                })
-            except Exception as e:
-                print(f"[*] Error storing remediation record: {e}")
-
-        return jsonify(remediation_result), 200
+        }), 200
 
     except Exception as e:
         print(f"[*] Error executing remediation: {e}")
@@ -2892,9 +3062,8 @@ def ai_analysis(incident_id, user=None):
         audit_logger.log_action(
             user_id=user.get('user_id') if user else 'system',
             action='AI_ANALYSIS_TRIGGERED',
-            resource_type='incident',
-            resource_id=incident_id,
-            details=f"AI analysis triggered for: {incident.get('name', incident_id)}",
+            resource=f'incident:{incident_id}',
+            details={'incident_id': incident_id},
             status='success'
         )
 
@@ -3207,7 +3376,10 @@ def get_approval_api(approval_id, user=None):
 @app.route('/api/approvals/<approval_id>/approve', methods=['POST'])
 @require_auth
 def approve_approval_api(approval_id, user=None):
-    """Approve an approval request."""
+    """Approve an approval request. If it was a remediation approval
+    created by the risk gate (has details.action/target), actually runs
+    the action now -- approving used to just flip a status flag with no
+    effect."""
     timestamp = datetime.utcnow().isoformat()
     user = user or {'username': 'admin'}
 
@@ -3217,18 +3389,33 @@ def approve_approval_api(approval_id, user=None):
         'approved_at': timestamp
     }
 
+    approval = None
     if db is not None:
         try:
+            approval = db['approvals'].find_one({'approval_id': approval_id}, {'_id': 0})
             db['approvals'].update_one({'approval_id': approval_id}, {'$set': update_data})
         except Exception as e:
             print(f"MongoDB error: {e}")
     else:
-        for approval in in_memory_store.get('approvals', []):
-            if approval.get('approval_id') == approval_id:
-                approval.update(update_data)
+        for a in in_memory_store.get('approvals', []):
+            if a.get('approval_id') == approval_id:
+                a.update(update_data)
+                approval = a
                 break
 
-    return jsonify({'status': 'approved', 'message': f'Approval {approval_id} granted'}), 200
+    if not approval:
+        return jsonify({'error': 'Approval not found'}), 404
+
+    response = {'status': 'approved', 'message': f'Approval {approval_id} granted'}
+
+    details = approval.get('details') or {}
+    action, target = details.get('action'), details.get('target')
+    if action and target:
+        action_record = _run_remediation_action(action, target, details.get('incident_id'), user)
+        response['action_executed'] = action_record
+        response['message'] = f"Approval {approval_id} granted - '{approval.get('title', action)}' executed"
+
+    return jsonify(response), 200
 
 @app.route('/api/approvals/<approval_id>/reject', methods=['POST'])
 @require_auth
@@ -3337,69 +3524,34 @@ def update_playbook(playbook_id, user=None):
 @app.route('/api/actions/execute', methods=['POST'])
 @require_auth
 def execute_action(user=None):
-    """Execute remediation action and save to database."""
+    """Execute a remediation action, gated by the matching playbook's
+    priority (see _playbook_requires_approval). CRITICAL/HIGH playbooks
+    create a pending approval instead of running immediately."""
     data = request.get_json()
     action = data.get('action')
     target = data.get('target')
     incident_id = data.get('incident_id')
+    playbook_id = data.get('playbook_id')
     user = request.user or {'username': 'system'}
 
-    actions_map = {
-        'drain': f'Draining connections from {target}...',
-        'scale': f'Scaling up instances for {target}...',
-        'deploy': f'Deploying patch to {target}...',
-        'rollback': f'Rolling back deployment on {target}...',
-        'restart': f'Restarting application pool on {target}...',
-        'clear_cache': f'Invalidating cache on {target}...',
-        'debug_logging': f'Enabling debug logging on {target}...'
-    }
+    if not action or not target:
+        return jsonify({'error': 'action and target are required'}), 400
 
-    message = actions_map.get(action, 'Executing action...')
-    timestamp = datetime.utcnow().isoformat()
+    playbook = _find_playbook(playbook_id=playbook_id, action=action, target=target)
 
-    # Create action record
-    action_record = {
-        'action_id': f"ACT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{action[:3].upper()}",
-        'action': action,
-        'target': target,
-        'incident_id': incident_id,
-        'message': message,
-        'status': 'executing',
-        'timestamp': timestamp,
-        'executed_by': user.get('username', 'system')
-    }
+    if _playbook_requires_approval(playbook):
+        approval = _create_pending_approval(action, target, playbook, incident_id, user)
+        return jsonify({
+            'status': 'pending_approval',
+            'pending_approval': True,
+            'approval_id': approval['approval_id'],
+            'action': action,
+            'target': target,
+            'message': f"'{playbook['name']}' is {playbook['priority']} priority and requires approval before running.",
+            'timestamp': datetime.utcnow().isoformat()
+        }), 202
 
-    # Save to MongoDB
-    if db is not None:
-        try:
-            db['actions'].insert_one(dict(action_record))
-            print(f"[*] Action saved to MongoDB: {action_record['action_id']}")
-        except Exception as e:
-            print(f"[*] MongoDB save error: {e}")
-    else:
-        # Save to in-memory
-        in_memory_store['actions'].append(action_record)
-
-    # Also log to audit log
-    audit_entry = {
-        'timestamp': timestamp,
-        'user_id': user.get('user_id', 'system'),
-        'username': user.get('username', 'system'),
-        'action_type': 'execute_remediation',
-        'description': f"Executed {action} on {target}",
-        'incident_id': incident_id
-    }
-
-    if db is not None:
-        try:
-            db['audit_log'].insert_one(audit_entry)
-        except Exception as e:
-            print(f"[*] Audit log error: {e}")
-    else:
-        in_memory_store['audit_log'].append(audit_entry)
-
-    print(f"[*] Action executed: {action} on {target} (Incident: {incident_id})")
-
+    action_record = _run_remediation_action(action, target, incident_id, user)
     return jsonify(action_record), 200
 
 # ==================== WEBSOCKET EVENTS ====================

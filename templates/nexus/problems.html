@@ -427,12 +427,13 @@
             if (response.ok) {
                 // Show success message
                 const detailPanel = document.getElementById('detailPanel');
+                const isPending = data.status === 'pending_approval';
                 const successMsg = document.createElement('div');
                 successMsg.style.cssText = `
                     position: fixed;
                     top: 20px;
                     right: 20px;
-                    background: var(--color-success);
+                    background: ${isPending ? 'var(--color-warning)' : 'var(--color-success)'};
                     color: white;
                     padding: 16px 24px;
                     border-radius: 8px;
@@ -441,7 +442,10 @@
                     max-width: 400px;
                     animation: slideIn 0.3s ease;
                 `;
-                successMsg.innerHTML = `
+                successMsg.innerHTML = isPending ? `
+                    <div style="font-weight: 600;">⏳ Approval Required</div>
+                    <div style="font-size: 0.9em; margin-top: 4px;">${data.message || `'${data.playbook}' needs approval before it can run`}</div>
+                ` : `
                     <div style="font-weight: 600;">Remediation Executed</div>
                     <div style="font-size: 0.9em; margin-top: 4px;">
                         ${data.actions_taken && data.actions_taken.length > 0 ?

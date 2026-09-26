@@ -691,14 +691,18 @@ async function executePlaybook() {
         const res = await fetch('/api/actions/execute', {
             method: 'POST',
             headers: authHeaders(),
-            body: JSON.stringify({ action: playbook.action, target: playbook.target })
+            body: JSON.stringify({ action: playbook.action, target: playbook.target, playbook_id: playbook.playbook_id })
         });
         if (res.status === 401) { window.location.href = '/login'; return; }
         const record = await res.json();
-        if (!res.ok) throw new Error(record.error || 'Execution failed');
+        if (!res.ok && res.status !== 202) throw new Error(record.error || 'Execution failed');
 
-        showNotification(`${playbook.name}: ${record.message}`);
-        await loadActionHistory();
+        if (record.pending_approval) {
+            showNotification(`⏳ ${record.message} (Approval ID: ${record.approval_id})`);
+        } else {
+            showNotification(`${playbook.name}: ${record.message}`);
+            await loadActionHistory();
+        }
     } catch (e) {
         showNotification('Execution failed: ' + e.message);
     } finally {

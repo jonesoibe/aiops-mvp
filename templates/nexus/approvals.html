@@ -630,7 +630,12 @@ async function approveRequest(approvalId) {
             headers: authHeaders()
         });
         if (res.status === 401) { window.location.href = '/login'; return; }
-        if (!res.ok) throw new Error((await res.json()).error || 'Approve failed');
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Approve failed');
+
+        if (result.action_executed) {
+            alert(`${result.message}\n\n${result.action_executed.message}`);
+        }
 
         await loadApprovals(currentStatus);
         clearDetailView();
