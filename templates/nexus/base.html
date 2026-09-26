@@ -431,15 +431,6 @@
             </a>
         </div>
 
-        <!-- Development & Testing -->
-        <div class="nav-section">
-            <div class="nav-label">Testing & Simulation</div>
-            <a href="/simulator" class="nav-item {% if request.endpoint == 'simulator_page' %}active{% endif %}">
-                <span class="nav-icon">⚡</span>
-                <span>Chaos Simulator</span>
-            </a>
-        </div>
-
         <!-- Admin -->
         <div class="nav-section">
             <div class="nav-label">Administration</div>
@@ -494,8 +485,19 @@
         var globalSocket = null;
 
         // Initialize default socket connection if not overridden
+        // NOTE: server runs Flask-SocketIO with async_mode='threading', which only
+        // supports the long-polling transport - forcing polling here avoids a doomed
+        // websocket-upgrade attempt on every page load (was spamming failed upgrades
+        // and 400s as the client endlessly retried).
+        // The server's handle_connect() also rejects any connection with no JWT
+        // (see verify_websocket_token(), which reads request.args/Authorization -
+        // NOT Socket.IO's `auth` handshake payload). The token has to go in `query`
+        // so it lands in the polling request's query string where the server checks.
         if (typeof io !== 'undefined') {
-            globalSocket = io();
+            globalSocket = io({
+                transports: ['polling'],
+                query: { token: localStorage.getItem('token') || '' }
+            });
         }
 
         // Toggle sidebar on mobile
