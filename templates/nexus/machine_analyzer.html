@@ -1033,6 +1033,27 @@ async function startAnalysis() {
 
     try {
         console.log('Starting analysis for:', machine);
+
+        // Start the real anomaly-detection engine (machine_analyzer.py's
+        // AnomalyDetector) so live_data/anomaly_score updates actually
+        // reflect this machine's telemetry instead of staying frozen.
+        // Previously only /api/command/stream (a different, unrelated
+        // "Command Center" feature) was called here, so the analyzer's
+        // background thread never started and the gauge got stuck at a
+        // synthetic value derived from Command Center's findings.
+        const startResponse = await fetch('/api/machine-analyzer/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ machine: machine, update_frequency: 1.0 })
+        });
+
+        if (!startResponse.ok) {
+            const error = await startResponse.text();
+            console.error('Failed to start analyzer engine:', error);
+            alert('Error starting analysis: ' + error);
+            return;
+        }
+
         const params = new URLSearchParams({
             machine: machine,
             offset: 0,
@@ -1054,7 +1075,8 @@ async function startAnalysis() {
         const rawData = await response.json();
         console.log('Stream data:', rawData);
 
-        // Transform API response to dashboard format
+        // Transform API response to dashboard format (initial snapshot only --
+        // anomaly_score gets overwritten within ~500ms by the real polling below)
         const transformedData = {
             metrics: (rawData.series || []).map((row, idx) => ({
                 timestamp: Date.now() / 1000,
@@ -1064,7 +1086,7 @@ async function startAnalysis() {
                 deviation: Math.abs(row.cpu - 50),
                 status: row.cpu > 70 ? 'anomaly' : 'normal'
             })),
-            anomaly_score: Math.max(...(rawData.findings || []).map(f => f.severity === 'critical' ? 0.8 : 0.4), 0),
+            anomaly_score: 0,
             alerts: (rawData.findings || []).map(f => ({
                 timestamp: Date.now() / 1000,
                 severity: f.severity,

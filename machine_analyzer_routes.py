@@ -18,6 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from datetime import datetime
 from PIL import Image as PILImage
+import base64
 
 bp = Blueprint('machine_analyzer', __name__, url_prefix='/api/machine-analyzer')
 
@@ -378,6 +379,46 @@ def export_reports_pdf():
         ]))
         story.append(summary_table)
         story.append(PageBreak())
+
+        # ---- Evaluation Visualizations (chart for each report above) ----
+        try:
+            visualizations = AnalysisVisualizations.generate_all_visualizations()
+        except Exception as e:
+            visualizations = {}
+            print(f"[*] Failed to generate evaluation visualizations for PDF: {e}")
+
+        if visualizations:
+            story.append(Paragraph("Evaluation Visualizations", heading_style))
+            story.append(Paragraph(
+                "Supporting chart for each evaluation report above.",
+                summary_intro_style
+            ))
+            story.append(PageBreak())
+
+            viz_max_width = 7.0 * inch
+            viz_max_height = 8.5 * inch
+
+            for report_key, report_data in reports.items():
+                b64_data = visualizations.get(report_key)
+                if not b64_data:
+                    continue
+
+                img_buffer = BytesIO(base64.b64decode(b64_data))
+                with PILImage.open(img_buffer) as pil_img:
+                    img_w, img_h = pil_img.size
+                img_buffer.seek(0)
+
+                aspect = img_h / img_w
+                display_w = viz_max_width
+                display_h = display_w * aspect
+                if display_h > viz_max_height:
+                    display_h = viz_max_height
+                    display_w = display_h / aspect
+
+                story.append(Paragraph(report_data['title'], heading_style))
+                story.append(Spacer(1, 0.1*inch))
+                story.append(Image(img_buffer, width=display_w, height=display_h))
+                story.append(PageBreak())
 
         # ---- Machine Analysis (real per-machine data, with charts) ----
         import json as _json

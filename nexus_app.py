@@ -423,8 +423,10 @@ def add_security_headers(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
     # Force HTTPS (HSTS)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    # Content Security Policy - Allow socket.io CDN and WebSocket connections
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; connect-src 'self' wss: ws:; style-src 'self' 'unsafe-inline'"
+    # Content Security Policy - Allow socket.io CDN, WebSocket connections, and
+    # inline base64 PNG charts (Machine Analyzer's Analysis Results tab renders
+    # matplotlib output as data: URIs)
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; connect-src 'self' wss: ws:; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     # Referrer Policy
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     return response
