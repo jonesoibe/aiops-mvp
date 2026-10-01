@@ -298,7 +298,16 @@ class AnomalyDetector:
 class MachineDataLoader:
     """Load and stream data from SMD CSV files"""
 
-    def __init__(self, smd_dir: str = r"C:\Users\FAVOUR\aiops-mvp\data\raw\smd"):
+    def __init__(self, smd_dir: str = None):
+        # Relative to this file's own location, not a hardcoded absolute path --
+        # the previous default (a Windows-only path under a specific user's
+        # home directory) could never resolve on Render's Linux containers,
+        # so analyzer.loader.available_machines was always empty there and
+        # every "Start" click failed with "Failed to load machine". This was
+        # masked locally because the hardcoded path happened to match this
+        # dev machine exactly.
+        if smd_dir is None:
+            smd_dir = str(Path(__file__).parent / 'data' / 'raw' / 'smd')
         self.smd_dir = Path(smd_dir)
         self.available_machines = self._scan_machines()
         self.current_file = None
