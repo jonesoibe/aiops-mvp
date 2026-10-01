@@ -1217,6 +1217,11 @@ def _populate_demo_audit_data():
 
 # ==================== ROUTES ====================
 
+@app.route('/welcome')
+def landing_page():
+    """Public marketing landing page"""
+    return render_template('landing.html')
+
 @app.route('/login')
 def login_page():
     """Login Page"""
@@ -4681,9 +4686,24 @@ def get_active_alerts_ws():
 
 # ==================== MACHINE ANALYZER WEBSOCKET HANDLERS ====================
 
+_analyzer_clients = set()
+_analyzer_broadcast_registered = False
+_analyzer_clients_lock = threading.Lock()
+
+
+def _broadcast_analyzer_update(data):
+    """Send analyzer updates to every client in the namespace (runs on analyzer's background thread)."""
+    try:
+        socketio.emit('data_update', data, namespace='/ws/machine-analyzer', to=None)
+    except Exception as e:
+        logger.error(f'[ANALYZER] Failed to emit update: {e}')
+
+
 @socketio.on('connect', namespace='/ws/machine-analyzer')
 def handle_analyzer_connect():
     """Handle WebSocket connection for machine analyzer - requires authentication"""
+    global _analyzer_broadcast_registered
+
     # Verify JWT token
     if not verify_websocket_token():
         logger.warning(f'[SOCKETIO] Rejecting unauthenticated machine-analyzer connection: {request.sid}')
@@ -4698,19 +4718,15 @@ def handle_analyzer_connect():
         'status': 'ready'
     })
 
-    # Register callback for analyzer updates (works from background threads)
-    def send_update(data):
-        """Send analyzer updates to connected client"""
-        try:
-            # Broadcast to all clients in the namespace
-            socketio.emit('data_update', data,
-                         namespace='/ws/machine-analyzer',
-                         to=None)
-        except Exception as e:
-            logger.error(f'[ANALYZER] Failed to emit update: {e}')
-
-    analyzer.register_callback(send_update)
-    logger.info('[ANALYZER] Callback registered for analyzer updates')
+    # The broadcast callback is process-wide and broadcasts to the whole namespace, so it must be
+    # registered exactly once. Registering one per connection made every update get emitted N times
+    # (N = connections so far, never cleaned up), multiplying polling traffic on each reconnect.
+    with _analyzer_clients_lock:
+        _analyzer_clients.add(request.sid)
+        if not _analyzer_broadcast_registered:
+            analyzer.register_callback(_broadcast_analyzer_update)
+            _analyzer_broadcast_registered = True
+            logger.info('[ANALYZER] Broadcast callback registered for analyzer updates')
 
 
 @socketio.on('disconnect', namespace='/ws/machine-analyzer')
@@ -4718,10 +4734,14 @@ def handle_analyzer_disconnect():
     """Handle WebSocket disconnection for machine analyzer"""
     logger.info('[SOCKETIO] Client disconnected from /ws/machine-analyzer')
 
-    # Stop any running analysis
-    if analyzer.is_running:
+    with _analyzer_clients_lock:
+        _analyzer_clients.discard(request.sid)
+        no_clients_left = not _analyzer_clients
+
+    # Stop the analysis only when the last viewer leaves, not when one of several tabs closes
+    if no_clients_left and analyzer.is_running:
         analyzer.reset()
-        logger.info('[ANALYZER] Analysis stopped due to disconnect')
+        logger.info('[ANALYZER] Analysis stopped: last client disconnected')
 
 
 @socketio.on('request_status', namespace='/ws/machine-analyzer')

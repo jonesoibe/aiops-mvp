@@ -9,25 +9,45 @@
         body {
             margin: 0;
             padding: 0;
-            background: var(--bg-primary);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(var(--brand-rgb), 0.28), transparent 70%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(to right, rgba(var(--brand-strong-rgb), 0.07) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(var(--brand-strong-rgb), 0.07) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 100%);
         }
 
         .login-container {
             width: 100%;
             max-width: 420px;
             padding: var(--space-6);
+            position: relative;
+            animation: reveal 560ms var(--ease-out) both;
         }
 
         .login-card {
             background: var(--bg-secondary);
+            background: color-mix(in srgb, var(--bg-secondary) 86%, transparent);
+            backdrop-filter: blur(18px);
             border: 1px solid var(--border-primary);
-            border-radius: var(--radius-xl);
+            border-radius: 24px;
             padding: var(--space-8);
+            box-shadow: 0 24px 64px rgba(5, 6, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .login-header {
@@ -36,85 +56,105 @@
         }
 
         .login-logo {
-            font-size: 2.5em;
-            margin-bottom: var(--space-3);
+            width: 48px;
+            height: 48px;
+            margin: 0 auto var(--space-4);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            background: linear-gradient(145deg, var(--brand), #8b5cf6);
+            box-shadow: 0 10px 28px rgba(var(--brand-rgb), 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .login-title {
-            font-size: var(--fs-2xl);
+            font-family: var(--font-display);
+            font-size: var(--fs-4xl);
             font-weight: var(--fw-bold);
+            letter-spacing: var(--ls-display);
             color: var(--text-primary);
-            margin-bottom: var(--space-1);
+            margin-bottom: var(--space-2);
         }
 
         .login-subtitle {
-            font-size: var(--fs-sm);
+            font-size: var(--fs-md);
             color: var(--text-secondary);
         }
 
         .form-group {
-            margin-bottom: var(--space-6);
+            margin-bottom: var(--space-5);
         }
 
         .form-label {
             display: block;
-            font-size: var(--fs-sm);
+            font-size: 11px;
             font-weight: var(--fw-medium);
-            color: var(--text-primary);
+            color: var(--text-secondary);
             margin-bottom: var(--space-2);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.12em;
         }
 
         .form-input {
             width: 100%;
-            padding: var(--space-3) var(--space-4);
+            padding: 12px var(--space-4);
             background: var(--bg-primary);
             border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-md);
             color: var(--text-primary);
-            font-size: var(--fs-sm);
+            font: inherit;
+            font-size: var(--fs-md);
             box-sizing: border-box;
-            transition: all var(--transition-base);
+            transition: border-color 160ms var(--ease-out), box-shadow 200ms var(--ease-out);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--color-info);
-            box-shadow: 0 0 0 3px rgba(45, 212, 255, 0.1);
+            border-color: var(--brand-strong);
+            box-shadow: 0 0 0 4px var(--brand-dim);
         }
 
         .login-button {
             width: 100%;
-            padding: var(--space-3) var(--space-4);
-            background: linear-gradient(135deg, var(--color-success), var(--color-info));
+            padding: 13px var(--space-4);
+            background: var(--brand);
             border: none;
-            border-radius: var(--radius-lg);
-            color: var(--text-inverse);
-            font-size: var(--fs-sm);
-            font-weight: var(--fw-bold);
+            border-radius: var(--radius-md);
+            color: #fff;
+            font: inherit;
+            font-size: var(--fs-md);
+            font-weight: var(--fw-semibold);
             cursor: pointer;
-            transition: all var(--transition-base);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            transition: transform 160ms var(--ease-out), box-shadow 200ms var(--ease-out), background-color 200ms var(--ease-out);
         }
 
-        .login-button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--glow-success);
+        .login-button:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .login-button:hover:not(:disabled) {
+                background: var(--brand-strong);
+                box-shadow: var(--brand-glow);
+            }
         }
 
         .login-button:disabled {
-            opacity: 0.5;
+            opacity: 0.55;
             cursor: not-allowed;
         }
 
         .error-message {
             display: none;
-            padding: var(--space-3);
-            background: rgba(255, 77, 166, 0.1);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-critical-dim);
             border: 1px solid var(--color-critical);
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-md);
             color: var(--color-critical);
             font-size: var(--fs-sm);
             margin-bottom: var(--space-4);
@@ -122,6 +162,7 @@
 
         .error-message.show {
             display: block;
+            animation: reveal 240ms var(--ease-out) both;
         }
 
         .auth-links {
@@ -130,20 +171,19 @@
             justify-content: center;
             margin-top: var(--space-6);
             padding-top: var(--space-6);
-            border-top: 1px solid var(--border-primary);
+            border-top: 1px solid var(--border-secondary);
         }
 
         .auth-link {
-            color: var(--color-info);
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: var(--fs-sm);
-            transition: all var(--transition-base);
+            transition: color 160ms var(--ease-out);
             font-weight: var(--fw-medium);
         }
 
         .auth-link:hover {
-            color: var(--color-success);
-            text-decoration: underline;
+            color: var(--brand-strong);
         }
 
         .auth-link-separator {
@@ -156,9 +196,9 @@
         <div class="login-card">
             <!-- Header -->
             <div class="login-header">
-                <div class="login-logo">🚀</div>
+                <div class="login-logo">⚡</div>
                 <div class="login-title">Nexus AIOps</div>
-                <div class="login-subtitle">Enterprise Autonomous Observability Platform</div>
+                <div class="login-subtitle">Sign in to your observability workspace</div>
             </div>
 
             <!-- Error Message -->

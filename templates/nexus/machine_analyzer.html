@@ -10,15 +10,15 @@
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background: #0a0e27;
-        color: #e0e0e0;
-        font-family: 'Courier New', monospace;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: var(--font-mono);
     }
 
     /* TOP BAR */
     .analyzer-topbar {
-        background: linear-gradient(135deg, #1a1f3a, #16213e);
-        border-bottom: 2px solid #00d4ff;
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-tertiary));
+        border-bottom: 2px solid var(--brand-strong);
         padding: 15px 20px;
         display: flex;
         align-items: center;
@@ -34,7 +34,7 @@
     .machine-selector label {
         display: block;
         font-size: 12px;
-        color: #00d4ff;
+        color: var(--brand-strong);
         margin-bottom: 5px;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -43,16 +43,16 @@
     .machine-selector select {
         width: 100%;
         padding: 10px;
-        background: #0f1419;
-        border: 1px solid #00d4ff;
-        color: #00d4ff;
+        background: var(--bg-secondary);
+        border: 1px solid var(--brand-strong);
+        color: var(--brand-strong);
         border-radius: 4px;
-        font-family: 'Courier New', monospace;
+        font-family: var(--font-mono);
         font-size: 13px;
     }
 
     .machine-selector select:hover {
-        border-color: #00ffff;
+        border-color: var(--brand-strong);
         box-shadow: 0 0 10px rgba(0,255,255,0.3);
     }
 
@@ -67,28 +67,28 @@
     }
 
     .status-ready {
-        background: #2d5a2d;
-        color: #90ee90;
-        border: 1px solid #90ee90;
+        background: var(--color-success-dim);
+        color: var(--color-success);
+        border: 1px solid var(--color-success);
     }
 
     .status-loading {
-        background: #5a5a2d;
-        color: #ffff00;
-        border: 1px solid #ffff00;
+        background: var(--color-warning-dim);
+        color: var(--color-warning);
+        border: 1px solid var(--color-warning);
         animation: pulse 1s infinite;
     }
 
     .status-streaming {
-        background: #2d5a2d;
-        color: #00ff00;
-        border: 1px solid #00ff00;
+        background: var(--color-success-dim);
+        color: var(--color-success);
+        border: 1px solid var(--color-success);
     }
 
     .status-paused {
-        background: #5a2d2d;
-        color: #ffaa00;
-        border: 1px solid #ffaa00;
+        background: var(--color-error-dim);
+        color: var(--color-warning);
+        border: 1px solid var(--color-warning);
     }
 
     @keyframes pulse {
@@ -103,9 +103,9 @@
 
     .btn {
         padding: 10px 20px;
-        border: 1px solid #00d4ff;
-        background: #0f1419;
-        color: #00d4ff;
+        border: 1px solid var(--brand-strong);
+        background: var(--bg-secondary);
+        color: var(--brand-strong);
         border-radius: 4px;
         cursor: pointer;
         font-size: 12px;
@@ -116,8 +116,8 @@
     }
 
     .btn:hover {
-        background: #00d4ff;
-        color: #0a0e27;
+        background: var(--brand-strong);
+        color: var(--bg-primary);
         box-shadow: 0 0 20px rgba(0,212,255,0.5);
     }
 
@@ -140,19 +140,19 @@
         flex: 2;
         display: flex;
         flex-direction: column;
-        background: #0f1419;
-        border: 1px solid #1a3a4a;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
         border-radius: 4px;
         overflow: hidden;
     }
 
     .panel-header {
-        background: linear-gradient(90deg, #1a2847, #1a1f3a);
+        background: linear-gradient(90deg, var(--bg-hover), var(--bg-tertiary));
         padding: 12px 15px;
-        border-bottom: 1px solid #00d4ff;
+        border-bottom: 1px solid var(--brand-strong);
         font-size: 13px;
         font-weight: bold;
-        color: #00d4ff;
+        color: var(--brand-strong);
         text-transform: uppercase;
         letter-spacing: 1px;
     }
@@ -169,11 +169,11 @@
     }
 
     .live-data-table th {
-        background: #1a2847;
+        background: var(--bg-hover);
         padding: 8px;
         text-align: left;
-        border-bottom: 1px solid #00d4ff;
-        color: #00d4ff;
+        border-bottom: 1px solid var(--brand-strong);
+        color: var(--brand-strong);
         font-weight: bold;
         position: sticky;
         top: 0;
@@ -184,11 +184,11 @@
 
     .live-data-table td {
         padding: 6px 8px;
-        border-bottom: 1px solid #1a3a4a;
+        border-bottom: 1px solid var(--border-primary);
     }
 
     .metric-name {
-        color: #00d4ff;
+        color: var(--brand-strong);
         font-weight: bold;
     }
 
@@ -198,14 +198,14 @@
     }
 
     .metric-baseline {
-        color: #888;
+        color: var(--text-tertiary);
         font-size: 10px;
     }
 
     .deviation-bar {
         width: 100%;
         height: 4px;
-        background: #1a1f3a;
+        background: var(--bg-tertiary);
         border-radius: 2px;
         overflow: hidden;
         position: relative;
@@ -217,13 +217,13 @@
         transition: width 0.3s;
     }
 
-    .status-green { color: #00ff00; }
-    .status-yellow { color: #ffff00; }
-    .status-red { color: #ff0000; }
+    .status-green { color: var(--color-success); }
+    .status-yellow { color: var(--color-warning); }
+    .status-red { color: var(--color-error); }
 
-    .fill-green { background: #00ff00; }
-    .fill-yellow { background: #ffff00; }
-    .fill-red { background: #ff0000; }
+    .fill-green { background: var(--color-success); }
+    .fill-yellow { background: var(--color-warning); }
+    .fill-red { background: var(--color-error); }
 
     /* RIGHT PANEL */
     .analyzer-right {
@@ -235,8 +235,8 @@
 
     /* ANOMALY PANEL */
     .anomaly-panel {
-        background: #0f1419;
-        border: 1px solid #1a3a4a;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
         border-radius: 4px;
         padding: 15px;
         display: flex;
@@ -245,12 +245,12 @@
     }
 
     .anomaly-title {
-        color: #00d4ff;
+        color: var(--brand-strong);
         font-size: 12px;
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-bottom: 1px solid #00d4ff;
+        border-bottom: 1px solid var(--brand-strong);
         padding-bottom: 8px;
     }
 
@@ -267,10 +267,10 @@
     .gauge-bar {
         width: 100%;
         height: 20px;
-        background: #1a1f3a;
+        background: var(--bg-tertiary);
         border-radius: 10px;
         overflow: hidden;
-        border: 1px solid #00d4ff;
+        border: 1px solid var(--brand-strong);
         position: relative;
     }
 
@@ -284,7 +284,7 @@
         position: absolute;
         width: 2px;
         height: 100%;
-        background: #ff6600;
+        background: var(--color-high);
         left: 52%;
         top: 0;
         z-index: 10;
@@ -295,11 +295,11 @@
         justify-content: space-between;
         font-size: 10px;
         margin-top: 5px;
-        color: #888;
+        color: var(--text-tertiary);
     }
 
     .threshold-label {
-        color: #ff6600;
+        color: var(--color-high);
         font-weight: bold;
     }
 
@@ -313,20 +313,20 @@
 
     .anomaly-normal {
         background: rgba(0, 255, 0, 0.1);
-        color: #00ff00;
-        border: 1px solid #00ff00;
+        color: var(--color-success);
+        border: 1px solid var(--color-success);
     }
 
     .anomaly-warning {
         background: rgba(255, 255, 0, 0.1);
-        color: #ffff00;
-        border: 1px solid #ffff00;
+        color: var(--color-warning);
+        border: 1px solid var(--color-warning);
     }
 
     .anomaly-alert {
         background: rgba(255, 0, 0, 0.1);
-        color: #ff0000;
-        border: 1px solid #ff0000;
+        color: var(--color-error);
+        border: 1px solid var(--color-error);
     }
 
     .alert-log {
@@ -337,29 +337,29 @@
     .alert-item {
         padding: 8px;
         margin-bottom: 5px;
-        background: #1a1f3a;
-        border-left: 3px solid #00d4ff;
+        background: var(--bg-tertiary);
+        border-left: 3px solid var(--brand-strong);
         border-radius: 2px;
         font-size: 10px;
     }
 
-    .alert-item.high { border-left-color: #ff6600; }
-    .alert-item.critical { border-left-color: #ff0000; }
+    .alert-item.high { border-left-color: var(--color-high); }
+    .alert-item.critical { border-left-color: var(--color-error); }
 
     .alert-time {
-        color: #888;
+        color: var(--text-tertiary);
         font-size: 9px;
     }
 
     .alert-score {
         font-weight: bold;
-        color: #00d4ff;
+        color: var(--brand-strong);
     }
 
     /* ACTION PANEL */
     .action-panel {
-        background: #0f1419;
-        border: 1px solid #1a3a4a;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
         border-radius: 4px;
         padding: 15px;
         display: flex;
@@ -370,41 +370,41 @@
     }
 
     .action-title {
-        color: #00d4ff;
+        color: var(--brand-strong);
         font-size: 12px;
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-bottom: 1px solid #00d4ff;
+        border-bottom: 1px solid var(--brand-strong);
         padding-bottom: 8px;
     }
 
     .fault-category {
-        background: #1a1f3a;
-        border-left: 3px solid #00d4ff;
+        background: var(--bg-tertiary);
+        border-left: 3px solid var(--brand-strong);
         padding: 10px;
         border-radius: 2px;
         margin-bottom: 10px;
     }
 
     .fault-category.critical {
-        border-left-color: #ff0000;
+        border-left-color: var(--color-error);
         background: rgba(255, 0, 0, 0.05);
     }
 
     .fault-category.high {
-        border-left-color: #ff6600;
+        border-left-color: var(--color-high);
         background: rgba(255, 102, 0, 0.05);
     }
 
     .fault-category.medium {
-        border-left-color: #ffff00;
+        border-left-color: var(--color-warning);
         background: rgba(255, 255, 0, 0.05);
     }
 
     .fault-name {
         font-weight: bold;
-        color: #00d4ff;
+        color: var(--brand-strong);
         font-size: 11px;
         margin-bottom: 5px;
     }
@@ -420,28 +420,28 @@
     }
 
     .severity-critical {
-        background: #ff0000;
+        background: var(--color-error);
         color: white;
     }
 
     .severity-high {
-        background: #ff6600;
+        background: var(--color-high);
         color: white;
     }
 
     .severity-medium {
-        background: #ffff00;
-        color: #000;
+        background: var(--color-warning);
+        color: var(--text-inverse);
     }
 
     .affected-metrics {
         font-size: 10px;
-        color: #888;
+        color: var(--text-tertiary);
         margin-bottom: 8px;
     }
 
     .affected-metrics strong {
-        color: #ffaa00;
+        color: var(--color-warning);
     }
 
     .recommendations {
@@ -451,8 +451,8 @@
     .recommendation {
         padding: 4px 8px;
         margin: 3px 0;
-        background: #0f1419;
-        border-left: 2px solid #00d4ff;
+        background: var(--bg-secondary);
+        border-left: 2px solid var(--brand-strong);
         border-radius: 2px;
         display: flex;
         align-items: center;
@@ -471,10 +471,10 @@
         flex-shrink: 0;
     }
 
-    .priority-1 { background: #ff0000; color: white; }
-    .priority-2 { background: #ff6600; color: white; }
-    .priority-3 { background: #ffff00; color: #000; }
-    .priority-4 { background: #00d4ff; color: #000; }
+    .priority-1 { background: var(--color-error); color: white; }
+    .priority-2 { background: var(--color-high); color: white; }
+    .priority-3 { background: var(--color-warning); color: var(--text-inverse); }
+    .priority-4 { background: var(--brand-strong); color: var(--text-inverse); }
 
     /* SCROLLBARS */
     ::-webkit-scrollbar {
@@ -483,16 +483,16 @@
     }
 
     ::-webkit-scrollbar-track {
-        background: #0f1419;
+        background: var(--bg-secondary);
     }
 
     ::-webkit-scrollbar-thumb {
-        background: #00d4ff;
+        background: var(--brand-strong);
         border-radius: 4px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: #00ffff;
+        background: var(--brand-strong);
     }
 
     /* EMPTY STATE */
@@ -502,12 +502,12 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        color: #888;
+        color: var(--text-tertiary);
         text-align: center;
     }
 
     .empty-state h3 {
-        color: #00d4ff;
+        color: var(--brand-strong);
         margin-bottom: 10px;
     }
 
@@ -515,8 +515,8 @@
     .analyzer-tabs {
         display: flex;
         gap: 10px;
-        background: #0a0e27;
-        border-bottom: 2px solid #1a2340;
+        background: var(--bg-primary);
+        border-bottom: 2px solid var(--border-primary);
         padding: 0 20px;
         overflow-x: auto;
     }
@@ -526,25 +526,25 @@
         background: none;
         border: none;
         border-bottom: 3px solid transparent;
-        color: #888;
+        color: var(--text-tertiary);
         cursor: pointer;
         font-size: 13px;
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 1px;
-        font-family: 'Courier New', monospace;
+        font-family: var(--font-mono);
         transition: all 0.3s;
         white-space: nowrap;
     }
 
     .tab-btn:hover {
-        color: #00d4ff;
-        border-bottom-color: #00d4ff;
+        color: var(--brand-strong);
+        border-bottom-color: var(--brand-strong);
     }
 
     .tab-btn.active {
-        color: #00ff41;
-        border-bottom-color: #00ff41;
+        color: var(--color-success);
+        border-bottom-color: var(--color-success);
         box-shadow: 0 -2px 8px rgba(0,255,65,0.2);
     }
 
@@ -574,8 +574,8 @@
     }
 
     .analysis-card {
-        background: #1a1f3a;
-        border: 1px solid #00d4ff;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--brand-strong);
         border-radius: 8px;
         padding: 15px;
         cursor: pointer;
@@ -584,12 +584,12 @@
 
     .analysis-card:hover {
         box-shadow: 0 0 15px rgba(0,212,255,0.3);
-        border-color: #00ffff;
+        border-color: var(--brand-strong);
         transform: translateY(-2px);
     }
 
     .analysis-card h3 {
-        color: #00ff41;
+        color: var(--color-success);
         margin: 0 0 10px 0;
         font-size: 14px;
         text-transform: uppercase;
@@ -598,7 +598,7 @@
     .analysis-card-image {
         width: 100%;
         height: 300px;
-        background: #0f1419;
+        background: var(--bg-secondary);
         border: 1px solid #1a3a3a;
         border-radius: 4px;
         display: flex;
@@ -621,17 +621,17 @@
 
     /* REPORT SECTION */
     .report-section {
-        background: #1a1f3a;
-        border: 1px solid #00d4ff;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--brand-strong);
         border-radius: 8px;
         margin-bottom: 20px;
         overflow: hidden;
     }
 
     .report-header {
-        background: linear-gradient(135deg, #1a2340, #1a1f3a);
+        background: linear-gradient(135deg, #1a2340, var(--bg-tertiary));
         padding: 15px 20px;
-        border-bottom: 1px solid #00d4ff;
+        border-bottom: 1px solid var(--brand-strong);
         cursor: pointer;
         display: flex;
         justify-content: space-between;
@@ -639,14 +639,14 @@
     }
 
     .report-header h3 {
-        color: #00ff41;
+        color: var(--color-success);
         margin: 0;
         font-size: 14px;
         text-transform: uppercase;
     }
 
     .report-toggle {
-        color: #00d4ff;
+        color: var(--brand-strong);
         font-size: 16px;
     }
 
@@ -682,8 +682,8 @@
     }
 
     .report-content th {
-        background: #0f1419;
-        color: #00ff41;
+        background: var(--bg-secondary);
+        color: var(--color-success);
         font-weight: bold;
     }
 
@@ -691,21 +691,21 @@
     .incident-table {
         width: 100%;
         border-collapse: collapse;
-        background: #1a1f3a;
-        border: 1px solid #00d4ff;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--brand-strong);
         border-radius: 8px;
         overflow: hidden;
     }
 
     .incident-table th {
-        background: linear-gradient(135deg, #1a2340, #1a1f3a);
+        background: linear-gradient(135deg, #1a2340, var(--bg-tertiary));
         padding: 12px;
         text-align: left;
-        color: #00ff41;
+        color: var(--color-success);
         font-size: 12px;
         font-weight: bold;
         text-transform: uppercase;
-        border-bottom: 2px solid #00d4ff;
+        border-bottom: 2px solid var(--brand-strong);
     }
 
     .incident-table td {
@@ -720,7 +720,7 @@
     }
 
     .severity-critical {
-        color: #ff0000;
+        color: var(--color-error);
         font-weight: bold;
     }
 
@@ -733,7 +733,7 @@
     }
 
     .severity-low {
-        color: #00ff41;
+        color: var(--color-success);
     }
 
     .status-badge-small {
@@ -747,7 +747,7 @@
 
     .status-remediation_applied {
         background: #1a4d1a;
-        color: #00ff41;
+        color: var(--color-success);
     }
 
     .status-escalated {
@@ -757,13 +757,13 @@
 
     .status-acknowledged {
         background: #1a3a4d;
-        color: #00d4ff;
+        color: var(--brand-strong);
     }
 
     .loading {
         text-align: center;
         padding: 40px;
-        color: #888;
+        color: var(--text-tertiary);
         font-size: 14px;
     }
 </style>
@@ -820,7 +820,7 @@
                     </thead>
                     <tbody id="live-data-tbody">
                         <tr>
-                            <td colspan="6" style="text-align: center; color: #888;">
+                            <td colspan="6" style="text-align: center; color: var(--text-tertiary);">
                                 Select a machine and click Start to begin analysis
                             </td>
                         </tr>
@@ -853,9 +853,9 @@
                 </div>
 
                 <div>
-                    <div style="font-size: 11px; color: #00d4ff; margin-bottom: 8px; font-weight: bold;">Recent Alerts</div>
+                    <div style="font-size: 11px; color: var(--brand-strong); margin-bottom: 8px; font-weight: bold;">Recent Alerts</div>
                     <div class="alert-log" id="alert-log">
-                        <div style="color: #888; text-align: center; padding: 20px;">
+                        <div style="color: var(--text-tertiary); text-align: center; padding: 20px;">
                             No alerts yet
                         </div>
                     </div>
@@ -865,7 +865,7 @@
             <!-- ACTIONS & RECOMMENDATIONS -->
             <div class="action-panel">
                 <div class="action-title">Recommended Actions</div>
-                <div id="action-container" style="color: #888; text-align: center; padding: 20px;">
+                <div id="action-container" style="color: var(--text-tertiary); text-align: center; padding: 20px;">
                     Awaiting analysis results...
                 </div>
             </div>
@@ -880,8 +880,8 @@
 
         <div style="margin-top: 40px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #00ff41; margin: 0;">📊 Detailed Evaluation Reports</h2>
-                <button class="btn" onclick="exportReportsPDF()" style="background: #00d4ff; color: #0a0e27;">
+                <h2 style="color: var(--color-success); margin: 0;">📊 Detailed Evaluation Reports</h2>
+                <button class="btn" onclick="exportReportsPDF()" style="background: var(--brand-strong); color: var(--bg-primary);">
                     [PDF] Export All Reports
                 </button>
             </div>
@@ -894,14 +894,14 @@
     <!-- INCIDENT LOG TAB -->
     <div class="tab-content" id="incidents-tab">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="color: #00ff41; margin: 0;">📋 Incident Log</h2>
-            <button class="btn" onclick="exportIncidentDashboard()" style="background: #00d4ff; color: #0a0e27;">
+            <h2 style="color: var(--color-success); margin: 0;">📋 Incident Log</h2>
+            <button class="btn" onclick="exportIncidentDashboard()" style="background: var(--brand-strong); color: var(--bg-primary);">
                 [PNG] Export Incident Dashboard
             </button>
         </div>
         <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-            <input type="text" id="incident-search" placeholder="Search incidents..." style="flex: 1; padding: 10px; background: #0f1419; border: 1px solid #00d4ff; color: #00d4ff; border-radius: 4px; font-size: 12px;">
-            <select id="severity-filter" style="padding: 10px; background: #0f1419; border: 1px solid #00d4ff; color: #00d4ff; border-radius: 4px; font-size: 12px;">
+            <input type="text" id="incident-search" placeholder="Search incidents..." style="flex: 1; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--brand-strong); color: var(--brand-strong); border-radius: 4px; font-size: 12px;">
+            <select id="severity-filter" style="padding: 10px; background: var(--bg-secondary); border: 1px solid var(--brand-strong); color: var(--brand-strong); border-radius: 4px; font-size: 12px;">
                 <option value="">All Severities</option>
                 <option value="Critical">Critical</option>
                 <option value="High">High</option>
@@ -916,6 +916,16 @@
 </div>
 
 <script>
+// Status badge colours come from theme tokens so they follow light/dark mode
+function setBadgeTone(tone) {
+    const el = document.getElementById('status-badge');
+    if (!el) return;
+    el.style.background = 'var(--color-' + tone + '-dim)';
+    el.style.color = 'var(--color-' + tone + ')';
+    el.style.borderColor = 'var(--color-' + tone + ')';
+}
+
+
 // WebSocket connection (socket defined in base.html, machine socket for namespace)
 let machineData = {};
 let machineSocket = null;
@@ -986,7 +996,7 @@ function connectWebSocket() {
 
     machineSocket.on('connect', function() {
         if (document.getElementById('status-badge')) {
-            document.getElementById('status-badge').style.background = '#0f0';
+            setBadgeTone('success');
         }
     });
 
@@ -1002,19 +1012,19 @@ function connectWebSocket() {
 
     machineSocket.on('error', function(error) {
         if (document.getElementById('status-badge')) {
-            document.getElementById('status-badge').style.background = '#f00';
+            setBadgeTone('error');
         }
     });
 
     machineSocket.on('disconnect', function() {
         if (document.getElementById('status-badge')) {
-            document.getElementById('status-badge').style.background = '#f80';
+            setBadgeTone('warning');
         }
     });
 
     machineSocket.on('connect_error', function(error) {
         if (document.getElementById('status-badge')) {
-            document.getElementById('status-badge').style.background = '#f00';
+            setBadgeTone('error');
         }
     });
 }
@@ -1215,7 +1225,7 @@ async function resetAnalysis() {
         document.getElementById('machine-select').disabled = false;
         document.getElementById('live-data-tbody').innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; color: #888;">
+                <td colspan="6" style="text-align: center; color: var(--text-tertiary);">
                     Select a machine and click Start to begin analysis
                 </td>
             </tr>
@@ -1224,7 +1234,7 @@ async function resetAnalysis() {
         document.getElementById('gauge-fill').style.width = '0%';
         document.getElementById('anomaly-status').textContent = 'NORMAL - No anomalies detected';
         document.getElementById('action-container').innerHTML = 'Awaiting analysis results...';
-        document.getElementById('alert-log').innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No alerts yet</div>';
+        document.getElementById('alert-log').innerHTML = '<div style="color: var(--text-tertiary); text-align: center; padding: 20px;">No alerts yet</div>';
     } catch (error) {
         console.error('Error resetting analysis:', error);
     }
@@ -1273,7 +1283,7 @@ function updateLiveData(metrics) {
                     <div class="deviation-bar">
                         <div class="deviation-fill ${fillClass}" style="width: ${Math.min(metric.deviation, 100)}%"></div>
                     </div>
-                    <small style="color: #888;">${metric.deviation.toFixed(1)}%</small>
+                    <small style="color: var(--text-tertiary);">${metric.deviation.toFixed(1)}%</small>
                 </td>
                 <td class="${statusClass}">● ${metric.status.toUpperCase()}</td>
             </tr>
@@ -1315,7 +1325,7 @@ function updateAlerts(alerts) {
     const log = document.getElementById('alert-log');
 
     if (!alerts || alerts.length === 0) {
-        log.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No alerts yet</div>';
+        log.innerHTML = '<div style="color: var(--text-tertiary); text-align: center; padding: 20px;">No alerts yet</div>';
         return;
     }
 
@@ -1330,7 +1340,7 @@ function updateAlerts(alerts) {
                     <span class="alert-time">${time}</span>
                     <span class="alert-score">Score: ${alert.anomaly_score.toFixed(3)}</span>
                 </div>
-                <div style="color: #ffaa00; margin-top: 3px;">${alert.severity}</div>
+                <div style="color: var(--color-warning); margin-top: 3px;">${alert.severity}</div>
             </div>
         `;
     });
@@ -1343,7 +1353,7 @@ function updateRecommendations(faults) {
     const container = document.getElementById('action-container');
 
     if (!faults || faults.length === 0) {
-        container.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No faults detected</div>';
+        container.innerHTML = '<div style="color: var(--text-tertiary); text-align: center; padding: 20px;">No faults detected</div>';
         return;
     }
 
@@ -1532,7 +1542,7 @@ async function loadAnalysisReports() {
                     <div class="report-header" onclick="toggleReport('${reportId}')">
                         <div>
                             <h3>${report.title || 'Untitled Report'}</h3>
-                            <div style="font-size: 11px; color: #888;">${report.description || 'No description'}</div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">${report.description || 'No description'}</div>
                         </div>
                         <div class="report-toggle">▼</div>
                     </div>
