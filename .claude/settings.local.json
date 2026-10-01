@@ -272,7 +272,10 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\('machine_analyzer_routes.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('machine_analyzer_routes.py', encoding='utf-8'\\).read\\(\\)\\); print\\('machine_analyzer_routes.py OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('analysis_visualizations.py', encoding='utf-8'\\).read\\(\\)\\); print\\('analysis_visualizations.py OK'\\)\")",
-      "Bash(grep \"\\\\.log$\")"
+      "Bash(grep \"\\\\.log$\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('analysis_visualizations.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId = 15580\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('machine_analyzer.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")"
     ]
   }
 }
