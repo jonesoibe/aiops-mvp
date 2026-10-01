@@ -7,11 +7,11 @@
     <meta name="description" content="Detect anomalies, find root causes and remediate incidents automatically with Nexus AIOps.">
     <link rel="stylesheet" href="{{ url_for('static', filename='design-tokens.css') }}">
     <style>
-        body { background-image: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(99, 102, 241, 0.32), transparent 70%); }
-        [data-theme="light"] body { background-image: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(79, 70, 229, 0.14), transparent 70%); }
-        [data-theme="light"] .mock { box-shadow: 0 30px 80px rgba(79, 70, 229, .18), 0 0 0 1px rgba(79, 70, 229, .08); }
-        [data-theme="light"] .float { box-shadow: 0 12px 30px rgba(79, 70, 229, .15); }
-        [data-theme="light"] .final { background: radial-gradient(ellipse 70% 120% at 50% 0%, rgba(79, 70, 229, .12), transparent 70%), var(--bg-secondary); }
+        body { background-image: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(var(--brand-rgb), 0.32), transparent 70%); }
+        [data-theme="light"] body { background-image: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(var(--brand-rgb), 0.14), transparent 70%); }
+        [data-theme="light"] .mock { box-shadow: 0 30px 80px rgba(var(--brand-rgb), .18), 0 0 0 1px rgba(var(--brand-rgb), .08); }
+        [data-theme="light"] .float { box-shadow: 0 12px 30px rgba(var(--brand-rgb), .15); }
+        [data-theme="light"] .final { background: radial-gradient(ellipse 70% 120% at 50% 0%, rgba(var(--brand-rgb), .12), transparent 70%), var(--bg-secondary); }
         .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
         /* ---------- nav ---------- */
@@ -19,6 +19,7 @@
         .nav-bar {
             display: flex; align-items: center; justify-content: space-between; gap: 16px;
             padding: 10px 12px 10px 18px; border-radius: 999px;
+            background: var(--bg-secondary);
             background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
             backdrop-filter: blur(16px); border: 1px solid var(--border-secondary);
         }
@@ -36,7 +37,7 @@
         .eyebrow { letter-spacing: .24em; text-transform: uppercase; font-size: 11px; color: var(--brand-strong); }
         .hero h1 {
             margin: 18px 0 20px; font-size: clamp(56px, 12vw, 148px); line-height: .86;
-            letter-spacing: var(--ls-display); font-weight: 800; text-transform: uppercase;
+            letter-spacing: var(--ls-display); font-weight: 700; text-transform: uppercase;
         }
         .hero h1 span { display: block; }
         .hero h1 .accent { color: var(--brand-strong); }
@@ -50,7 +51,7 @@
         .mock {
             border-radius: 20px; border: 1px solid var(--border-primary);
             background: linear-gradient(180deg, var(--bg-tertiary), var(--bg-secondary));
-            box-shadow: 0 40px 120px rgba(5, 6, 20, .6), 0 0 0 1px rgba(124, 131, 255, .08), inset 0 1px 0 rgba(255,255,255,.05);
+            box-shadow: 0 40px 120px rgba(5, 6, 20, .6), 0 0 0 1px rgba(var(--brand-strong-rgb), .08), inset 0 1px 0 rgba(255,255,255,.05);
             transform: rotateX(6deg); transform-origin: 50% 100%;
             padding: 14px 16px 20px; text-align: left;
         }
@@ -72,7 +73,7 @@
         .row:last-child { border: 0; }
         .row em { font-style: normal; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 
-        .float { position: absolute; padding: 10px 14px; border-radius: 14px; font-size: 12px; background: color-mix(in srgb, var(--bg-tertiary) 88%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--border-primary); box-shadow: 0 16px 40px rgba(5, 6, 20, .5); animation: float 6s ease-in-out infinite; display: flex; gap: 8px; align-items: center; }
+        .float { position: absolute; padding: 10px 14px; border-radius: 14px; font-size: 12px; background: var(--bg-tertiary); background: color-mix(in srgb, var(--bg-tertiary) 88%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--border-primary); box-shadow: 0 16px 40px rgba(5, 6, 20, .5); animation: float 6s ease-in-out infinite; display: flex; gap: 8px; align-items: center; }
         .float.a { top: -22px; right: 6%; }
         .float.b { bottom: 28px; left: -3%; animation-delay: -3s; border-color: rgba(255, 77, 166, .45); }
         .ping { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 rgba(107, 255, 184, .6); animation: ping 2s var(--ease-out) infinite; }

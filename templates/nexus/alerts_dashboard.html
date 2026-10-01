@@ -7,16 +7,14 @@
 {% block extra_styles %}
 <style>
 
+        /* Spacing comes from .main-content in the shell; no extra gutter here */
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
         }
 
         header {
-            margin-bottom: 30px;
-            border-bottom: 2px solid var(--border-primary);
-            padding-bottom: 20px;
+            margin-bottom: var(--space-6);
         }
 
         h1 {

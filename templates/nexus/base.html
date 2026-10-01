@@ -10,50 +10,6 @@
 
     <!-- Page Styles -->
     <style>
-        /* Light Mode Theme Overrides (inline to ensure they load) */
-        /* Adjusted colors for better light mode visibility and WCAG AA contrast */
-        [data-theme="light"] {
-            --bg-primary: #f6f7fd;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #eef0fb;
-            --bg-hover: #e8ebfa;
-            --bg-active: #dde1f8;
-            --text-primary: #12142e;
-            --text-secondary: #4a4f78;
-            --text-tertiary: #6b7099;
-            --text-inverse: #ffffff;
-            --border-primary: #d3d7f0;
-            --border-secondary: #e3e6f7;
-            --border-subtle: #eef0fb;
-            --brand: #4f46e5;
-            --brand-strong: #4338ca;
-            --brand-dim: rgba(79, 70, 229, 0.10);
-
-            /* Semantic colors optimized for light mode - darker/more saturated */
-            --color-success: #107c10;     /* Darker green for visibility on white */
-            --color-info: #0078d4;        /* Darker blue for visibility on white */
-            --color-warning: #d18800;     /* Darker amber/gold (not bright yellow) */
-            --color-critical: #a4373a;    /* Darker red-pink for visibility */
-            --color-error: #a4373a;       /* Darker red for visibility */
-
-            /* Dimmed variants for light mode */
-            --color-success-dim: rgba(16, 124, 16, 0.12);
-            --color-info-dim: rgba(0, 120, 212, 0.12);
-            --color-warning-dim: rgba(209, 136, 0, 0.12);
-            --color-critical-dim: rgba(164, 55, 58, 0.12);
-            --color-error-dim: rgba(164, 55, 58, 0.12);
-
-            /* Accent colors for light mode */
-            --accent-primary: #4f46e5;    /* Indigo */
-            --accent-secondary: #0078d4;  /* Blue */
-            --accent-tertiary: #d18800;   /* Amber (not yellow) */
-
-            color-scheme: light;
-        }
-    </style>
-
-    <!-- Page Styles -->
-    <style>
         body {
             display: grid;
             grid-template-columns: 240px 1fr;
@@ -61,15 +17,14 @@
             min-height: 100vh;
             background: var(--bg-primary);
             background-image:
-                radial-gradient(ellipse 60% 40% at 70% -10%, rgba(99, 102, 241, 0.16), transparent 70%);
+                radial-gradient(ellipse 60% 40% at 70% -10%, rgba(var(--brand-rgb), 0.16), transparent 70%);
             background-attachment: fixed;
         }
 
         .sidebar {
             grid-column: 1;
             grid-row: 1 / -1;
-            background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
-            backdrop-filter: blur(14px);
+            background: var(--bg-secondary);
             border-right: 1px solid var(--border-secondary);
             display: flex;
             flex-direction: column;
@@ -99,7 +54,7 @@
             justify-content: center;
             font-size: var(--fs-lg);
             background: linear-gradient(145deg, var(--brand), #8b5cf6);
-            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            box-shadow: 0 6px 18px rgba(var(--brand-rgb), 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
         }
 
         .logo-text {
@@ -205,8 +160,7 @@
         .topbar {
             grid-column: 2;
             grid-row: 1;
-            background: color-mix(in srgb, var(--bg-primary) 78%, transparent);
-            backdrop-filter: blur(14px);
+            background: var(--bg-primary);
             border-bottom: 1px solid var(--border-secondary);
             display: flex;
             align-items: center;
@@ -288,14 +242,15 @@
             transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
         }
 
-        /* Page content rises in on load */
-        .main-content > * {
+        /* Page content rises in on load. Overlays/modals are excluded: they toggle display, which
+           would restart this animation and delay them every time they open. */
+        .main-content > :not(script):not(style):not(.modal):not(.modal-overlay):not([id$="Modal"]):not([id$="modal"]) {
             animation: reveal 480ms var(--ease-out) backwards;
         }
-        .main-content > *:nth-child(2) { animation-delay: 60ms; }
-        .main-content > *:nth-child(3) { animation-delay: 120ms; }
-        .main-content > *:nth-child(4) { animation-delay: 180ms; }
-        .main-content > *:nth-child(n+5) { animation-delay: 220ms; }
+        .main-content > :nth-child(2) { animation-delay: 60ms; }
+        .main-content > :nth-child(3) { animation-delay: 120ms; }
+        .main-content > :nth-child(4) { animation-delay: 180ms; }
+        .main-content > :nth-child(n+5) { animation-delay: 220ms; }
 
         /* Disable transition for theme toggle to avoid flashing */
         .theme-toggle-btn {

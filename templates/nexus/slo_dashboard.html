@@ -19,19 +19,14 @@
             --text: var(--text-primary);
         }
 
+        /* Spacing comes from .main-content in the shell; no extra gutter here */
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
         }
 
         header {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: var(--space-6);
             display: flex;
             justify-content: space-between;
             align-items: center;
