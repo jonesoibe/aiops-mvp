@@ -1217,6 +1217,11 @@ def _populate_demo_audit_data():
 
 # ==================== ROUTES ====================
 
+@app.route('/welcome')
+def landing_page():
+    """Public marketing landing page"""
+    return render_template('landing.html')
+
 @app.route('/login')
 def login_page():
     """Login Page"""

@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Alerts Dashboard - AIOps</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-        }
+{% extends "nexus/base.html" %}
+
+{% block title %}Alerts Dashboard - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}🚨 Alerts Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
 
         .container {
             max-width: 1400px;
@@ -19,7 +15,7 @@
 
         header {
             margin-bottom: 30px;
-            border-bottom: 2px solid #0f3460;
+            border-bottom: 2px solid var(--border-primary);
             padding-bottom: 20px;
         }
 
@@ -29,7 +25,7 @@
         }
 
         .subtitle {
-            color: #888;
+            color: var(--text-secondary);
             font-size: 14px;
         }
 
@@ -44,21 +40,21 @@
         .stat-card {
             padding: 20px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+            border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
             backdrop-filter: blur(10px);
         }
 
         .stat-card.critical {
-            border-left: 4px solid #ff4757;
+            border-left: 4px solid var(--color-error);
         }
 
         .stat-card.major {
-            border-left: 4px solid #ffa502;
+            border-left: 4px solid var(--color-warning);
         }
 
         .stat-card.active {
-            border-left: 4px solid #2ecc71;
+            border-left: 4px solid var(--color-success);
         }
 
         .stat-value {
@@ -69,7 +65,7 @@
 
         .stat-label {
             font-size: 12px;
-            color: #888;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -79,14 +75,14 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
         }
 
         .tab-btn {
             padding: 10px 20px;
             background: none;
             border: none;
-            color: #888;
+            color: var(--text-secondary);
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
@@ -95,12 +91,12 @@
         }
 
         .tab-btn:hover {
-            color: #eee;
+            color: var(--text-primary);
         }
 
         .tab-btn.active {
-            color: #0099ff;
-            border-bottom-color: #0099ff;
+            color: var(--brand-strong);
+            border-bottom-color: var(--brand-strong);
         }
 
         .tab-content {
@@ -113,7 +109,7 @@
 
         /* Tables */
         .table-wrapper {
-            background: rgba(255, 255, 255, 0.03);
+            background: color-mix(in srgb, var(--text-primary) 3%, transparent);
             border-radius: 8px;
             overflow: hidden;
             margin-bottom: 20px;
@@ -125,8 +121,8 @@
         }
 
         thead {
-            background: rgba(255, 255, 255, 0.05);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+            border-bottom: 2px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
         }
 
         th {
@@ -134,18 +130,18 @@
             text-align: left;
             font-size: 12px;
             font-weight: 600;
-            color: #0099ff;
+            color: var(--brand-strong);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         td {
             padding: 12px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 5%, transparent);
         }
 
         tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: color-mix(in srgb, var(--text-primary) 5%, transparent);
         }
 
         /* Badges */
@@ -159,33 +155,33 @@
         }
 
         .badge.firing {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
+            background: var(--color-error-dim);
+            color: var(--color-error);
         }
 
         .badge.acknowledged {
-            background: rgba(255, 165, 2, 0.2);
-            color: #ffa502;
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
         }
 
         .badge.resolved {
-            background: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
+            background: var(--color-success-dim);
+            color: var(--color-success);
         }
 
         .badge.critical {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
+            background: var(--color-error-dim);
+            color: var(--color-error);
         }
 
         .badge.major {
-            background: rgba(255, 165, 2, 0.2);
-            color: #ffa502;
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
         }
 
         .badge.minor {
-            background: rgba(0, 153, 255, 0.2);
-            color: #0099ff;
+            background: var(--brand-dim);
+            color: var(--brand-strong);
         }
 
         /* Buttons */
@@ -200,39 +196,39 @@
         }
 
         .btn-primary {
-            background: #0099ff;
+            background: var(--brand-strong);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #0077cc;
+            background: var(--brand);
         }
 
         .btn-success {
-            background: #2ecc71;
+            background: var(--color-success);
             color: white;
         }
 
         .btn-success:hover {
-            background: #27ae60;
+            background: var(--color-success);
         }
 
         .btn-warning {
-            background: #ffa502;
+            background: var(--color-warning);
             color: white;
         }
 
         .btn-warning:hover {
-            background: #e89400;
+            background: var(--color-warning);
         }
 
         .btn-danger {
-            background: #ff4757;
+            background: var(--color-error);
             color: white;
         }
 
         .btn-danger:hover {
-            background: #ee3f43;
+            background: var(--color-error);
         }
 
         /* Filters */
@@ -245,9 +241,9 @@
 
         select {
             padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #eee;
+            background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+            border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+            color: var(--text-primary);
             border-radius: 4px;
             font-size: 12px;
         }
@@ -271,8 +267,8 @@
         }
 
         .modal-content {
-            background: #16213e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-tertiary);
+            border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
             border-radius: 8px;
             padding: 30px;
             max-width: 500px;
@@ -283,7 +279,7 @@
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
             padding-bottom: 10px;
         }
 
@@ -295,7 +291,7 @@
             display: block;
             font-size: 12px;
             font-weight: 600;
-            color: #0099ff;
+            color: var(--brand-strong);
             margin-bottom: 5px;
             text-transform: uppercase;
         }
@@ -303,9 +299,9 @@
         input, select {
             width: 100%;
             padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #eee;
+            background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+            border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+            color: var(--text-primary);
             border-radius: 4px;
             font-size: 13px;
         }
@@ -316,7 +312,7 @@
             width: 12px;
             height: 12px;
             border: 2px solid rgba(0, 153, 255, 0.3);
-            border-top-color: #0099ff;
+            border-top-color: var(--brand-strong);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -328,20 +324,20 @@
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #666;
+            color: var(--text-tertiary);
         }
 
         .empty-state-icon {
             font-size: 48px;
             margin-bottom: 15px;
         }
-    </style>
-</head>
-<body>
+</style>
+{% endblock %}
+
+{% block content %}
     <div class="container">
         <!-- Header -->
         <header>
-            <h1>⚡ Alerts Dashboard</h1>
             <div class="subtitle">Real-time alert management and monitoring</div>
         </header>
 
@@ -536,8 +532,13 @@
         </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script>
+    
+    
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
         const API_URL = 'http://localhost:5000';
         const token = localStorage.getItem('token');
         let alertSocket = null;
@@ -811,5 +812,4 @@
             setInterval(loadAlerts, 60000);
         });
     </script>
-</body>
-</html>
+{% endblock %}

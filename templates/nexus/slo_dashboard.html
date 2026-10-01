@@ -1,50 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLO Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "nexus/base.html" %}
+
+{% block title %}SLO Dashboard - Nexus AIOps{% endblock %}
+
+{% block topbar_title %}📊 SLO Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
 
         :root {
-            --primary: #007bff;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --dark: #2d3748;
-            --light: #f8f9fa;
-            --border: #e2e8f0;
-            --text: #1a202c;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --text-primary: #1a202c;
-            --text-secondary: #666666;
-        }
-
-        /* Dark mode colors */
-        [data-theme="dark"] {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --text-primary: #e0e0e0;
-            --text-secondary: #b0b0b0;
-            --border: #404040;
-            --text: #e0e0e0;
-        }
-
-        * {
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
+            /* Aliased to the shared design tokens so this page follows the app theme */
+            --primary: var(--brand);
+            --success: var(--color-success);
+            --warning: var(--color-warning);
+            --danger: var(--color-error);
+            --dark: var(--bg-tertiary);
+            --light: var(--bg-tertiary);
+            --border: var(--border-primary);
+            --text: var(--text-primary);
         }
 
         .container {
@@ -71,36 +43,9 @@
             color: var(--text-primary);
         }
 
-        .theme-toggle-btn {
-            background: none;
-            border: 1px solid var(--border);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            color: var(--text-primary);
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-        }
-
-        .theme-toggle-btn:hover {
-            background: var(--bg-primary);
-            border-color: var(--primary);
-            transform: scale(1.05);
-        }
-
-        .theme-toggle-btn:active {
-            transform: scale(0.95);
-        }
-
         .header-meta {
             font-size: 14px;
-            color: #666;
+            color: var(--text-secondary);
             display: flex;
             gap: 20px;
             margin-top: 10px;
@@ -141,7 +86,7 @@
 
         .stat-subtitle {
             font-size: 12px;
-            color: #999;
+            color: var(--text-tertiary);
         }
 
         .tabs {
@@ -158,7 +103,7 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            color: #666;
+            color: var(--text-secondary);
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
         }
@@ -187,7 +132,7 @@
         }
 
         .slo-card {
-            background: white;
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
@@ -215,7 +160,7 @@
 
         .slo-service {
             font-size: 12px;
-            color: #999;
+            color: var(--text-tertiary);
             margin-top: 3px;
         }
 
@@ -229,18 +174,18 @@
         }
 
         .status-badge.healthy {
-            background: #d4edda;
-            color: #155724;
+            background: var(--color-success-dim);
+            color: var(--color-success);
         }
 
         .status-badge.warning {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
         }
 
         .status-badge.violated {
-            background: #f8d7da;
-            color: #721c24;
+            background: var(--color-error-dim);
+            color: var(--color-error);
         }
 
         .slo-metrics {
@@ -260,7 +205,7 @@
         }
 
         .metric-label {
-            color: #666;
+            color: var(--text-secondary);
         }
 
         .metric-value {
@@ -271,7 +216,7 @@
         .progress-bar {
             width: 100%;
             height: 6px;
-            background: #e0e0e0;
+            background: var(--bg-tertiary);
             border-radius: 3px;
             margin-top: 10px;
             overflow: hidden;
@@ -292,7 +237,7 @@
         }
 
         .error-budget {
-            background: #f0f4f8;
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 12px;
@@ -301,7 +246,7 @@
 
         .error-budget-label {
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 8px;
             font-weight: 600;
         }
@@ -322,12 +267,14 @@
             flex: 1;
             padding: 8px 12px;
             border: 1px solid var(--border);
-            background: white;
-            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: background-color 0.2s var(--ease-out), transform 0.16s var(--ease-out);
         }
 
         .btn:hover {
@@ -336,24 +283,24 @@
 
         .btn-primary {
             background: var(--primary);
-            color: white;
+            color: #fff;
             border-color: var(--primary);
         }
 
         .btn-primary:hover {
-            background: #0056b3;
-            border-color: #0056b3;
+            background: var(--brand-strong);
+            border-color: var(--brand-strong);
         }
 
         .btn-danger {
             background: var(--danger);
-            color: white;
+            color: #fff;
             border-color: var(--danger);
         }
 
         .btn-danger:hover {
-            background: #c82333;
-            border-color: #c82333;
+            background: var(--color-error);
+            border-color: var(--color-error);
         }
 
         .modal {
@@ -376,7 +323,7 @@
         }
 
         .modal-content {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 8px;
             padding: 30px;
             max-width: 600px;
@@ -400,7 +347,7 @@
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #999;
+            color: var(--text-tertiary);
         }
 
         .modal-close:hover {
@@ -416,7 +363,7 @@
             font-size: 13px;
             font-weight: 600;
             margin-bottom: 5px;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         .form-group input,
@@ -425,9 +372,11 @@
             width: 100%;
             padding: 8px 12px;
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: var(--radius-md);
             font-size: 13px;
             font-family: inherit;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         .form-group input:focus,
@@ -454,7 +403,7 @@
         .filter-btn {
             padding: 8px 16px;
             border: 1px solid var(--border);
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 20px;
             cursor: pointer;
             font-size: 13px;
@@ -464,14 +413,14 @@
         .filter-btn:hover,
         .filter-btn.active {
             background: var(--primary);
-            color: white;
+            color: #fff;
             border-color: var(--primary);
         }
 
         .loading {
             text-align: center;
             padding: 40px;
-            color: #999;
+            color: var(--text-tertiary);
         }
 
         .spinner {
@@ -496,27 +445,27 @@
         }
 
         .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: var(--color-error-dim);
+            color: var(--color-error);
+            border: 1px solid var(--color-error);
         }
 
         .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
+            border: 1px solid var(--color-warning);
         }
 
         .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: var(--color-success-dim);
+            color: var(--color-success);
+            border: 1px solid var(--color-success);
         }
 
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--text-tertiary);
         }
 
         .empty-state-icon {
@@ -537,22 +486,19 @@
                 overflow-x: auto;
             }
         }
-    </style>
-</head>
-<body>
+</style>
+{% endblock %}
+
+{% block content %}
     <div class="container">
         <header>
             <div>
-                <h1>📊 SLO Dashboard</h1>
                 <div class="header-meta">
                     <span>Service Level Objectives Monitoring</span>
                     <span id="last-updated">Last updated: --:--</span>
                     <button class="btn" onclick="refreshData()">🔄 Refresh</button>
                 </div>
             </div>
-            <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
-                🌙
-            </button>
         </header>
 
         <!-- Statistics Cards -->
@@ -705,7 +651,14 @@
         </div>
     </div>
 
-    <script>
+    
+
+    
+    
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
         const API_URL = 'http://localhost:5000/api';
         const TOKEN = localStorage.getItem('token') || 'test_token';
         let currentFilter = 'all';
@@ -783,38 +736,38 @@
             let html = `
                 <div class="form-group">
                     <label>Service Name</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;">${slo.service_name}</div>
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;">${slo.service_name}</div>
                 </div>
                 <div class="form-group">
                     <label>Service ID</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px; font-family: monospace;">${slo.service_id}</div>
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px; font-family: var(--font-mono);">${slo.service_id}</div>
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;">${slo.description}</div>
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;">${slo.description}</div>
                 </div>
                 <div class="form-group">
                     <label>Target Percentage</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;"><strong>${slo.target_percentage}%</strong></div>
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;"><strong>${slo.target_percentage}%</strong></div>
                 </div>
                 <div class="form-group">
                     <label>Current Compliance</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;">
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;">
                         <strong>${(compliance.average_compliance || 0).toFixed(2)}%</strong>
                         <span class="status-badge ${compliance.status || 'no_data'}" style="margin-left: 10px;">${compliance.status || 'NO DATA'}</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Error Budget Remaining</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;"><strong>${(compliance.error_budget_remaining || 0).toFixed(1)}%</strong></div>
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;"><strong>${(compliance.error_budget_remaining || 0).toFixed(1)}%</strong></div>
                 </div>
                 <div class="form-group">
                     <label>Tracking Period</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;">${slo.tracking_period}</div>
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;">${slo.tracking_period}</div>
                 </div>
                 <div class="form-group">
                     <label>Min / Max Compliance</label>
-                    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 4px;">
+                    <div style="padding: 8px 12px; background: var(--bg-tertiary); border-radius: 4px;">
                         ${(compliance.min_compliance || 0).toFixed(2)}% / ${(compliance.max_compliance || 0).toFixed(2)}%
                     </div>
                 </div>
@@ -1087,8 +1040,4 @@
             setInterval(refreshData, 60000); // Refresh every minute
         });
     </script>
-
-    <!-- Theme Manager (must load before other scripts) -->
-    <script src="{{ url_for('static', filename='theme-manager.js') }}"></script>
-</body>
-</html>
+{% endblock %}

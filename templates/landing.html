@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus AIOps - Autonomous Observability</title>
+    <meta name="description" content="Detect anomalies, find root causes and remediate incidents automatically with Nexus AIOps.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='design-tokens.css') }}">
+    <style>
+        body { background-image: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(99, 102, 241, 0.32), transparent 70%); }
+        [data-theme="light"] body { background-image: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(79, 70, 229, 0.14), transparent 70%); }
+        [data-theme="light"] .mock { box-shadow: 0 30px 80px rgba(79, 70, 229, .18), 0 0 0 1px rgba(79, 70, 229, .08); }
+        [data-theme="light"] .float { box-shadow: 0 12px 30px rgba(79, 70, 229, .15); }
+        [data-theme="light"] .final { background: radial-gradient(ellipse 70% 120% at 50% 0%, rgba(79, 70, 229, .12), transparent 70%), var(--bg-secondary); }
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+        /* ---------- nav ---------- */
+        .nav { position: sticky; top: 12px; z-index: 50; margin: 12px auto 0; max-width: 1120px; padding: 0 24px; }
+        .nav-bar {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 10px 12px 10px 18px; border-radius: 999px;
+            background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+            backdrop-filter: blur(16px); border: 1px solid var(--border-secondary);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: var(--ls-tight); color: var(--text-primary); text-decoration: none; }
+        .brand-mark { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; background: linear-gradient(145deg, var(--brand), #8b5cf6); box-shadow: 0 4px 14px rgba(99, 102, 241, .5); }
+        .nav-links { display: flex; gap: 28px; font-size: 13px; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; transition: color 160ms var(--ease-out); }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-cta { display: flex; gap: 8px; align-items: center; }
+        .nav-cta .btn-brand, .nav-cta .btn-ghost { padding: 8px 16px; font-size: 13px; border-radius: 999px; }
+
+        /* ---------- hero ---------- */
+        .hero { position: relative; text-align: center; padding: 88px 0 40px; }
+        .hero .bg-grid { position: absolute; inset: 0 -50vw; z-index: -1; }
+        .eyebrow { letter-spacing: .24em; text-transform: uppercase; font-size: 11px; color: var(--brand-strong); }
+        .hero h1 {
+            margin: 18px 0 20px; font-size: clamp(56px, 12vw, 148px); line-height: .86;
+            letter-spacing: var(--ls-display); font-weight: 800; text-transform: uppercase;
+        }
+        .hero h1 span { display: block; }
+        .hero h1 .accent { color: var(--brand-strong); }
+        .lede { max-width: 640px; margin: 0 auto 28px; font-size: clamp(16px, 2vw, 20px); line-height: 1.55; color: var(--text-secondary); }
+        .pills { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+        .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .cta .btn-brand, .cta .btn-ghost { padding: 13px 26px; font-size: 15px; border-radius: 999px; }
+
+        /* ---------- product mock ---------- */
+        .stage { position: relative; margin: 64px auto 0; max-width: 960px; perspective: 1400px; }
+        .mock {
+            border-radius: 20px; border: 1px solid var(--border-primary);
+            background: linear-gradient(180deg, var(--bg-tertiary), var(--bg-secondary));
+            box-shadow: 0 40px 120px rgba(5, 6, 20, .6), 0 0 0 1px rgba(124, 131, 255, .08), inset 0 1px 0 rgba(255,255,255,.05);
+            transform: rotateX(6deg); transform-origin: 50% 100%;
+            padding: 14px 16px 20px; text-align: left;
+        }
+        .dots { display: flex; gap: 6px; margin-bottom: 14px; }
+        .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--border-primary); }
+        .dots i:nth-child(1) { background: #ff5f57; } .dots i:nth-child(2) { background: #febc2e; } .dots i:nth-child(3) { background: #28c840; }
+        .mock-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+        .panel { border: 1px solid var(--border-secondary); background: var(--bg-primary); border-radius: 14px; padding: 14px 16px; }
+        .panel h4 { font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+        .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+        .kpi b { display: block; font-family: var(--font-display); font-size: 26px; letter-spacing: var(--ls-tight); font-variant-numeric: tabular-nums; }
+        .kpi small { color: var(--text-tertiary); font-size: 11px; }
+        .up { color: var(--color-success); } .warn { color: var(--color-warning); }
+        .chart { width: 100%; height: 120px; display: block; }
+        .chart .line { stroke: var(--brand-strong); stroke-width: 2.5; fill: none; stroke-dasharray: 900; stroke-dashoffset: 900; animation: draw 1800ms var(--ease-out) 500ms forwards; }
+        .chart .fill { fill: url(#g); opacity: 0; animation: fadeIn 800ms ease-out 1.6s forwards; }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .row { display: flex; justify-content: space-between; font-size: 12px; padding: 7px 0; border-bottom: 1px solid var(--border-secondary); color: var(--text-secondary); }
+        .row:last-child { border: 0; }
+        .row em { font-style: normal; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+        .float { position: absolute; padding: 10px 14px; border-radius: 14px; font-size: 12px; background: color-mix(in srgb, var(--bg-tertiary) 88%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--border-primary); box-shadow: 0 16px 40px rgba(5, 6, 20, .5); animation: float 6s ease-in-out infinite; display: flex; gap: 8px; align-items: center; }
+        .float.a { top: -22px; right: 6%; }
+        .float.b { bottom: 28px; left: -3%; animation-delay: -3s; border-color: rgba(255, 77, 166, .45); }
+        .ping { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 rgba(107, 255, 184, .6); animation: ping 2s var(--ease-out) infinite; }
+        .ping.crit { background: var(--color-critical); box-shadow: 0 0 0 0 rgba(255, 77, 166, .6); }
+        @keyframes ping { to { box-shadow: 0 0 0 10px rgba(107, 255, 184, 0); } }
+
+        /* ---------- sections ---------- */
+        section { padding: 110px 0 0; }
+        .sec-head { text-align: center; margin-bottom: 48px; }
+        .sec-head h2 { font-size: clamp(32px, 5vw, 56px); line-height: 1; letter-spacing: var(--ls-display); font-weight: 700; margin-top: 14px; }
+        .sec-head p { margin: 14px auto 0; max-width: 560px; color: var(--text-secondary); font-size: 17px; line-height: 1.55; }
+        .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .card {
+            padding: 28px; border-radius: 20px; background: var(--bg-secondary); border: 1px solid var(--border-secondary);
+            transition: transform 260ms var(--ease-out), border-color 260ms var(--ease-out), background-color 260ms var(--ease-out);
+        }
+        @media (hover: hover) and (pointer: fine) { .card:hover { transform: translateY(-4px); border-color: var(--brand-strong); background: var(--bg-tertiary); } }
+        .card .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--brand-dim); margin-bottom: 18px; }
+        .card h3 { font-size: 20px; margin-bottom: 8px; }
+        .card p { color: var(--text-secondary); font-size: 14.5px; line-height: 1.6; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; }
+        .stats b { display: block; font-family: var(--font-display); font-size: clamp(40px, 6vw, 72px); letter-spacing: var(--ls-display); font-variant-numeric: tabular-nums; }
+        .stats span { color: var(--text-secondary); font-size: 14px; }
+        .final { margin: 110px 0 0; padding: 64px 24px; text-align: center; border-radius: 28px; border: 1px solid var(--border-primary); background: radial-gradient(ellipse 70% 120% at 50% 0%, rgba(99, 102, 241, .28), transparent 70%), var(--bg-secondary); }
+        .final h2 { font-size: clamp(32px, 5vw, 56px); letter-spacing: var(--ls-display); margin-bottom: 24px; }
+        footer { padding: 56px 0 40px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+
+        /* scroll reveal: hidden only when JS is on, so no-JS still shows everything */
+        .js .rv { opacity: 0; transform: translateY(18px); transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out); }
+        .js .rv.in { opacity: 1; transform: none; }
+        .js .rv:nth-child(2) { transition-delay: 70ms; } .js .rv:nth-child(3) { transition-delay: 140ms; }
+        .js .rv:nth-child(4) { transition-delay: 210ms; } .js .rv:nth-child(5) { transition-delay: 280ms; } .js .rv:nth-child(6) { transition-delay: 350ms; }
+
+        @media (max-width: 860px) {
+            .nav-links { display: none; }
+            .features { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: repeat(2, 1fr); row-gap: 32px; }
+            .mock-grid { grid-template-columns: 1fr; }
+            .float.b { display: none; }
+            .hero { padding-top: 56px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="nav">
+        <div class="nav-bar">
+            <a class="brand" href="/welcome"><span class="brand-mark">⚡</span>Nexus</a>
+            <nav class="nav-links" aria-label="Primary">
+                <a href="#features">Features</a>
+                <a href="#how">How it works</a>
+                <a href="#results">Results</a>
+            </nav>
+            <div class="nav-cta">
+                <a class="btn-ghost" href="/login">Sign in</a>
+                <a class="btn-brand" href="/signup">Get started</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <div class="hero">
+            <div class="bg-grid" aria-hidden="true"></div>
+            <p class="eyebrow reveal reveal-1">Autonomous observability platform</p>
+            <h1 class="reveal reveal-2"><span>Nexus</span><span class="accent">AIOps</span></h1>
+            <p class="lede reveal reveal-3">Detect anomalies, trace root causes and remediate incidents automatically, across every machine you run.</p>
+            <div class="pills reveal reveal-4">
+                <span class="pill">Anomaly detection</span><span class="pill">Root cause</span><span class="pill">Auto-remediation</span><span class="pill">SLOs</span>
+            </div>
+            <div class="cta reveal reveal-5">
+                <a class="btn-brand" href="/login">Open dashboard</a>
+                <a class="btn-ghost" href="#how">See how it works</a>
+            </div>
+
+            <div class="stage reveal reveal-5" aria-hidden="true">
+                <div class="float a"><span class="ping"></span>Anomaly resolved in 38s</div>
+                <div class="float b"><span class="ping crit"></span>CPU spike on node-07</div>
+                <div class="mock">
+                    <div class="dots"><i></i><i></i><i></i></div>
+                    <div class="kpis">
+                        <div class="panel kpi"><small>Healthy machines</small><b class="up">98.7%</b></div>
+                        <div class="panel kpi"><small>Mean time to resolve</small><b>8.2m</b></div>
+                        <div class="panel kpi"><small>Open problems</small><b class="warn">3</b></div>
+                    </div>
+                    <div class="mock-grid">
+                        <div class="panel">
+                            <h4>Latency &middot; p95</h4>
+                            <svg class="chart" viewBox="0 0 400 120" preserveAspectRatio="none">
+                                <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c83ff" stop-opacity=".45"/><stop offset="1" stop-color="#7c83ff" stop-opacity="0"/></linearGradient></defs>
+                                <path class="fill" d="M0 90 C40 80 60 95 90 70 S150 40 180 58 S240 100 270 60 S330 20 360 34 L400 28 L400 120 L0 120Z"/>
+                                <path class="line" d="M0 90 C40 80 60 95 90 70 S150 40 180 58 S240 100 270 60 S330 20 360 34 L400 28"/>
+                            </svg>
+                        </div>
+                        <div class="panel">
+                            <h4>Recent actions</h4>
+                            <div class="row"><span>Restart service</span><em>auto</em></div>
+                            <div class="row"><span>Scale out pool</span><em>approved</em></div>
+                            <div class="row"><span>Clear cache</span><em>auto</em></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section id="features">
+            <div class="sec-head rv"><p class="eyebrow">Features</p><h2>Everything you need to run calm.</h2><p>One workspace for detection, diagnosis and the fix.</p></div>
+            <div class="features">
+                <article class="card rv"><div class="ico">🔬</div><h3>Machine analyzer</h3><p>Streams metrics and flags anomalies with ML models, with per-machine evaluation charts.</p></div>
+                <article class="card rv"><div class="ico">🔗</div><h3>Topology &amp; root cause</h3><p>See how services depend on each other and trace a problem back to where it started.</p></div>
+                <article class="card rv"><div class="ico">🤖</div><h3>Auto-remediation</h3><p>Playbook-driven fixes with human approval where it matters and a full audit trail.</p></div>
+                <article class="card rv"><div class="ico">🚨</div><h3>Real-time alerting</h3><p>Email and Slack alerts the moment a threshold or an anomaly trips.</p></div>
+                <article class="card rv"><div class="ico">📈</div><h3>SLO tracking</h3><p>Error budgets and burn rates so reliability targets stay visible.</p></div>
+                <article class="card rv"><div class="ico">🔐</div><h3>Secure by default</h3><p>HTTPS, role-based access and hardened headers protect every request.</p></div>
+            </div>
+        </section>
+
+        <section id="how">
+            <div class="sec-head rv"><p class="eyebrow">How it works</p><h2>From signal to fix in three steps.</h2></div>
+            <div class="features">
+                <article class="card rv"><div class="ico">1</div><h3>Observe</h3><p>Metrics, logs and traces flow in from your machines in real time.</p></div>
+                <article class="card rv"><div class="ico">2</div><h3>Understand</h3><p>Models separate noise from real anomalies and group them into problems.</p></div>
+                <article class="card rv"><div class="ico">3</div><h3>Resolve</h3><p>Approved playbooks run, results are verified, everything is logged.</p></div>
+            </div>
+        </section>
+
+        <section id="results">
+            <div class="stats">
+                <div class="rv"><b data-count="98.7" data-suffix="%" data-dec="1">98.7%</b><span>System uptime</span></div>
+                <div class="rv"><b data-count="8.2" data-suffix="m" data-dec="1">8.2m</b><span>Avg resolution time</span></div>
+                <div class="rv"><b data-count="24" data-suffix="/7">24/7</b><span>Autonomous monitoring</span></div>
+                <div class="rv"><b data-count="10" data-suffix="+">10+</b><span>Machines analyzed at once</span></div>
+            </div>
+        </section>
+
+        <div class="final rv">
+            <h2>Ready to see it live?</h2>
+            <div class="cta"><a class="btn-brand" href="/login">Open dashboard</a><a class="btn-ghost" href="/signup">Create account</a></div>
+        </div>
+    </main>
+
+    <footer><div class="wrap">Nexus AIOps &copy; 2026</div></footer>
+
+    <script src="{{ url_for('static', filename='theme-manager.js') }}"></script>
+    <script>
+        (function () {
+            document.documentElement.classList.add('js');
+            var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            // Scroll reveal
+            var items = document.querySelectorAll('.rv');
+            if (!('IntersectionObserver' in window) || reduce) {
+                items.forEach(function (el) { el.classList.add('in'); });
+            } else {
+                var io = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e) {
+                        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+                items.forEach(function (el) { io.observe(el); });
+            }
+
+            // Count-up for stats (final text is already in the markup for no-JS / reduced motion)
+            if (!reduce && 'IntersectionObserver' in window) {
+                var co = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e) {
+                        if (!e.isIntersecting) return;
+                        co.unobserve(e.target);
+                        var el = e.target, end = parseFloat(el.dataset.count), dec = +(el.dataset.dec || 0), suf = el.dataset.suffix || '', t0 = performance.now();
+                        (function tick(t) {
+                            var p = Math.min((t - t0) / 1200, 1), v = end * (1 - Math.pow(1 - p, 4));
+                            el.textContent = v.toFixed(dec) + suf;
+                            if (p < 1) requestAnimationFrame(tick);
+                        })(t0);
+                    });
+                }, { threshold: 0.6 });
+                document.querySelectorAll('[data-count]').forEach(function (el) { co.observe(el); });
+            }
+        })();
+    </script>
+</body>
+</html>
