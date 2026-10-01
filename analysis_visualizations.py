@@ -397,9 +397,25 @@ class AnalysisVisualizations:
         plt.close(fig)
         return image_base64
 
+    _viz_cache = None
+
     @classmethod
     def generate_all_visualizations(cls):
-        """Generate all visualizations and return as base64 strings"""
+        """Generate all visualizations and return as base64 strings.
+
+        Cached in-memory after the first call: every chart here is built from
+        fixed, hardcoded demo data (e.g. detection_rate = [96, 94, 98, ...]),
+        so regenerating all 7 matplotlib figures on every request produces
+        the same result every time while costing 25-40+ seconds under
+        Render's constrained CPU (vs. near-instant on a typical dev
+        machine -- the actual cause of "localhost and Render look
+        different": Render wasn't broken, just slow enough that the charts
+        and the PDF export (which also calls this) risked approaching proxy
+        timeout thresholds).
+        """
+        if cls._viz_cache is not None:
+            return cls._viz_cache
+
         visualizations = {
             'chaos_simulation': cls.fig_to_base64(cls.chaos_simulation()),
             'classification_results': cls.fig_to_base64(cls.classification_results()),
@@ -409,6 +425,7 @@ class AnalysisVisualizations:
             'threshold_calibration': cls.fig_to_base64(cls.threshold_calibration()),
             'remediation_results': cls.fig_to_base64(cls.remediation_results()),
         }
+        cls._viz_cache = visualizations
         return visualizations
 
 
