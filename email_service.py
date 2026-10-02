@@ -1,8 +1,17 @@
 """
 Email Service for Nexus AIOps
-Handles SMTP email sending for verification codes, password resets, etc.
+Sends verification codes, password resets, invites and welcome emails.
+
+Delivery provider is chosen by which credentials are present, in this order:
+  1. BREVO_API_KEY   - Brevo HTTPS API (works on Render's free tier)
+  2. RESEND_API_KEY  - Resend HTTPS API (works on Render's free tier)
+  3. SMTP_USERNAME (or SMTP_USER) + SMTP_PASSWORD - plain SMTP
+
+Render's free web services block outbound SMTP ports 25/465/587, so SMTP only
+works locally or on a paid instance; use one of the HTTPS APIs there.
 """
 
+import html
 import os
 import smtplib
 from typing import Optional, Tuple
@@ -10,18 +19,42 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
+import requests
+
+# Seconds. Without a timeout, a blocked/filtered port can hang the request
+# thread (and therefore the signup page) for minutes.
+SEND_TIMEOUT = 15
+
 class EmailService:
-    """Service for sending emails via SMTP."""
+    """Service for sending emails via an HTTPS API or SMTP."""
 
     def __init__(self):
-        """Initialize email service with SMTP configuration."""
+        """Initialize email service from environment configuration."""
         self.smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
         self.smtp_port = int(os.getenv('SMTP_PORT', '587'))
-        self.sender_email = os.getenv('SMTP_USERNAME', '')
+        # src/notification_channels.py (alert emails) reads SMTP_USER while this
+        # module historically read SMTP_USERNAME; accept either so one set of
+        # credentials works for both.
+        self.sender_email = os.getenv('SMTP_USERNAME') or os.getenv('SMTP_USER', '')
         self.sender_password = os.getenv('SMTP_PASSWORD', '')
+        self.brevo_api_key = os.getenv('BREVO_API_KEY', '')
+        self.resend_api_key = os.getenv('RESEND_API_KEY', '')
         self.from_email = os.getenv('FROM_EMAIL', 'noreply@nexusaiops.com')
         self.from_name = 'Nexus AIOps'
-        self.enabled = bool(self.sender_email and self.sender_password)
+        # Public base URL used in emailed links (reset/invite). Must be configured
+        # explicitly rather than derived from the request Host header, which an
+        # attacker can forge to poison password-reset links.
+        self.base_url = os.getenv('APP_BASE_URL', 'http://localhost:5000').rstrip('/')
+
+        if self.brevo_api_key:
+            self.provider = 'brevo'
+        elif self.resend_api_key:
+            self.provider = 'resend'
+        elif self.sender_email and self.sender_password:
+            self.provider = 'smtp'
+        else:
+            self.provider = None
+        self.enabled = self.provider is not None
 
     def send_email(
         self,
@@ -31,7 +64,7 @@ class EmailService:
         text_body: Optional[str] = None
     ) -> Tuple[bool, str]:
         """
-        Send an email via SMTP.
+        Send an email via the configured provider.
 
         Args:
             to_email: Recipient email address
@@ -40,26 +73,77 @@ class EmailService:
             text_body: Plain text fallback body
 
         Returns:
-            Tuple of (success, message)
+            Tuple of (success, message). success is False when nothing was sent,
+            including when no provider is configured -- callers must not tell
+            users an email went out in that case.
         """
         if not self.enabled:
-            print(f"⚠️ Email service not configured. Email would be sent to: {to_email}")
-            return True, "Email service not configured (development mode)"
+            print("[*] Email service not configured: set BREVO_API_KEY, RESEND_API_KEY, "
+                  "or SMTP_USERNAME/SMTP_PASSWORD. Email was NOT sent.")
+            return False, "Email service not configured"
 
+        if self.provider == 'brevo':
+            return self._send_via_brevo(to_email, subject, html_body, text_body)
+        if self.provider == 'resend':
+            return self._send_via_resend(to_email, subject, html_body, text_body)
+        return self._send_via_smtp(to_email, subject, html_body, text_body)
+
+    def _send_via_brevo(self, to_email, subject, html_body, text_body) -> Tuple[bool, str]:
+        payload = {
+            'sender': {'name': self.from_name, 'email': self.from_email},
+            'to': [{'email': to_email}],
+            'subject': subject,
+            'htmlContent': html_body,
+        }
+        if text_body:
+            payload['textContent'] = text_body
         try:
-            # Create message
+            resp = requests.post(
+                'https://api.brevo.com/v3/smtp/email',
+                headers={'api-key': self.brevo_api_key, 'accept': 'application/json'},
+                json=payload,
+                timeout=SEND_TIMEOUT,
+            )
+        except requests.RequestException as e:
+            return False, f"Brevo request failed: {e}"
+        if resp.status_code in (200, 201, 202):
+            return True, f"Email sent to {to_email}"
+        return False, f"Brevo API error {resp.status_code}: {resp.text[:200]}"
+
+    def _send_via_resend(self, to_email, subject, html_body, text_body) -> Tuple[bool, str]:
+        payload = {
+            'from': f"{self.from_name} <{self.from_email}>",
+            'to': [to_email],
+            'subject': subject,
+            'html': html_body,
+        }
+        if text_body:
+            payload['text'] = text_body
+        try:
+            resp = requests.post(
+                'https://api.resend.com/emails',
+                headers={'Authorization': f'Bearer {self.resend_api_key}'},
+                json=payload,
+                timeout=SEND_TIMEOUT,
+            )
+        except requests.RequestException as e:
+            return False, f"Resend request failed: {e}"
+        if resp.status_code in (200, 201):
+            return True, f"Email sent to {to_email}"
+        return False, f"Resend API error {resp.status_code}: {resp.text[:200]}"
+
+    def _send_via_smtp(self, to_email, subject, html_body, text_body) -> Tuple[bool, str]:
+        try:
             message = MIMEMultipart('alternative')
             message['Subject'] = subject
             message['From'] = f"{self.from_name} <{self.from_email}>"
             message['To'] = to_email
 
-            # Attach text and HTML parts
             if text_body:
                 message.attach(MIMEText(text_body, 'plain'))
             message.attach(MIMEText(html_body, 'html'))
 
-            # Send via SMTP
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+            with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=SEND_TIMEOUT) as server:
                 server.starttls()
                 server.login(self.sender_email, self.sender_password)
                 server.send_message(message)
@@ -152,7 +236,7 @@ Nexus AIOps | Enterprise Observability Platform
         """
         subject = "Reset Your Password - Nexus AIOps"
 
-        reset_link = f"http://localhost:5000/reset-password?token={reset_token}"
+        reset_link = f"{self.base_url}/reset-password?token={reset_token}"
 
         html_body = f"""
         <html>
@@ -394,6 +478,80 @@ Your Operational Buddy
 
 Enterprise Autonomous Observability Platform
 © {datetime.now().year} All Rights Reserved
+        """
+
+        return self.send_email(to_email, subject, html_body, text_body)
+
+    def send_invite_email(self, to_email: str, username: str, first_name: str, invite_token: str) -> Tuple[bool, str]:
+        """
+        Send the account-setup invitation an admin triggers from user management.
+
+        Args:
+            to_email: Recipient email
+            username: Username assigned to the invited user
+            first_name: First name
+            invite_token: Single-use setup token (valid 48 hours)
+
+        Returns:
+            Tuple of (success, message)
+        """
+        subject = "You're invited to Nexus AIOps - Set Up Your Account"
+        setup_link = f"{self.base_url}/setup-account?token={invite_token}"
+        safe_name = html.escape(first_name or username)
+        safe_username = html.escape(username)
+
+        html_body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h2 style="color: #333; margin-bottom: 20px;">You've been invited to Nexus AIOps</h2>
+
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">Hi {safe_name},</p>
+
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        An administrator created an account for you (username: <strong>{safe_username}</strong>).
+                        Click the button below to choose your password and finish setting it up:
+                    </p>
+
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{setup_link}" style="display: inline-block; background: #2d5aa0; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                            Set Up Account
+                        </a>
+                    </div>
+
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                        Or copy this link: <br>
+                        <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; word-break: break-all;">{setup_link}</code>
+                    </p>
+
+                    <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 30px;">
+                        This link will expire in <strong>48 hours</strong>.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+
+                    <p style="color: #999; font-size: 12px;">
+                        Nexus AIOps | Enterprise Observability Platform<br>
+                        &copy; {datetime.now().year} All rights reserved.
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+
+        text_body = f"""
+You've been invited to Nexus AIOps
+
+Hi {first_name or username},
+
+An administrator created an account for you (username: {username}).
+Open this link to choose your password and finish setting it up:
+
+{setup_link}
+
+This link will expire in 48 hours.
+
+Nexus AIOps | Enterprise Observability Platform
         """
 
         return self.send_email(to_email, subject, html_body, text_body)

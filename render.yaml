@@ -12,6 +12,15 @@ services:
         value: production
       - key: ALLOWED_ORIGINS
         value: https://aiops-mvp.onrender.com
+      # Public URL used in emailed links (password reset, account setup)
+      - key: APP_BASE_URL
+        value: https://aiops-mvp.onrender.com
+      # Email delivery. Render's free tier blocks outbound SMTP, so use an HTTPS
+      # API (Brevo). Secrets are entered in the Render dashboard, not stored here.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: PYTHONUNBUFFERED

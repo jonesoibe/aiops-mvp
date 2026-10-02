@@ -1747,7 +1747,6 @@ def signup():
             'username': username,
             'first_name': first_name,
             'last_name': last_name,
-            'password': password,
             'password_hash': hash_password(password),
             'role': role,
             'department': department,
@@ -1761,8 +1760,14 @@ def signup():
         from email_service import email_service
         success, msg = email_service.send_verification_email(email, code)
 
+        is_production = os.getenv('ENVIRONMENT', 'development') == 'production'
+
         if not success:
             print(f"[*] Email service warning: {msg}")
+            if not is_production:
+                # Local dev without email configured: surface the code in the
+                # server console so signup can still be completed.
+                print(f"[*] DEV ONLY - verification code for {email}: {code}")
 
         # Log signup attempt
         audit_logger.log_action(
@@ -1779,6 +1784,14 @@ def signup():
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
+
+        if not success and is_production:
+            # Never return the code in the response in production: that would let
+            # anyone "verify" an email address they don't own. Say plainly that
+            # delivery failed instead of claiming it was sent.
+            return jsonify({
+                'error': 'We could not send the verification email right now. Please try again later.'
+            }), 503
 
         return jsonify({
             'message': f'Signup initiated. Verification code sent to {email}.',
@@ -1937,6 +1950,12 @@ def forgot_password():
             reset_token,
             user.get('username', 'User')
         )
+
+        if not success:
+            # The response below is intentionally identical either way (so it
+            # can't be used to discover which emails have accounts), so the
+            # failure has to be visible in the logs instead.
+            print(f"[*] Password reset email failed: {msg}")
 
         # Log the action
         audit_logger.log_action(
@@ -2378,7 +2397,8 @@ def create_user_admin(user=None):
         )
 
         return jsonify({
-            'message': 'User created successfully. Invitation email sent.',
+            'message': ('User created successfully. Invitation email sent.' if success
+                        else 'User created successfully, but the invitation email could not be sent.'),
             'username': username,
             'email': email,
             'role': role
