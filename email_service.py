@@ -41,10 +41,16 @@ class EmailService:
         self.resend_api_key = os.getenv('RESEND_API_KEY', '')
         self.from_email = os.getenv('FROM_EMAIL', 'noreply@nexusaiops.com')
         self.from_name = 'Nexus AIOps'
-        # Public base URL used in emailed links (reset/invite). Must be configured
-        # explicitly rather than derived from the request Host header, which an
-        # attacker can forge to poison password-reset links.
-        self.base_url = os.getenv('APP_BASE_URL', 'http://localhost:5000').rstrip('/')
+        # Public base URL used in emailed links (reset/invite). Taken from config,
+        # never the request Host header, which an attacker can forge to poison
+        # password-reset links. APP_BASE_URL wins (needed for a custom domain);
+        # otherwise use RENDER_EXTERNAL_URL, which Render sets itself on every web
+        # service, so deployed links never silently fall back to localhost.
+        self.base_url = (
+            os.getenv('APP_BASE_URL')
+            or os.getenv('RENDER_EXTERNAL_URL')
+            or 'http://localhost:5000'
+        ).rstrip('/')
 
         if self.brevo_api_key:
             self.provider = 'brevo'
